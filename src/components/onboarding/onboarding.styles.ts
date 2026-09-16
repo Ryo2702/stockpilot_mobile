@@ -1,0 +1,138 @@
+import { StyleSheet } from "react-native";
+
+import { colors, control, radii, spacing, typography } from "@/theme";
+
+export const onboardingStyles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background.surface,
+  },
+  container: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[8],
+  },
+  content: {
+    width: "100%",
+    alignSelf: "center",
+    maxWidth: 420,
+    gap: spacing[8],
+  },
+  hero: {
+    alignItems: "center",
+  },
+  mascot: {
+    width: 150,
+    height: 150,
+    marginBottom: spacing[4],
+  },
+  heading: {
+    ...typography.h2,
+    color: colors.text.primary,
+    textAlign: "center",
+  },
+  featureHeading: {
+    maxWidth: 260,
+  },
+  title: {
+    ...typography.title,
+    marginTop: spacing[1],
+    color: colors.text.primary,
+    textAlign: "center",
+  },
+  subtitle: {
+    ...typography.caption,
+    maxWidth: 300,
+    marginTop: spacing[2],
+    color: colors.text.secondary,
+    textAlign: "center",
+  },
+  form: {
+    gap: spacing[3],
+  },
+  input: {
+    minHeight: control.lg,
+    paddingHorizontal: spacing[4],
+    borderWidth: 1,
+    borderColor: colors.border.strong,
+    borderRadius: radii.md,
+    color: colors.text.primary,
+    backgroundColor: colors.background.surface,
+    ...typography.caption,
+  },
+  inputError: {
+    borderColor: colors.semantic.danger,
+  },
+  error: {
+    ...typography.caption,
+    marginTop: -spacing[2],
+    color: colors.semantic.danger,
+  },
+  helper: {
+    ...typography.caption,
+    color: colors.text.muted,
+    textAlign: "center",
+  },
+  actions: {
+    gap: spacing[3],
+  },
+  action: {
+    width: "100%",
+  },
+  featureList: {
+    gap: spacing[4],
+  },
+  featureRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[3],
+  },
+  featureIcon: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.full,
+  },
+  featureCopy: {
+    flex: 1,
+  },
+  featureTitle: {
+    ...typography.label,
+    color: colors.text.primary,
+  },
+  featureDescription: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+  nextCard: {
+    gap: spacing[3],
+  },
+  nextTitle: {
+    ...typography.label,
+    color: colors.text.primary,
+  },
+  nextRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[3],
+  },
+  stepNumber: {
+    width: 22,
+    height: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.full,
+    backgroundColor: colors.primary[600],
+  },
+  stepNumberText: {
+    ...typography.caption,
+    color: colors.text.onPrimary,
+    fontWeight: "700",
+  },
+  nextLabel: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+});
