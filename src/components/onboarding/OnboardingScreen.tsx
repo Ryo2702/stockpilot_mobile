@@ -1,6 +1,6 @@
 import { useVideoPlayer } from "expo-video";
-import { useState } from "react";
-import { ScrollView, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Easing, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import OnboardingStep from "./OnboardingStep";
@@ -11,11 +11,27 @@ export default function OnboardingScreen() {
   const [step, setStep] = useState(0);
   const [ownerName, setOwnerName] = useState("");
   const [ownerError, setOwnerError] = useState<string>();
+  const transition = useRef(new Animated.Value(0)).current;
   const player = useVideoPlayer(mascotVideo, (videoPlayer) => {
     videoPlayer.loop = true;
     videoPlayer.muted = true;
     videoPlayer.play();
   });
+
+  useEffect(() => {
+    transition.stopAnimation();
+    transition.setValue(0);
+
+    const animation = Animated.timing(transition, {
+      toValue: 1,
+      duration: 180,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    });
+
+    animation.start();
+    return () => animation.stop();
+  }, [step, transition]);
 
   const advance = () => setStep((currentStep) => Math.min(currentStep + 1, 4));
   const continueWithOwnerName = () => {
@@ -38,7 +54,22 @@ export default function OnboardingScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.content}>
+        <Animated.View
+          style={[
+            styles.content,
+            {
+              opacity: transition,
+              transform: [
+                {
+                  translateY: transition.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [8, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
           <OnboardingStep
             step={step}
             ownerName={ownerName}
@@ -51,7 +82,7 @@ export default function OnboardingScreen() {
             onOwnerContinue={continueWithOwnerName}
             onAdvance={advance}
           />
-        </View>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
