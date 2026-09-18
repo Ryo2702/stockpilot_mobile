@@ -45,6 +45,6 @@ export const features: Array<{
 
 export const nextSteps = [
   "Create your first store",
-  "Add your products",
+  "Add your catalogs",
   "Start managing your inventory",
 ];

@@ -6,6 +6,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { createOwnerStore, type OwnerStore } from "@/services/owner-store.service";
 import { storeSchema } from "@/validation/store.validation";
+import { initialStoreForm } from "@/components/store/store.data";
+import type { StoreErrors, StoreFieldChange, StoreForm } from "@/components/store/store.types";
 
 import OnboardingStep from "./OnboardingStep";
 import { mascotVideo, ownerNameSchema } from "./onboarding.data";
@@ -20,15 +22,18 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   const [step, setStep] = useState(0);
   const [ownerName, setOwnerName] = useState("");
   const [ownerError, setOwnerError] = useState<string>();
-  const [storeName, setStoreName] = useState("");
-  const [storeError, setStoreError] = useState<string>();
+  const [storeForm, setStoreForm] = useState(initialStoreForm);
+  const [storeErrors, setStoreErrors] = useState<StoreErrors>({});
   const [saving, setSaving] = useState(false);
   const transition = useRef(new Animated.Value(0)).current;
   const player = useVideoPlayer(mascotVideo, (videoPlayer) => {
     videoPlayer.loop = true;
     videoPlayer.muted = true;
-    videoPlayer.play();
   });
+
+  useEffect(() => {
+    player.play();
+  }, [player, step]);
 
   useEffect(() => {
     transition.stopAnimation();
@@ -59,21 +64,36 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
     advance();
   };
 
+  const updateStoreField: StoreFieldChange = (field, value) => {
+    setStoreForm((current) => ({ ...current, [field]: value }));
+    setStoreErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  };
+
   const createStore = async () => {
-    const result = storeSchema.safeParse({ name: storeName });
+    const result = storeSchema.safeParse(storeForm);
 
     if (!result.success) {
-      setStoreError(result.error.issues[0]?.message ?? "Please enter your store name.");
+      const errors: StoreErrors = {};
+      for (const issue of result.error.issues) {
+        const key = (issue.path.join(".") || "form") as keyof StoreErrors;
+        errors[key] = issue.message;
+      }
+      setStoreErrors(errors);
       return;
     }
 
     setSaving(true);
-    setStoreError(undefined);
+    setStoreErrors({});
 
     try {
-      onComplete(await createOwnerStore(db, ownerName, result.data.name));
+      onComplete(await createOwnerStore(db, ownerName, result.data));
     } catch {
-      setStoreError("Couldn't create your store. Please try again.");
+      setStoreErrors({ form: "Couldn't create your store. Please try again." });
     } finally {
       setSaving(false);
     }
@@ -106,8 +126,8 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             step={step}
             ownerName={ownerName}
             ownerError={ownerError}
-            storeName={storeName}
-            storeError={storeError}
+            storeForm={storeForm}
+            storeErrors={storeErrors}
             saving={saving}
             player={player}
             onOwnerNameChange={(value) => {
@@ -115,10 +135,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
               if (ownerError) setOwnerError(undefined);
             }}
             onOwnerContinue={continueWithOwnerName}
-            onStoreNameChange={(value) => {
-              setStoreName(value);
-              if (storeError) setStoreError(undefined);
-            }}
+            onStoreFieldChange={updateStoreField}
             onCreateStore={createStore}
             onAdvance={advance}
           />

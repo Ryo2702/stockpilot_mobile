@@ -24,6 +24,7 @@ export const currencyModeValues = ["iso", "custom"] as const;
 export const storeStatusValues = ["active", "archived"] as const;
 
 export type StoreType = (typeof storeTypeValues)[number];
+export type CurrencyMode = (typeof currencyModeValues)[number];
 
 const optionalText = (max: number) =>
   z.preprocess(
@@ -90,3 +91,4 @@ export const storeSchema = z
   });
 
 export type StoreSchema = z.infer<typeof storeSchema>;
+export type StoreInput = z.input<typeof storeSchema>;

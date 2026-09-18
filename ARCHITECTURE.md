@@ -22,7 +22,7 @@ This mobile architecture replaces the former web SaaS/subscription foundation. S
 
 ## Store isolation
 
-Every store-scoped write receives a `storeId`; services verify that referenced products belong to that store before mutation. SQL queries never accept an unverified cross-store product/store pairing. Tables carry store ownership explicitly, and foreign keys reinforce it.
+Every store-scoped write receives a `storeId`; services verify that referenced items belong to that store before mutation. SQL queries never accept an unverified cross-store product/store pairing. Tables carry store ownership explicitly, and foreign keys reinforce it.
 
 There is no global mutable "current inventory" shared between stores. Changing the selected store only changes the query context.
 
@@ -68,7 +68,7 @@ src/
     types.ts
   features/
     inventory/
-    products/
+    items/
     stores/
   purchases/
     feature-gate.ts

@@ -119,7 +119,7 @@ Examples of appropriate keys:
 - `thousand_separator`
 - `decimal_separator`
 - `date_format`
-- `default_product_unit`
+- `default_catalog_unit`
 - `stock_alerts_enabled`
 - `notifications_enabled`
 - `scanner_preferences`
@@ -128,9 +128,9 @@ Core identity values such as store type, address, currency identity, name, and a
 
 ---
 
-### products
+### catalogs
 
-Represents an inventory item inside a specific store.
+Represents a catalog item inside a specific store.
 
 - `id TEXT PRIMARY KEY`
 - `business_id TEXT NOT NULL -> businesses.id`
@@ -159,9 +159,9 @@ Unique:
 
 ### inventory
 
-Stores the authoritative current quantity for each product.
+Stores the authoritative current quantity for each catalog item.
 
-- `product_id TEXT PRIMARY KEY -> products.id`
+- `catalog_id TEXT PRIMARY KEY -> catalogs.id`
 - `business_id TEXT NOT NULL -> businesses.id`
 - `store_id TEXT NOT NULL -> stores.id`
 - `quantity INTEGER NOT NULL DEFAULT 0 CHECK(quantity >= 0)`
@@ -169,7 +169,7 @@ Stores the authoritative current quantity for each product.
 
 Rules:
 
-- Exactly one inventory row exists per product.
+- Exactly one inventory row exists per catalog item.
 - Quantity can never be negative.
 - Quantity changes must be performed through the inventory/stock service inside a transaction.
 - Screens must never update quantity directly.
@@ -183,7 +183,7 @@ Immutable inventory movement history.
 - `id TEXT PRIMARY KEY`
 - `business_id TEXT NOT NULL -> businesses.id`
 - `store_id TEXT NOT NULL -> stores.id`
-- `product_id TEXT NOT NULL -> products.id`
+- `catalog_id TEXT NOT NULL -> catalogs.id`
 - `delta INTEGER NOT NULL CHECK(delta <> 0)`
 - `quantity_before INTEGER NOT NULL CHECK(quantity_before >= 0)`
 - `quantity_after INTEGER NOT NULL CHECK(quantity_after >= 0)`
@@ -242,10 +242,10 @@ Rules:
 - `stores(business_id)`
 - `stores(business_id, status)`
 - `store_settings(store_id)`
-- `products(store_id, is_active)`
-- `products(store_id, sku)`
+- `catalogs(store_id, is_active)`
+- `catalogs(store_id, sku)`
 - `inventory(store_id)`
-- `stock_movements(store_id, product_id, created_at DESC)`
+- `stock_movements(store_id, catalog_id, created_at DESC)`
 - `insight_snapshots(store_id, kind, created_at DESC)`
 
 ## Store setup model
@@ -277,6 +277,6 @@ That migration should:
 2. Backfill existing stores with safe defaults such as `store_type = 'retail'`, `currency_mode = 'iso'`, `currency_code = 'PHP'`, `currency_decimal_places = 2`, and `status = 'active'`.
 3. Create `store_settings`.
 4. Create the new indexes.
-5. Preserve all existing business, store, product, inventory, movement, settings, and insight data.
+5. Preserve all existing business, store, catalog, inventory, movement, settings, and insight data.
 
 Never drop and recreate a user database merely to add these fields after release.

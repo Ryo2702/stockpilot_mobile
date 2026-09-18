@@ -1,11 +1,15 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
-import { schemaMigrationsSchema } from "./schema/schema_migrations";
 import { migrations } from "./migrations";
+import { schemaMigrationsSchema } from "./schema/schema_migrations";
 
 export type DatabaseExecutor = Pick<
   SQLiteDatabase,
-  "execAsync" | "runAsync" | "getFirstAsync" | "getAllAsync" | "withTransactionAsync"
+  | "execAsync"
+  | "runAsync"
+  | "getFirstAsync"
+  | "getAllAsync"
+  | "withTransactionAsync"
 >;
 
 export type Migration = {
@@ -20,14 +24,16 @@ DROP TABLE IF EXISTS store_settings;
 DROP TABLE IF EXISTS insight_snapshots;
 DROP TABLE IF EXISTS stock_movements;
 DROP TABLE IF EXISTS inventory;
-DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS catalogs;
 DROP TABLE IF EXISTS stores;
 DROP TABLE IF EXISTS businesses;
 DROP TABLE IF EXISTS settings;
 DROP TABLE IF EXISTS schema_migrations;`.trim();
 
 export async function migrate(db: DatabaseExecutor) {
-  await db.execAsync(`PRAGMA foreign_keys = ON;\nPRAGMA journal_mode = WAL;\n${schemaMigrationsSchema}`);
+  await db.execAsync(
+    `PRAGMA foreign_keys = ON;\nPRAGMA journal_mode = WAL;\n${schemaMigrationsSchema}`,
+  );
 
   for (const migration of migrations) {
     const applied = await db.getFirstAsync<{ version: number }>(
@@ -35,7 +41,8 @@ export async function migrate(db: DatabaseExecutor) {
       migration.version,
     );
 
-    if (applied && (!migration.isApplied || (await migration.isApplied(db)))) continue;
+    if (applied && (!migration.isApplied || (await migration.isApplied(db))))
+      continue;
 
     await db.withTransactionAsync(async () => {
       await migration.up(db);

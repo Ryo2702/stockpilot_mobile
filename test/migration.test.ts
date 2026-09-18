@@ -53,6 +53,7 @@ describe("database migration", () => {
       expect(database.all<{ version: number }>("SELECT version FROM schema_migrations ORDER BY version")).toEqual([
         { version: 1 },
         { version: 2 },
+        { version: 3 },
       ]);
       expect(database.all<{ name: string }>("PRAGMA table_info(stores)").map(({ name }) => name)).toEqual(
         expect.arrayContaining(["code", "store_type", "currency_mode", "status"]),
@@ -70,9 +71,9 @@ describe("database migration", () => {
       await database.db.execAsync(`
         INSERT INTO businesses (id, name, created_at, updated_at) VALUES ('business-1', 'Test Business', 'now', 'now');
         INSERT INTO stores (id, business_id, name, created_at, updated_at) VALUES ('store-1', 'business-1', 'Test Store', 'now', 'now');
-        INSERT INTO products (id, business_id, store_id, name, sku, created_at, updated_at) VALUES ('product-1', 'business-1', 'store-1', 'Test Product', 'SKU-1', 'now', 'now');
-        INSERT INTO inventory (product_id, business_id, store_id, updated_at) VALUES ('product-1', 'business-1', 'store-1', 'now');
-        INSERT INTO stock_movements (id, business_id, store_id, product_id, delta, quantity_before, quantity_after, reason, created_at) VALUES ('movement-1', 'business-1', 'store-1', 'product-1', 1, 0, 1, 'test', 'now');
+        INSERT INTO catalogs (id, business_id, store_id, name, sku, created_at, updated_at) VALUES ('catalog-1', 'business-1', 'store-1', 'Test Catalog', 'SKU-1', 'now', 'now');
+        INSERT INTO inventory (catalog_id, business_id, store_id, updated_at) VALUES ('catalog-1', 'business-1', 'store-1', 'now');
+        INSERT INTO stock_movements (id, business_id, store_id, catalog_id, delta, quantity_before, quantity_after, reason, created_at) VALUES ('movement-1', 'business-1', 'store-1', 'catalog-1', 1, 0, 1, 'test', 'now');
         INSERT INTO settings (key, value_json, updated_at) VALUES ('test', '{}', 'now');
         INSERT INTO insight_snapshots (id, business_id, store_id, kind, payload_json, source_updated_at, created_at) VALUES ('insight-1', 'business-1', 'store-1', 'test', '{}', 'now', 'now');
       `);
@@ -91,7 +92,82 @@ describe("database migration", () => {
       expect(database.all<{ version: number }>("SELECT version FROM schema_migrations ORDER BY version")).toEqual([
         { version: 1 },
         { version: 2 },
+        { version: 3 },
       ]);
+    } finally {
+      database.close();
+    }
+  });
+
+  test("renames existing products and keeps catalog inventory data", async () => {
+    const database = createTestDatabase();
+
+    try {
+      await database.db.execAsync(`
+        PRAGMA foreign_keys = ON;
+        CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL);
+        CREATE TABLE businesses (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+        CREATE TABLE stores (
+          id TEXT PRIMARY KEY,
+          business_id TEXT NOT NULL REFERENCES businesses(id),
+          name TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          UNIQUE (business_id, name)
+        );
+        CREATE TABLE products (
+          id TEXT PRIMARY KEY,
+          business_id TEXT NOT NULL REFERENCES businesses(id),
+          store_id TEXT NOT NULL REFERENCES stores(id),
+          name TEXT NOT NULL,
+          sku TEXT NULL,
+          reorder_level INTEGER NOT NULL DEFAULT 0,
+          critical_level INTEGER NOT NULL DEFAULT 0,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+        CREATE TABLE inventory (
+          product_id TEXT PRIMARY KEY REFERENCES products(id),
+          business_id TEXT NOT NULL REFERENCES businesses(id),
+          store_id TEXT NOT NULL REFERENCES stores(id),
+          quantity INTEGER NOT NULL DEFAULT 0,
+          updated_at TEXT NOT NULL
+        );
+        CREATE TABLE stock_movements (
+          id TEXT PRIMARY KEY,
+          business_id TEXT NOT NULL REFERENCES businesses(id),
+          store_id TEXT NOT NULL REFERENCES stores(id),
+          product_id TEXT NOT NULL REFERENCES products(id),
+          delta INTEGER NOT NULL,
+          quantity_before INTEGER NOT NULL,
+          quantity_after INTEGER NOT NULL,
+          reason TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        );
+        INSERT INTO businesses (id, name, created_at, updated_at) VALUES ('business-1', 'Owner', 'now', 'now');
+        INSERT INTO stores (id, business_id, name, created_at, updated_at) VALUES ('store-1', 'business-1', 'Main Store', 'now', 'now');
+        INSERT INTO products (id, business_id, store_id, name, sku, created_at, updated_at) VALUES ('product-1', 'business-1', 'store-1', 'Legacy Catalog', 'SKU-1', 'now', 'now');
+        INSERT INTO inventory (product_id, business_id, store_id, quantity, updated_at) VALUES ('product-1', 'business-1', 'store-1', 3, 'now');
+        INSERT INTO stock_movements (id, business_id, store_id, product_id, delta, quantity_before, quantity_after, reason, created_at) VALUES ('movement-1', 'business-1', 'store-1', 'product-1', 1, 2, 3, 'test', 'now');
+        INSERT INTO schema_migrations (version, name, applied_at) VALUES (1, 'initial', 'now');
+      `);
+
+      await migrate(database.db);
+
+      expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'products'")).toBeUndefined();
+      expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'catalogs'")).toEqual({ name: "catalogs" });
+      expect(database.first<{ id: string; name: string }>("SELECT id, name FROM catalogs")).toEqual({
+        id: "product-1",
+        name: "Legacy Catalog",
+      });
+      expect(database.first<{ catalog_id: string; quantity: number }>("SELECT catalog_id, quantity FROM inventory")).toEqual({
+        catalog_id: "product-1",
+        quantity: 3,
+      });
+      expect(database.first<{ catalog_id: string }>("SELECT catalog_id FROM stock_movements")).toEqual({
+        catalog_id: "product-1",
+      });
     } finally {
       database.close();
     }

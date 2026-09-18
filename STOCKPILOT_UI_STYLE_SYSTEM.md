@@ -57,7 +57,7 @@ Use **Lucide Icons** as the default icon library.
   --------------- ---------------------
   Dashboard       `LayoutDashboard`
   Store           `Store`
-  Products        `Package`
+  Catalog         `Package`
   Inventory       `Boxes`
   Camera          `Camera`
   Insights        `Lightbulb`
@@ -429,7 +429,7 @@ component.
 Structure:
 
 ``` text
-[Search icon] Search products...
+[Search icon] Search catalogs...
 ```
 
 Use the Lucide `Search` icon.
@@ -466,7 +466,7 @@ Do not put a shadow under every dashboard card.
 
 -   Standard Card
 -   Summary Card
--   Product Card
+-   Catalog Card
 -   Inventory Card
 -   Store Card
 -   Insight Card
@@ -536,7 +536,7 @@ content.
 Primary mobile navigation can contain:
 
 -   Dashboard
--   Products
+-   Catalog
 -   Camera
 -   Inventory
 -   Insights
@@ -615,7 +615,7 @@ to remember where they put them.
 Standard row:
 
 ``` text
-[Icon / Thumbnail] Product Name          Quantity
+[Icon / Thumbnail] Catalog Name          Quantity
                    SKU / Category        Status
 ```
 
@@ -630,17 +630,17 @@ Keep the most important information visually dominant.
 
 ------------------------------------------------------------------------
 
-## 17. Product Item
+## 17. Catalog Item
 
-Product list items should prioritize:
+Catalog list items should prioritize:
 
-1.  Product name
+1.  Catalog name
 2.  Current quantity
 3.  Stock status
 4.  SKU/category
 5.  Optional secondary information
 
-Do not require product images.
+Do not require catalog images.
 
 Use `Package` as a neutral Lucide fallback when an image is unavailable.
 
@@ -687,7 +687,7 @@ Rice 25kg may run out soon based on its current movement.
 Recommended action:
 Restock approximately 20 units.
 
-[View product]
+[View catalog]
 ```
 
 Use standard surfaces and typography.
@@ -705,11 +705,11 @@ Structure:
 ``` text
 [Lucide icon or StockPilot mascot]
 
-No products yet
+No catalogs yet
 
-Add your first product to start tracking inventory.
+Add your first catalog to start tracking inventory.
 
-[Add Product]
+[Add Catalog]
 ```
 
 Keep the message concise.
@@ -827,7 +827,7 @@ Use toasts for brief action feedback.
 Examples:
 
 ``` text
-Product added
+Catalog added
 Inventory updated
 Store archived
 ```
@@ -972,7 +972,7 @@ Switch
 Card
 SummaryCard
 StoreCard
-ProductCard
+CatalogCard
 InventoryCard
 InsightCard
 StockHealthCard
@@ -983,7 +983,7 @@ NotificationBadge
 
 List
 ListItem
-ProductRow
+CatalogRow
 InventoryRow
 StoreRow
 
@@ -1250,7 +1250,7 @@ Custom SVG/illustration assets are reserved for StockPilot branding and
 mascot artwork.
 
 The result should remain visually consistent whether the interface is
-displaying one store, multiple independent stores, products, inventory
+displaying one store, multiple independent stores, catalogs, inventory
 movement, stock health, camera actions, or insights.
 
 ------------------------------------------------------------------------
@@ -1342,7 +1342,7 @@ components/
 ├── ui/                 # shadcn-generated primitives
 ├── stockpilot/         # reusable StockPilot compositions
 │   ├── status-badge
-│   ├── product-row
+│   ├── catalog-row
 │   ├── inventory-row
 │   ├── store-card
 │   ├── insight-card

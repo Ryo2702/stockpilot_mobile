@@ -1,5 +1,5 @@
-export const productsSchema = `
-CREATE TABLE IF NOT EXISTS products (
+export const catalogsSchema = `
+CREATE TABLE IF NOT EXISTS catalogs (
   id TEXT PRIMARY KEY,
   business_id TEXT NOT NULL REFERENCES businesses(id),
   store_id TEXT NOT NULL REFERENCES stores(id),
@@ -16,12 +16,12 @@ CREATE TABLE IF NOT EXISTS products (
   CHECK (is_active IN (0, 1))
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS products_store_sku_unique
-  ON products (store_id, sku)
+CREATE UNIQUE INDEX IF NOT EXISTS catalogs_store_sku_unique
+  ON catalogs (store_id, sku)
   WHERE sku IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS products_store_active_idx
-  ON products (store_id, is_active);
+CREATE INDEX IF NOT EXISTS catalogs_store_active_idx
+  ON catalogs (store_id, is_active);
 
-CREATE INDEX IF NOT EXISTS products_store_sku_idx
-  ON products (store_id, sku);`.trim();
+CREATE INDEX IF NOT EXISTS catalogs_store_sku_idx
+  ON catalogs (store_id, sku);`.trim();

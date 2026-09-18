@@ -51,6 +51,37 @@ export const onboardingStyles = StyleSheet.create({
   form: {
     gap: spacing[3],
   },
+  formIntro: {
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+  },
+  formSection: {
+    gap: spacing[3],
+  },
+  sectionTitle: {
+    ...typography.title,
+    color: colors.text.primary,
+  },
+  field: {
+    gap: spacing[1],
+  },
+  columnGroup: {
+    flexDirection: "row",
+    gap: spacing[3],
+  },
+  column: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing[1],
+  },
+  fieldLabel: {
+    ...typography.label,
+    color: colors.text.primary,
+  },
+  optional: {
+    ...typography.caption,
+    color: colors.text.muted,
+  },
   input: {
     minHeight: control.lg,
     paddingHorizontal: spacing[4],
@@ -66,8 +97,37 @@ export const onboardingStyles = StyleSheet.create({
   },
   error: {
     ...typography.caption,
-    marginTop: -spacing[2],
     color: colors.semantic.danger,
+  },
+  choiceList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing[2],
+  },
+  choice: {
+    minHeight: control.md,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing[3],
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    borderRadius: radii.md,
+    backgroundColor: colors.background.surface,
+  },
+  choiceSelected: {
+    borderColor: colors.primary[600],
+    backgroundColor: colors.primary[50],
+  },
+  choicePressed: {
+    opacity: 0.75,
+  },
+  choiceLabel: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+  choiceLabelSelected: {
+    color: colors.primary[700],
+    fontWeight: "600",
   },
   helper: {
     ...typography.caption,
