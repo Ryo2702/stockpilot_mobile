@@ -1,15 +1,10 @@
 import { Lightbulb, Package, Store, Zap, type LucideIcon } from "lucide-react-native";
-import { z } from "zod";
 
 import { colors } from "@/theme";
+import { ownerNameSchema } from "@/validation/store.validation";
 
 export const mascotVideo = require("../../../assets/mascot-clean.mp4");
-
-export const ownerNameSchema = z
-  .string()
-  .trim()
-  .min(2, "Please enter your name.")
-  .max(50, "Keep your name under 50 characters.");
+export { ownerNameSchema };
 
 export const features: Array<{
   title: string;

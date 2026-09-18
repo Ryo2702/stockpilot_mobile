@@ -14,9 +14,14 @@ type OnboardingStepProps = {
   step: number;
   ownerName: string;
   ownerError?: string;
+  storeName: string;
+  storeError?: string;
+  saving: boolean;
   player: VideoPlayer;
   onOwnerNameChange: (value: string) => void;
   onOwnerContinue: () => void;
+  onStoreNameChange: (value: string) => void;
+  onCreateStore: () => void;
   onAdvance: () => void;
 };
 
@@ -24,9 +29,14 @@ export default function OnboardingStep({
   step,
   ownerName,
   ownerError,
+  storeName,
+  storeError,
+  saving,
   player,
   onOwnerNameChange,
   onOwnerContinue,
+  onStoreNameChange,
+  onCreateStore,
   onAdvance,
 }: OnboardingStepProps) {
   return (
@@ -137,9 +147,21 @@ export default function OnboardingStep({
       ) : null}
 
       {step === 4 ? (
-        <View style={styles.actions}>
-          <Button title="Explore Store" size="lg" style={styles.action} />
-          <Button title="Explore App" size="lg" variant="secondary" style={styles.action} />
+        <View style={styles.form}>
+          <TextInput
+            accessibilityLabel="Store name"
+            autoCapitalize="words"
+            autoCorrect={false}
+            onChangeText={onStoreNameChange}
+            onSubmitEditing={onCreateStore}
+            placeholder="e.g. Main Store"
+            placeholderTextColor={colors.text.muted}
+            returnKeyType="done"
+            style={[styles.input, storeError ? styles.inputError : null]}
+            value={storeName}
+          />
+          {storeError ? <Text style={styles.error}>{storeError}</Text> : null}
+          <Button title="Create Store" size="lg" loading={saving} onPress={onCreateStore} style={styles.action} />
         </View>
       ) : null}
     </>

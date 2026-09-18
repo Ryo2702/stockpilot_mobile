@@ -1,8 +1,8 @@
 export const productsSchema = `
 CREATE TABLE IF NOT EXISTS products (
   id TEXT PRIMARY KEY,
-  business_id TEXT NOT NULL,
-  store_id TEXT NOT NULL,
+  business_id TEXT NOT NULL REFERENCES businesses(id),
+  store_id TEXT NOT NULL REFERENCES stores(id),
   name TEXT NOT NULL,
   sku TEXT NULL,
   reorder_level INTEGER NOT NULL DEFAULT 0,
@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS products (
   updated_at TEXT NOT NULL,
   CHECK (reorder_level >= 0),
   CHECK (critical_level >= 0),
-  CHECK (critical_level <= reorder_level)
+  CHECK (critical_level <= reorder_level),
+  CHECK (is_active IN (0, 1))
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS products_store_sku_unique

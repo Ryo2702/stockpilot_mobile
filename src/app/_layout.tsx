@@ -1,9 +1,12 @@
 import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { useColorScheme } from "react-native";
-SplashScreen.preventAutoHideAsync();
+import { SQLiteProvider } from "expo-sqlite";
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  return <Stack />;
+import { migrateFresh } from "@/database/migrate";
+
+export default function RootLayout() {
+  return (
+    <SQLiteProvider databaseName="stockpilot.db" onInit={migrateFresh}>
+      <Stack screenOptions={{ headerShown: false }} />
+    </SQLiteProvider>
+  );
 }

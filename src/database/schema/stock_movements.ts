@@ -1,8 +1,8 @@
 export const stockMovementsSchema = `
 CREATE TABLE IF NOT EXISTS stock_movements (
   id TEXT PRIMARY KEY,
-  business_id TEXT NOT NULL,
-  store_id TEXT NOT NULL,
+  business_id TEXT NOT NULL REFERENCES businesses(id),
+  store_id TEXT NOT NULL REFERENCES stores(id),
   product_id TEXT NOT NULL REFERENCES products(id),
   delta INTEGER NOT NULL CHECK (delta <> 0),
   quantity_before INTEGER NOT NULL CHECK (quantity_before >= 0),

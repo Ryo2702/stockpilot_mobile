@@ -5,17 +5,24 @@ import { productsSchema } from "./schema/products";
 import { schemaMigrationsSchema } from "./schema/schema_migrations";
 import { settingsSchema } from "./schema/settings";
 import { stockMovementsSchema } from "./schema/stock_movements";
-import { storesSchema } from "./schema/stores";
+import { storesIndexesSchema, storesSchema } from "./schema/stores";
+import { storeSettingsSchema } from "./schema/store_settings";
 
-export const DB_SCHEMA = [
-  "PRAGMA foreign_keys = ON;",
-  "PRAGMA journal_mode = WAL;",
-  schemaMigrationsSchema,
+export const DB_TABLES_SCHEMA = [
   businessesSchema,
   storesSchema,
+  storeSettingsSchema,
   productsSchema,
   inventorySchema,
   stockMovementsSchema,
   settingsSchema,
   insightSnapshotsSchema,
+].join("\n\n");
+
+export const DB_SCHEMA = [
+  "PRAGMA foreign_keys = ON;",
+  "PRAGMA journal_mode = WAL;",
+  schemaMigrationsSchema,
+  DB_TABLES_SCHEMA,
+  storesIndexesSchema,
 ].join("\n\n");
