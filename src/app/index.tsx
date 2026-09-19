@@ -2,13 +2,10 @@ import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { VideoView, useVideoPlayer } from "expo-video";
-
 import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
 import StoreSelector from "@/components/store/StoreSelector";
 import OwnerStoreScreen from "@/components/store/OwnerStoreScreen";
 import { Button } from "@/components/ui/Button";
-import { mascotVideo } from "@/components/onboarding/onboarding.data";
 import { createStoreForBusiness, getOwnerStores, type OwnerStore } from "@/services/owner-store.service";
 import { colors, spacing, typography } from "@/theme";
 import type { StoreInput } from "@/validation/store.validation";
@@ -141,24 +138,14 @@ function OwnerEntryScreen({
 }
 
 function LoadingScreen() {
-  const player = useVideoPlayer(mascotVideo, (videoPlayer) => {
-    videoPlayer.loop = true;
-    videoPlayer.muted = true;
-  });
-
-  useEffect(() => {
-    player.play();
-  }, [player]);
-
   return (
     <SafeAreaView style={styles.centered}>
-      <VideoView
-        player={player}
+      <Image
+        accessible
+        accessibilityLabel="StockPilot mascot loading"
+        source={headMascot}
+        resizeMode="contain"
         style={styles.mascot}
-        contentFit="contain"
-        nativeControls={false}
-        playsInline
-        accessibilityLabel="StockPilot mascot loading animation"
       />
       <ActivityIndicator color={colors.primary[600]} />
       <Text style={styles.loadingText}>Loading your store…</Text>

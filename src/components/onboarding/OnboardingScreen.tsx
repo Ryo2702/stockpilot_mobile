@@ -1,7 +1,7 @@
 import { useSQLiteContext } from "expo-sqlite";
 import { useVideoPlayer } from "expo-video";
 import { useEffect, useRef, useState } from "react";
-import { Animated, Easing, ScrollView } from "react-native";
+import { Animated, Easing, Platform, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { createOwnerStore, type OwnerStore } from "@/services/owner-store.service";
@@ -33,7 +33,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
 
   useEffect(() => {
     player.play();
-  }, [player, step]);
+  }, [player]);
 
   useEffect(() => {
     transition.stopAnimation();
@@ -43,7 +43,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       toValue: 1,
       duration: 180,
       easing: Easing.out(Easing.ease),
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== "web",
     });
 
     animation.start();
