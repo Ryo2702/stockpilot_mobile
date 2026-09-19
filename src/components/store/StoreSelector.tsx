@@ -16,6 +16,7 @@ type StoreSelectorProps = {
   ownerStores?: OwnerStore[];
   onSelectStore?: (store: OwnerStore) => Promise<void>;
   onCreateStore?: (store: StoreInput) => Promise<OwnerStore>;
+  showAddStoreButton?: boolean;
 };
 
 type SelectorView = "list" | "create";
@@ -25,15 +26,21 @@ export default function StoreSelector({
   ownerStores,
   onSelectStore,
   onCreateStore,
+  showAddStoreButton = false,
 }: StoreSelectorProps) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<SelectorView>("list");
   const [storeForm, setStoreForm] = useState<StoreForm>({ ...initialStoreForm });
   const [storeErrors, setStoreErrors] = useState<StoreErrors>({});
   const [saving, setSaving] = useState(false);
+  const [switchingStoreId, setSwitchingStoreId] = useState<string | null>(null);
+  const [switchError, setSwitchError] = useState("");
   const stores = [
     ownerStore,
-    ...(ownerStores ?? []).filter((store) => store.storeId !== ownerStore.storeId),
+    ...(ownerStores ?? []).filter(
+      (store) =>
+        store.storeId !== ownerStore.storeId || store.businessId !== ownerStore.businessId,
+    ),
   ];
 
   const resetCreateForm = () => {
@@ -44,18 +51,41 @@ export default function StoreSelector({
   const toggle = () => {
     setOpen((current) => !current);
     setView("list");
+    setSwitchError("");
     resetCreateForm();
   };
 
   const close = () => {
     setOpen(false);
     setView("list");
+    setSwitchError("");
     resetCreateForm();
   };
 
   const selectStore = async (store: OwnerStore) => {
-    await onSelectStore?.(store);
-    close();
+    if (switchingStoreId) return;
+    const isSwitch =
+      store.storeId !== ownerStore.storeId || store.businessId !== ownerStore.businessId;
+    if (!isSwitch) {
+      close();
+      return;
+    }
+    if (!onSelectStore) {
+      setSwitchError("Store switching is unavailable. Please try again.");
+      return;
+    }
+
+    setSwitchError("");
+    setSwitchingStoreId(store.storeId);
+    try {
+      await onSelectStore(store);
+      close();
+    } catch {
+      setSwitchError("Couldn't switch stores. Please try again.");
+      setOpen(true);
+    } finally {
+      setSwitchingStoreId(null);
+    }
   };
 
   const updateStoreField: StoreFieldChange = (field, value) => {
@@ -88,10 +118,9 @@ export default function StoreSelector({
 
     try {
       const store = await onCreateStore(result.data);
-      await onSelectStore?.(store);
       resetCreateForm();
       setView("list");
-      setOpen(false);
+      await selectStore(store);
     } catch {
       setStoreErrors({ form: "Couldn't create your store. Please try again." });
     } finally {
@@ -100,13 +129,17 @@ export default function StoreSelector({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, showAddStoreButton && styles.expandedContainer]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Select store, current ${ownerStore.storeName}`}
         accessibilityState={{ expanded: open }}
         onPress={toggle}
-        style={({ pressed }) => [styles.selector, pressed && styles.pressed]}
+        style={({ pressed }) => [
+          styles.selector,
+          showAddStoreButton && styles.expandedSelector,
+          pressed && styles.pressed,
+        ]}
       >
         <Store color={colors.primary[600]} size={18} strokeWidth={2} />
         <View style={styles.selectorCopy}>
@@ -117,6 +150,20 @@ export default function StoreSelector({
         </View>
         <ChevronDown color={colors.text.secondary} size={18} />
       </Pressable>
+      {showAddStoreButton && onCreateStore ? (
+        <Button
+          title="Add store"
+          icon={Plus}
+          size="md"
+          variant="secondary"
+          onPress={() => {
+            resetCreateForm();
+            setView("create");
+            setOpen(true);
+          }}
+          style={styles.visibleAddButton}
+        />
+      ) : null}
 
       <Modal
         visible={open}
@@ -146,15 +193,23 @@ export default function StoreSelector({
                   />
                   <Text style={styles.modalTitle}>Select store</Text>
                 </View>
+                {switchError ? (
+                  <Text accessibilityRole="alert" style={styles.error}>
+                    {switchError}
+                  </Text>
+                ) : null}
                 <View style={styles.storeList}>
                   {stores.map((store) => {
-                    const selected = store.storeId === ownerStore.storeId;
+                    const selected =
+                      store.storeId === ownerStore.storeId &&
+                      store.businessId === ownerStore.businessId;
 
                     return (
                       <Pressable
                         key={store.storeId}
                         accessibilityRole="menuitem"
                         accessibilityState={{ selected }}
+                        disabled={Boolean(switchingStoreId)}
                         onPress={() => void selectStore(store)}
                         style={({ pressed }) => [styles.storeItem, pressed && styles.itemPressed]}
                       >
@@ -167,7 +222,7 @@ export default function StoreSelector({
                     );
                   })}
                 </View>
-                {onCreateStore ? (
+                {onCreateStore && !showAddStoreButton ? (
                   <Button
                     title="Add store"
                     icon={Plus}
@@ -235,6 +290,9 @@ const styles = StyleSheet.create({
     position: "relative",
     zIndex: 999,
   },
+  expandedContainer: {
+    width: "100%",
+  },
   selector: {
     minHeight: control.md,
     maxWidth: 190,
@@ -246,6 +304,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border.default,
     borderRadius: radii.md,
     backgroundColor: colors.background.surface,
+  },
+  expandedSelector: {
+    width: "100%",
+    maxWidth: 420,
   },
   pressed: {
     opacity: 0.76,
@@ -308,6 +370,9 @@ const styles = StyleSheet.create({
   },
   addButton: {
     alignSelf: "flex-start",
+  },
+  visibleAddButton: {
+    width: "100%",
   },
   backButton: {
     minWidth: 0,

@@ -4,20 +4,47 @@ import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, Platform, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { createOwnerStore, type OwnerStore } from "@/services/owner-store.service";
-import { storeSchema } from "@/validation/store.validation";
 import { initialStoreForm } from "@/components/store/store.data";
 import type { StoreErrors, StoreFieldChange, StoreForm } from "@/components/store/store.types";
+import { createOwnerStore, type OwnerStore } from "@/services/owner-store.service";
+import { storeSchema, type StoreInput } from "@/validation/store.validation";
 
+import ExistingStoreSelectionStep from "./ExistingStoreSelectionStep";
 import OnboardingStep from "./OnboardingStep";
 import { mascotVideo, ownerNameSchema } from "./onboarding.data";
 import { onboardingStyles as styles } from "./onboarding.styles";
 
 type OnboardingScreenProps = {
   onComplete: (ownerStore: OwnerStore) => void;
+  existingStores?: OwnerStore[];
+  selectedStore?: OwnerStore;
+  onSelectStore?: (store: OwnerStore) => Promise<void>;
+  onCreateStore?: (store: StoreInput) => Promise<OwnerStore>;
 };
 
-export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
+export default function OnboardingScreen({
+  onComplete,
+  existingStores,
+  selectedStore,
+  onSelectStore,
+  onCreateStore,
+}: OnboardingScreenProps) {
+  if (existingStores?.length) {
+    return (
+      <ExistingStoreSelectionStep
+        ownerStore={selectedStore ?? existingStores[0]}
+        ownerStores={existingStores}
+        onSelectStore={onSelectStore}
+        onCreateStore={onCreateStore}
+        onComplete={onComplete}
+      />
+    );
+  }
+
+  return <FirstRunOnboarding onComplete={onComplete} />;
+}
+
+function FirstRunOnboarding({ onComplete }: Pick<OnboardingScreenProps, "onComplete">) {
   const db = useSQLiteContext();
   const [step, setStep] = useState(0);
   const [ownerName, setOwnerName] = useState("");
