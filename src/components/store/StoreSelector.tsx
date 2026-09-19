@@ -17,6 +17,7 @@ type StoreSelectorProps = {
   onSelectStore?: (store: OwnerStore) => Promise<void>;
   onCreateStore?: (store: StoreInput) => Promise<OwnerStore>;
   showAddStoreButton?: boolean;
+  disabled?: boolean;
 };
 
 type SelectorView = "list" | "create";
@@ -27,6 +28,7 @@ export default function StoreSelector({
   onSelectStore,
   onCreateStore,
   showAddStoreButton = false,
+  disabled = false,
 }: StoreSelectorProps) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<SelectorView>("list");
@@ -133,11 +135,13 @@ export default function StoreSelector({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Select store, current ${ownerStore.storeName}`}
-        accessibilityState={{ expanded: open }}
+        accessibilityState={{ expanded: open, disabled }}
+        disabled={disabled}
         onPress={toggle}
         style={({ pressed }) => [
           styles.selector,
           showAddStoreButton && styles.expandedSelector,
+          disabled && styles.disabled,
           pressed && styles.pressed,
         ]}
       >
@@ -156,6 +160,7 @@ export default function StoreSelector({
           icon={Plus}
           size="md"
           variant="secondary"
+          disabled={disabled}
           onPress={() => {
             resetCreateForm();
             setView("create");
@@ -228,6 +233,7 @@ export default function StoreSelector({
                     icon={Plus}
                     size="md"
                     variant="secondary"
+                    disabled={disabled}
                     onPress={() => {
                       resetCreateForm();
                       setView("create");
@@ -311,6 +317,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.76,
+  },
+  disabled: {
+    opacity: 0.5,
   },
   selectorCopy: {
     minWidth: 0,

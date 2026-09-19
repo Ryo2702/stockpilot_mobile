@@ -10,7 +10,7 @@ import StoreSelector from "@/components/store/StoreSelector";
 import { Button } from "@/components/ui/Button";
 import { importInventoryCsv } from "@/services/inventory-import.service";
 import type { OwnerStore } from "@/services/owner-store.service";
-import { colors, spacing, typography } from "@/theme";
+import { colors, radii, spacing, typography } from "@/theme";
 import type { StoreInput } from "@/validation/store.validation";
 
 const headMascot = require("../../../assets/images/stockpilot/headMascot-transparent.png");
@@ -23,6 +23,13 @@ type ExistingStoreSelectionStepProps = {
   onComplete: (store: OwnerStore) => void;
 };
 
+type ImportProgress = {
+  phase: "reading" | "validating" | "importing" | "complete";
+  processed: number;
+  total: number;
+  percent: number;
+};
+
 export default function ExistingStoreSelectionStep({
   ownerStore,
   ownerStores,
@@ -32,9 +39,21 @@ export default function ExistingStoreSelectionStep({
 }: ExistingStoreSelectionStepProps) {
   const db = useSQLiteContext();
   const [selectedStore, setSelectedStore] = useState(ownerStore);
+  const [importedStores, setImportedStores] = useState<OwnerStore[]>([]);
   const [entering, setEntering] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const [message, setMessage] = useState("");
+  const selectableStores = [
+    ...ownerStores,
+    ...importedStores.filter(
+      (imported) =>
+        !ownerStores.some(
+          (current) =>
+            current.businessId === imported.businessId && current.storeId === imported.storeId,
+        ),
+    ),
+  ];
 
   const selectStore = async (store: OwnerStore) => {
     setMessage("");
@@ -44,26 +63,71 @@ export default function ExistingStoreSelectionStep({
 
   const importCsv = async () => {
     setMessage("");
+    setImportProgress(null);
     setImporting(true);
     try {
-      const result = await DocumentPicker.getDocumentAsync({
+      const selection = await DocumentPicker.getDocumentAsync({
         type: ["text/csv", "text/comma-separated-values", "application/vnd.ms-excel"],
         base64: false,
         copyToCacheDirectory: true,
       });
-      if (result.canceled) return;
+      if (selection.canceled) return;
 
-      const asset = result.assets[0];
+      const asset = selection.assets[0];
       if (!asset.name.toLowerCase().endsWith(".csv")) {
         throw new Error("Choose a .csv inventory file.");
       }
+      setImportProgress({ phase: "reading", processed: 0, total: 0, percent: 0 });
       const csv =
         Platform.OS === "web"
           ? await (asset.file?.text() ?? Promise.reject(new Error("Couldn't read the selected file.")))
           : await new ExpoFile(asset.uri).text();
-      const count = await importInventoryCsv(db, selectedStore, csv, asset.name);
-      setMessage(`Imported ${count} items. Matching SKUs have updated quantities.`);
+      const importResult = await importInventoryCsv(
+        db,
+        selectedStore,
+        csv,
+        asset.name,
+        (progress) => setImportProgress(progress),
+      );
+      setImportedStores((current) => [
+        ...current,
+        ...importResult.createdStores.filter(
+          (created) =>
+            !current.some(
+              (existing) =>
+                existing.businessId === created.businessId && existing.storeId === created.storeId,
+            ),
+        ),
+      ]);
+      setImportProgress({
+        phase: "complete",
+        processed: importResult.importedCount,
+        total: importResult.importedCount,
+        percent: 100,
+      });
+      const createdStoreNotice =
+        importResult.createdStores.length === 1
+          ? ` Added ${importResult.createdStores[0].storeName} to the selector.`
+          : importResult.createdStores.length > 1
+            ? ` Added ${importResult.createdStores.length} new stores to the selector.`
+            : "";
+      const successMessage = `Imported ${importResult.importedCount.toLocaleString()} items. Matching SKUs have updated quantities.${createdStoreNotice}`;
+      setMessage(successMessage);
+
+      const storeToSelect = importResult.createdStores[0] ?? importResult.destinationStore;
+      if (
+        storeToSelect.businessId !== selectedStore.businessId ||
+        storeToSelect.storeId !== selectedStore.storeId
+      ) {
+        setSelectedStore(storeToSelect);
+        try {
+          await onSelectStore?.(storeToSelect);
+        } catch {
+          setMessage(`${successMessage} Select ${storeToSelect.storeName} to continue.`);
+        }
+      }
     } catch (error) {
+      setImportProgress(null);
       setMessage(error instanceof Error ? error.message : "Couldn't import this CSV file.");
     } finally {
       setImporting(false);
@@ -99,14 +163,15 @@ export default function ExistingStoreSelectionStep({
         <View style={styles.storeActions}>
           <StoreSelector
             ownerStore={selectedStore}
-            ownerStores={ownerStores}
+            ownerStores={selectableStores}
             onSelectStore={selectStore}
             onCreateStore={onCreateStore}
             showAddStoreButton
+            disabled={importing}
           />
           <Text style={styles.importHint}>
-            CSV: name and quantity are required; sku, reorder_level, and critical_level are optional.{" "}
-            Matching SKUs replace current stock.
+            CSV: name and quantity are required; store_name, sku, reorder_level, and critical_level are optional.{" "}
+            Unknown store names create stores. Matching SKUs replace current stock.
           </Text>
           <Button
             title="Import"
@@ -117,6 +182,41 @@ export default function ExistingStoreSelectionStep({
             onPress={() => void importCsv()}
             style={styles.actionButton}
           />
+          {importProgress ? (
+            <View style={styles.progressPanel}>
+              <View style={styles.progressHeading}>
+                <Text style={styles.progressLabel}>
+                  {importProgress.phase === "reading"
+                    ? "Reading CSV"
+                    : importProgress.phase === "validating"
+                      ? "Validating rows"
+                      : importProgress.phase === "importing"
+                        ? "Importing inventory"
+                        : "Import complete"}
+                </Text>
+                <Text style={styles.progressPercent}>{Math.floor(importProgress.percent)}%</Text>
+              </View>
+              <View
+                accessibilityLabel="CSV import progress"
+                accessibilityRole="progressbar"
+                accessibilityValue={{ min: 0, max: 100, now: Math.floor(importProgress.percent) }}
+                style={styles.progressTrack}
+              >
+                <View
+                  style={[styles.progressFill, { width: `${importProgress.percent}%` }]}
+                />
+              </View>
+              <Text style={styles.progressDetail}>
+                {importProgress.phase === "reading"
+                  ? "Reading the selected file."
+                  : importProgress.phase === "complete"
+                    ? `${importProgress.processed.toLocaleString()} items imported.`
+                    : importProgress.total
+                      ? `${importProgress.processed.toLocaleString()} of ${importProgress.total.toLocaleString()} rows ${importProgress.phase === "validating" ? "checked" : "processed"}.`
+                      : "Preparing CSV rows."}
+              </Text>
+            </View>
+          ) : null}
           {message ? (
             <Text accessibilityRole="alert" style={styles.importMessage}>
               {message}
@@ -185,6 +285,45 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     width: "100%",
+  },
+  progressPanel: {
+    width: "100%",
+    gap: spacing[2],
+    padding: spacing[3],
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    borderRadius: radii.md,
+    backgroundColor: colors.background.subtle,
+  },
+  progressHeading: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing[2],
+  },
+  progressLabel: {
+    ...typography.label,
+    flex: 1,
+    color: colors.text.primary,
+  },
+  progressPercent: {
+    ...typography.label,
+    color: colors.primary[700],
+  },
+  progressTrack: {
+    height: 8,
+    overflow: "hidden",
+    borderRadius: radii.full,
+    backgroundColor: colors.gray[200],
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: radii.full,
+    backgroundColor: colors.primary[600],
+  },
+  progressDetail: {
+    ...typography.caption,
+    color: colors.text.secondary,
   },
   button: {
     width: "100%",

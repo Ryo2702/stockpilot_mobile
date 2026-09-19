@@ -6,7 +6,7 @@ import type { CatalogCategory } from "@/domain/catalog";
 import type { ProductSort, ProductStockFilter } from "@/domain/product";
 import { colors, control, radii, spacing, typography } from "@/theme";
 
-import type { CatalogCategoryOption } from "../catalog.data";
+import type { CatalogCategoryOption } from "../data/catalog.data";
 
 const stockFilters: ProductStockFilter[] = ["all", "healthy", "low", "critical"];
 const sortOptions: Array<{ value: ProductSort; label: string }> = [

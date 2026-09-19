@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getProductStockStatus, type Product } from "@/domain/product";
 import { colors, radii, spacing, typography } from "@/theme";
 
-import { getCatalogCategoryOption } from "../catalog.data";
+import { getCatalogCategoryOption } from "../data/catalog.data";
 
 type CatalogItemCardProps = {
   product: Product;

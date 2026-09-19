@@ -26,6 +26,8 @@ export type OwnerStoreDatabase = Pick<
   "getAllAsync" | "getFirstAsync" | "runAsync" | "withTransactionAsync"
 >;
 
+type StoreInsertDatabase = Pick<SQLiteDatabase, "runAsync">;
+
 const ownerStoresQuery = `
   SELECT
     businesses.id AS businessId,
@@ -72,7 +74,7 @@ function createId(prefix: string) {
 }
 
 async function insertStore(
-  db: OwnerStoreDatabase,
+  db: StoreInsertDatabase,
   businessId: string,
   store: StoreSchema,
   storeId: string,
@@ -104,6 +106,26 @@ async function insertStore(
     now,
     now,
   );
+}
+
+export async function insertStoreForBusiness(
+  db: StoreInsertDatabase,
+  businessId: string,
+  ownerName: string,
+  store: StoreSchema,
+) {
+  const storeId = createId("store");
+  const now = new Date().toISOString();
+
+  await insertStore(db, businessId, store, storeId, now);
+
+  return {
+    businessId,
+    ownerName,
+    storeId,
+    storeName: store.name,
+    storeType: store.storeType,
+  } satisfies OwnerStore;
 }
 
 export async function getOwnerStore(db: OwnerStoreDatabase) {
@@ -193,18 +215,12 @@ export async function createStoreForBusiness(
 
   if (!business) throw new Error("Business not found");
 
-  const storeId = createId("store");
-  const now = new Date().toISOString();
+  const result: { store?: OwnerStore } = {};
 
   await db.withTransactionAsync(async () => {
-    await insertStore(db, businessId, store, storeId, now);
+    result.store = await insertStoreForBusiness(db, businessId, business.name, store);
   });
 
-  return {
-    businessId,
-    ownerName: business.name,
-    storeId,
-    storeName: store.name,
-    storeType: store.storeType,
-  } satisfies OwnerStore;
+  if (!result.store) throw new Error("Store creation failed.");
+  return result.store;
 }

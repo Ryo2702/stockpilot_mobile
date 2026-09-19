@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, control, radii, spacing, typography } from "@/theme";
 import type { CatalogCategory } from "@/domain/catalog";
 
-import type { CatalogCategoryOption } from "../catalog.data";
+import type { CatalogCategoryOption } from "../data/catalog.data";
 
 type CategorySelectorProps = {
   categories: CatalogCategoryOption[];

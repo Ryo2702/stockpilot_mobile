@@ -1,7 +1,8 @@
-import { Camera, ChevronLeft } from "lucide-react-native";
+import { Camera, Check, ChevronDown, ChevronLeft } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,8 +27,32 @@ import {
   type UpdateProductInput,
 } from "@/validation/product.validation";
 
-import type { CatalogCategoryOption } from "../catalog.data";
-import CategorySelector from "./CategorySelector";
+import type { CatalogCategoryOption } from "../data/catalog.data";
+import CategorySelector from "../components/CategorySelector";
+
+type DropdownOption = { value: string; label: string };
+
+const UNIT_OPTIONS: DropdownOption[] = [
+  { value: "ea", label: "Each (ea)" },
+  { value: "pc", label: "Piece (pc)" },
+  { value: "kg", label: "Kilogram (kg)" },
+  { value: "g", label: "Gram (g)" },
+  { value: "lb", label: "Pound (lb)" },
+  { value: "oz", label: "Ounce (oz)" },
+  { value: "L", label: "Liter (L)" },
+  { value: "mL", label: "Milliliter (mL)" },
+  { value: "box", label: "Box" },
+  { value: "pack", label: "Pack" },
+  { value: "case", label: "Case" },
+  { value: "bottle", label: "Bottle" },
+  { value: "can", label: "Can" },
+  { value: "bag", label: "Bag" },
+  { value: "roll", label: "Roll" },
+  { value: "pair", label: "Pair" },
+  { value: "dozen", label: "Dozen" },
+];
+
+const CRITICAL_LEVEL_PRESETS = [0, 1, 2, 3, 5, 10, 15, 20, 25, 50, 75, 100];
 
 type ProductDraft = {
   name: string;
@@ -139,6 +164,25 @@ export default function CatalogFormModal({
     }
   };
 
+  const unitOptions = UNIT_OPTIONS.some(({ value }) => value === form.unit)
+    ? UNIT_OPTIONS
+    : [{ value: form.unit, label: `${form.unit} (current)` }, ...UNIT_OPTIONS];
+  const reorderLevel = Number(form.reorderLevel);
+  const maxCriticalLevel = Number.isSafeInteger(reorderLevel) && reorderLevel >= 0
+    ? reorderLevel
+    : 0;
+  const currentCriticalLevel = Number(form.criticalLevel);
+  const criticalLevels = new Set([
+    ...CRITICAL_LEVEL_PRESETS.filter((level) => level <= maxCriticalLevel),
+    maxCriticalLevel,
+    ...(Number.isSafeInteger(currentCriticalLevel) && currentCriticalLevel >= 0 && currentCriticalLevel <= maxCriticalLevel
+      ? [currentCriticalLevel]
+      : []),
+  ]);
+  const criticalLevelOptions = [...criticalLevels]
+    .sort((a, b) => a - b)
+    .map((level) => ({ value: String(level), label: `${level} ${form.unit || "ea"}` }));
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={close}>
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
@@ -199,12 +243,11 @@ export default function CatalogFormModal({
             {errors.category ? <Text style={styles.error}>{errors.category}</Text> : null}
           </View>
 
-          <FormField
+          <DropdownField
             label="Unit"
-            accessibilityLabel="Unit"
             value={form.unit}
-            onChangeText={(value) => updateField("unit", value)}
-            placeholder="e.g. piece, kg, box"
+            options={unitOptions}
+            onChange={(value) => updateField("unit", value)}
             error={errors.unit}
           />
           {!product ? (
@@ -214,6 +257,7 @@ export default function CatalogFormModal({
               value={form.initialQuantity}
               onChangeText={(value) => updateField("initialQuantity", value)}
               keyboardType="number-pad"
+              numericOnly
               error={errors.initialQuantity}
             />
           ) : null}
@@ -225,15 +269,15 @@ export default function CatalogFormModal({
               value={form.reorderLevel}
               onChangeText={(value) => updateField("reorderLevel", value)}
               keyboardType="number-pad"
+              numericOnly
               error={errors.reorderLevel}
               containerStyle={styles.levelField}
             />
-            <FormField
+            <DropdownField
               label="Critical Level"
-              accessibilityLabel="Critical level"
               value={form.criticalLevel}
-              onChangeText={(value) => updateField("criticalLevel", value)}
-              keyboardType="number-pad"
+              options={criticalLevelOptions}
+              onChange={(value) => updateField("criticalLevel", value)}
               error={errors.criticalLevel}
               containerStyle={styles.levelField}
             />
@@ -275,22 +319,102 @@ function FormField({
   error,
   containerStyle,
   multiline,
+  numericOnly,
   ...inputProps
 }: TextInputProps & {
   label: string;
   error?: string;
   containerStyle?: StyleProp<ViewStyle>;
+  numericOnly?: boolean;
 }) {
   return (
     <View style={[styles.fieldGroup, containerStyle]}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
         {...inputProps}
+        inputMode={numericOnly ? "numeric" : inputProps.inputMode}
+        onChangeText={numericOnly
+          ? (value) => inputProps.onChangeText?.(value.replace(/\D/g, ""))
+          : inputProps.onChangeText}
         multiline={multiline}
         style={[styles.input, multiline && styles.multilineInput]}
         placeholderTextColor={colors.text.muted}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
+    </View>
+  );
+}
+
+function DropdownField({
+  label,
+  value,
+  options,
+  onChange,
+  error,
+  containerStyle,
+}: {
+  label: string;
+  value: string;
+  options: DropdownOption[];
+  onChange: (value: string) => void;
+  error?: string;
+  containerStyle?: StyleProp<ViewStyle>;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((option) => option.value === value);
+
+  return (
+    <View style={[styles.fieldGroup, containerStyle]}>
+      <Text style={styles.label}>{label}</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${label}, ${selected?.label ?? `select ${label.toLowerCase()}`}`}
+        accessibilityState={{ expanded: open }}
+        onPress={() => setOpen(true)}
+        style={({ pressed }) => [styles.dropdownSelector, pressed && styles.pressed]}
+      >
+        <Text numberOfLines={1} style={[styles.dropdownText, !selected && styles.dropdownPlaceholder]}>
+          {selected?.label ?? `Select ${label.toLowerCase()}`}
+        </Text>
+        <ChevronDown color={colors.text.secondary} size={18} />
+      </Pressable>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <View style={styles.dropdownOverlay}>
+          <SafeAreaView style={styles.dropdownSheet} edges={["bottom"]}>
+            <Text style={styles.dropdownTitle}>Select {label.toLowerCase()}</Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {options.map((option) => {
+                const isSelected = option.value === value;
+                return (
+                  <Pressable
+                    key={option.value}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    onPress={() => {
+                      onChange(option.value);
+                      setOpen(false);
+                    }}
+                    style={({ pressed }) => [styles.dropdownOption, pressed && styles.pressed]}
+                  >
+                    <Text style={[styles.dropdownOptionLabel, isSelected && styles.dropdownSelectedLabel]}>
+                      {option.label}
+                    </Text>
+                    {isSelected ? <Check color={colors.primary[600]} size={18} /> : null}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setOpen(false)}
+              style={styles.dropdownClose}
+            >
+              <Text style={styles.dropdownCloseText}>Cancel</Text>
+            </Pressable>
+          </SafeAreaView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -352,6 +476,72 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.text.primary,
   },
+  dropdownSelector: {
+    minHeight: control.md,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing[3],
+    paddingHorizontal: spacing[3],
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    borderRadius: radii.md,
+    backgroundColor: colors.background.surface,
+  },
+  dropdownText: {
+    ...typography.bodySmall,
+    flex: 1,
+    color: colors.text.primary,
+  },
+  dropdownPlaceholder: {
+    color: colors.text.muted,
+  },
+  dropdownOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(15, 23, 42, 0.32)",
+  },
+  dropdownSheet: {
+    maxHeight: "75%",
+    gap: spacing[2],
+    padding: spacing[4],
+    borderTopLeftRadius: radii.xl,
+    borderTopRightRadius: radii.xl,
+    backgroundColor: colors.background.surface,
+  },
+  dropdownTitle: {
+    ...typography.h3,
+    paddingBottom: spacing[2],
+    color: colors.text.primary,
+  },
+  dropdownOption: {
+    minHeight: control.md,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing[3],
+    paddingHorizontal: spacing[2],
+  },
+  dropdownOptionLabel: {
+    ...typography.bodySmall,
+    flex: 1,
+    color: colors.text.primary,
+  },
+  dropdownSelectedLabel: {
+    color: colors.primary[700],
+    fontWeight: "600",
+  },
+  dropdownClose: {
+    minHeight: control.md,
+    alignItems: "center",
+    justifyContent: "center",
+    borderTopWidth: 1,
+    borderTopColor: colors.border.default,
+  },
+  dropdownCloseText: {
+    ...typography.label,
+    color: colors.text.secondary,
+  },
   multilineInput: {
     minHeight: 96,
     paddingTop: spacing[3],
@@ -371,5 +561,8 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     width: "100%",
+  },
+  pressed: {
+    opacity: 0.7,
   },
 });

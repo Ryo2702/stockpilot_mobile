@@ -17,7 +17,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getProductStockStatus, type Product, type ProductStockMovement } from "@/domain/product";
 import { colors, control, radii, spacing, typography } from "@/theme";
 
-import { getCatalogCategoryOption } from "../catalog.data";
+import { getCatalogCategoryOption } from "../data/catalog.data";
 
 const noHistoryMascot = require("../../../../assets/images/stockpilot/empty state png/footprint.png");
 

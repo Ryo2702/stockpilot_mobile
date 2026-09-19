@@ -1,7 +1,17 @@
 import { useSQLiteContext } from "expo-sqlite";
 import { Boxes, Info, LogOut, PackageOpen, Settings, Store } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BottomNavigation, type BottomNavKey } from "@/components/ui/BottomNavigation";
@@ -38,6 +48,7 @@ export default function OwnerStoreScreen({
   onExit,
 }: OwnerStoreScreenProps) {
   const db = useSQLiteContext();
+  const compactHeader = useWindowDimensions().width < 440;
   const stores = ownerStores?.length ? ownerStores : [ownerStore];
   const [overview, setOverview] = useState<OwnerStoreOverview | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -66,12 +77,12 @@ export default function OwnerStoreScreen({
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
-            <View style={styles.ownerCopy}>
+          <View style={[styles.header, compactHeader && styles.compactHeader]}>
+            <View style={[styles.ownerCopy, compactHeader && styles.compactOwnerCopy]}>
               <Text style={styles.eyebrow}>Store owner</Text>
               <Text style={styles.ownerName}>{ownerStore.ownerName}</Text>
             </View>
-            <View style={styles.headerActions}>
+            <View style={[styles.headerActions, compactHeader && styles.compactHeaderActions]}>
               <StoreSelector
                 ownerStore={ownerStore}
                 ownerStores={stores}
@@ -225,16 +236,28 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: spacing[4],
   },
+  compactHeader: {
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: spacing[3],
+  },
   ownerCopy: {
     flex: 1,
     minWidth: 0,
     paddingTop: spacing[1],
+  },
+  compactOwnerCopy: {
+    flex: 0,
   },
   headerActions: {
     flexShrink: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing[2],
+  },
+  compactHeaderActions: {
+    width: "100%",
+    justifyContent: "space-between",
   },
   mascotButton: {
     width: 56,
