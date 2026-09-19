@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { BottomNavigation } from "@/components/ui/BottomNavigation";
-import { Card } from "@/components/ui/Card";
+import { BottomNavigation, type BottomNavKey } from "@/components/ui/BottomNavigation";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import {
   getOwnerStoreOverview,
   type OwnerStore,
@@ -18,12 +18,14 @@ import type { StoreInput } from "@/validation/store.validation";
 import StoreSelector from "./StoreSelector";
 
 const headMascot = require("../../../assets/images/stockpilot/headMascot-transparent.png");
+const emptyStockMascot = require("../../../assets/images/stockpilot/empty state png/empty.png");
 
 type OwnerStoreScreenProps = {
   ownerStore: OwnerStore;
   ownerStores?: OwnerStore[];
   onSelectStore?: (store: OwnerStore) => Promise<void>;
   onCreateStore?: (store: StoreInput) => Promise<OwnerStore>;
+  onNavigate?: (key: BottomNavKey) => void;
   onExit: () => void;
 };
 
@@ -32,6 +34,7 @@ export default function OwnerStoreScreen({
   ownerStores,
   onSelectStore,
   onCreateStore,
+  onNavigate,
   onExit,
 }: OwnerStoreScreenProps) {
   const db = useSQLiteContext();
@@ -48,7 +51,7 @@ export default function OwnerStoreScreen({
         if (active) setOverview(value);
       })
       .catch(() => {
-        if (active) setOverview({ catalogCount: 0, itemsInStock: 0 });
+        if (active) setOverview(null);
       });
 
     return () => {
@@ -111,9 +114,27 @@ export default function OwnerStoreScreen({
               </View>
             </View>
             <Text style={styles.cardDescription}>
-              Your store is ready. Add catalogs to start managing inventory.
+              Your store is ready. Add products to start managing inventory.
             </Text>
           </Card>
+
+          {overview?.productCount === 0 ? (
+            <View style={styles.stockHealth}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Stock Health</Text>
+              </View>
+              <Card style={styles.stockHealthEmpty}>
+                <Image
+                  accessible={false}
+                  source={emptyStockMascot}
+                  resizeMode="contain"
+                  style={styles.stockHealthImage}
+                />
+                <Text style={styles.stockHealthCopy}>Add a product to start tracking stock.</Text>
+                <Button title="Add Product" onPress={() => onNavigate?.("catalog")} />
+              </Card>
+            </View>
+          ) : null}
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Store overview</Text>
@@ -122,8 +143,8 @@ export default function OwnerStoreScreen({
           <View style={styles.overviewRow}>
             <Card style={styles.overviewCard}>
               <PackageOpen color={colors.primary[600]} size={22} />
-              <Text style={styles.overviewValue}>{overview?.catalogCount ?? "—"}</Text>
-              <Text style={styles.overviewLabel}>Catalogs</Text>
+              <Text style={styles.overviewValue}>{overview?.productCount ?? "—"}</Text>
+              <Text style={styles.overviewLabel}>Products</Text>
             </Card>
             <Card style={styles.overviewCard}>
               <Boxes color={colors.semantic.warning} size={22} />
@@ -132,7 +153,7 @@ export default function OwnerStoreScreen({
             </Card>
           </View>
         </ScrollView>
-        <BottomNavigation activeKey="dashboard" />
+        <BottomNavigation activeKey="dashboard" onChange={onNavigate} />
       </View>
       <Modal
         visible={menuOpen}
@@ -274,6 +295,23 @@ const styles = StyleSheet.create({
   storeCard: {
     gap: spacing[6],
     padding: spacing[6],
+  },
+  stockHealth: {
+    gap: spacing[3],
+  },
+  stockHealthEmpty: {
+    alignItems: "center",
+    gap: spacing[3],
+  },
+  stockHealthImage: {
+    width: 148,
+    height: 148,
+    backgroundColor: colors.background.surface,
+  },
+  stockHealthCopy: {
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+    textAlign: "center",
   },
   storeHeader: {
     flexDirection: "row",

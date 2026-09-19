@@ -36,6 +36,14 @@
       ],
       "expo-sqlite",
       "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow StockPilot to scan product barcodes.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ],
       "expo-video"
     ],
     "experiments": {

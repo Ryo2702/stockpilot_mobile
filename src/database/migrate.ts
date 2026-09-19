@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS store_settings;
 DROP TABLE IF EXISTS insight_snapshots;
 DROP TABLE IF EXISTS stock_movements;
 DROP TABLE IF EXISTS inventory;
+DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS catalogs;
 DROP TABLE IF EXISTS stores;
 DROP TABLE IF EXISTS businesses;

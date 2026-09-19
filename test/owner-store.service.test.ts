@@ -132,24 +132,24 @@ describe("owner store service", () => {
 
       database
         .prepare(
-          `INSERT INTO catalogs (id, business_id, store_id, name, created_at, updated_at)
+          `INSERT INTO products (id, business_id, store_id, name, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?)`,
         )
-        .run("catalog-main", businessId.id, mainStore.storeId, "Main catalog", "now", "now");
+        .run("product-main", businessId.id, mainStore.storeId, "Main product", "now", "now");
       database
         .prepare(
-          `INSERT INTO inventory (catalog_id, business_id, store_id, quantity, updated_at)
+          `INSERT INTO inventory (product_id, business_id, store_id, quantity, updated_at)
            VALUES (?, ?, ?, ?, ?)`,
         )
-        .run("catalog-main", businessId.id, mainStore.storeId, 4, "now");
+        .run("product-main", businessId.id, mainStore.storeId, 4, "now");
 
       expect((await getOwnerStores(db)).map(({ storeName }) => storeName)).toEqual(["Main Store", "Back Room"]);
       expect(await getOwnerStoreOverview(db, businessId.id, mainStore.storeId)).toEqual({
-        catalogCount: 1,
+        productCount: 1,
         itemsInStock: 4,
       });
       expect(await getOwnerStoreOverview(db, businessId.id, backRoom.storeId)).toEqual({
-        catalogCount: 0,
+        productCount: 0,
         itemsInStock: 0,
       });
     } finally {

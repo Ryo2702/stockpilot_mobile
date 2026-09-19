@@ -54,7 +54,15 @@ describe("database migration", () => {
         { version: 1 },
         { version: 2 },
         { version: 3 },
+        { version: 4 },
+        { version: 5 },
+        { version: 6 },
       ]);
+      expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'products'")).toEqual({ name: "products" });
+      expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'catalogs'")).toBeUndefined();
+      expect(database.all<{ name: string }>("PRAGMA table_info(products)").map(({ name }) => name)).toEqual(
+        expect.arrayContaining(["barcode", "unit", "notes", "category"]),
+      );
       expect(database.all<{ name: string }>("PRAGMA table_info(stores)").map(({ name }) => name)).toEqual(
         expect.arrayContaining(["code", "store_type", "currency_mode", "status"]),
       );
@@ -71,9 +79,9 @@ describe("database migration", () => {
       await database.db.execAsync(`
         INSERT INTO businesses (id, name, created_at, updated_at) VALUES ('business-1', 'Test Business', 'now', 'now');
         INSERT INTO stores (id, business_id, name, created_at, updated_at) VALUES ('store-1', 'business-1', 'Test Store', 'now', 'now');
-        INSERT INTO catalogs (id, business_id, store_id, name, sku, created_at, updated_at) VALUES ('catalog-1', 'business-1', 'store-1', 'Test Catalog', 'SKU-1', 'now', 'now');
-        INSERT INTO inventory (catalog_id, business_id, store_id, updated_at) VALUES ('catalog-1', 'business-1', 'store-1', 'now');
-        INSERT INTO stock_movements (id, business_id, store_id, catalog_id, delta, quantity_before, quantity_after, reason, created_at) VALUES ('movement-1', 'business-1', 'store-1', 'catalog-1', 1, 0, 1, 'test', 'now');
+        INSERT INTO products (id, business_id, store_id, name, sku, created_at, updated_at) VALUES ('product-1', 'business-1', 'store-1', 'Test Product', 'SKU-1', 'now', 'now');
+        INSERT INTO inventory (product_id, business_id, store_id, updated_at) VALUES ('product-1', 'business-1', 'store-1', 'now');
+        INSERT INTO stock_movements (id, business_id, store_id, product_id, delta, quantity_before, quantity_after, reason, created_at) VALUES ('movement-1', 'business-1', 'store-1', 'product-1', 1, 0, 1, 'test', 'now');
         INSERT INTO settings (key, value_json, updated_at) VALUES ('test', '{}', 'now');
         INSERT INTO insight_snapshots (id, business_id, store_id, kind, payload_json, source_updated_at, created_at) VALUES ('insight-1', 'business-1', 'store-1', 'test', '{}', 'now', 'now');
       `);
@@ -93,13 +101,16 @@ describe("database migration", () => {
         { version: 1 },
         { version: 2 },
         { version: 3 },
+        { version: 4 },
+        { version: 5 },
+        { version: 6 },
       ]);
     } finally {
       database.close();
     }
   });
 
-  test("renames existing products and keeps catalog inventory data", async () => {
+  test("restores the products table name without losing inventory or history", async () => {
     const database = createTestDatabase();
 
     try {
@@ -115,7 +126,7 @@ describe("database migration", () => {
           updated_at TEXT NOT NULL,
           UNIQUE (business_id, name)
         );
-        CREATE TABLE products (
+        CREATE TABLE catalogs (
           id TEXT PRIMARY KEY,
           business_id TEXT NOT NULL REFERENCES businesses(id),
           store_id TEXT NOT NULL REFERENCES stores(id),
@@ -127,8 +138,11 @@ describe("database migration", () => {
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
         );
+        CREATE UNIQUE INDEX catalogs_store_sku_unique ON catalogs (store_id, sku) WHERE sku IS NOT NULL;
+        CREATE INDEX catalogs_store_active_idx ON catalogs (store_id, is_active);
+        CREATE INDEX catalogs_store_sku_idx ON catalogs (store_id, sku);
         CREATE TABLE inventory (
-          product_id TEXT PRIMARY KEY REFERENCES products(id),
+          catalog_id TEXT PRIMARY KEY REFERENCES catalogs(id),
           business_id TEXT NOT NULL REFERENCES businesses(id),
           store_id TEXT NOT NULL REFERENCES stores(id),
           quantity INTEGER NOT NULL DEFAULT 0,
@@ -138,7 +152,7 @@ describe("database migration", () => {
           id TEXT PRIMARY KEY,
           business_id TEXT NOT NULL REFERENCES businesses(id),
           store_id TEXT NOT NULL REFERENCES stores(id),
-          product_id TEXT NOT NULL REFERENCES products(id),
+          catalog_id TEXT NOT NULL REFERENCES catalogs(id),
           delta INTEGER NOT NULL,
           quantity_before INTEGER NOT NULL,
           quantity_after INTEGER NOT NULL,
@@ -147,27 +161,35 @@ describe("database migration", () => {
         );
         INSERT INTO businesses (id, name, created_at, updated_at) VALUES ('business-1', 'Owner', 'now', 'now');
         INSERT INTO stores (id, business_id, name, created_at, updated_at) VALUES ('store-1', 'business-1', 'Main Store', 'now', 'now');
-        INSERT INTO products (id, business_id, store_id, name, sku, created_at, updated_at) VALUES ('product-1', 'business-1', 'store-1', 'Legacy Catalog', 'SKU-1', 'now', 'now');
-        INSERT INTO inventory (product_id, business_id, store_id, quantity, updated_at) VALUES ('product-1', 'business-1', 'store-1', 3, 'now');
-        INSERT INTO stock_movements (id, business_id, store_id, product_id, delta, quantity_before, quantity_after, reason, created_at) VALUES ('movement-1', 'business-1', 'store-1', 'product-1', 1, 2, 3, 'test', 'now');
-        INSERT INTO schema_migrations (version, name, applied_at) VALUES (1, 'initial', 'now');
+        INSERT INTO catalogs (id, business_id, store_id, name, sku, created_at, updated_at) VALUES ('product-1', 'business-1', 'store-1', 'Legacy Product', 'SKU-1', 'now', 'now');
+        INSERT INTO inventory (catalog_id, business_id, store_id, quantity, updated_at) VALUES ('product-1', 'business-1', 'store-1', 3, 'now');
+        INSERT INTO stock_movements (id, business_id, store_id, catalog_id, delta, quantity_before, quantity_after, reason, created_at) VALUES ('movement-1', 'business-1', 'store-1', 'product-1', 1, 2, 3, 'test', 'now');
+        INSERT INTO schema_migrations (version, name, applied_at) VALUES
+          (1, 'initial', 'now'),
+          (2, 'expand_stores_and_add_store_settings', 'now'),
+          (3, 'rename_products_to_catalogs', 'now');
       `);
 
       await migrate(database.db);
 
-      expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'products'")).toBeUndefined();
-      expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'catalogs'")).toEqual({ name: "catalogs" });
-      expect(database.first<{ id: string; name: string }>("SELECT id, name FROM catalogs")).toEqual({
+      expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'catalogs'")).toBeUndefined();
+      expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'products'")).toEqual({ name: "products" });
+      expect(database.first<{ id: string; name: string }>("SELECT id, name FROM products")).toEqual({
         id: "product-1",
-        name: "Legacy Catalog",
+        name: "Legacy Product",
       });
-      expect(database.first<{ catalog_id: string; quantity: number }>("SELECT catalog_id, quantity FROM inventory")).toEqual({
-        catalog_id: "product-1",
+      expect(database.first<{ category: string }>("SELECT category FROM products WHERE id = 'product-1'")).toEqual({
+        category: "other",
+      });
+      expect(database.first<{ product_id: string; quantity: number }>("SELECT product_id, quantity FROM inventory")).toEqual({
+        product_id: "product-1",
         quantity: 3,
       });
-      expect(database.first<{ catalog_id: string }>("SELECT catalog_id FROM stock_movements")).toEqual({
-        catalog_id: "product-1",
+      expect(database.first<{ product_id: string }>("SELECT product_id FROM stock_movements")).toEqual({
+        product_id: "product-1",
       });
+      expect(database.all<{ version: number }>("SELECT version FROM schema_migrations ORDER BY version")).toHaveLength(6);
+      expect(database.all("PRAGMA foreign_key_check")).toHaveLength(0);
     } finally {
       database.close();
     }

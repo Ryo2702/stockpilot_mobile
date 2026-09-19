@@ -3,6 +3,7 @@ import type { SQLiteDatabase } from "expo-sqlite";
 import {
   ownerNameSchema,
   storeSchema,
+  type StoreType,
   type StoreInput,
   type StoreSchema,
 } from "../validation/store.validation";
@@ -12,10 +13,11 @@ export type OwnerStore = {
   ownerName: string;
   storeId: string;
   storeName: string;
+  storeType: StoreType;
 };
 
 export type OwnerStoreOverview = {
-  catalogCount: number;
+  productCount: number;
   itemsInStock: number;
 };
 
@@ -29,7 +31,8 @@ const ownerStoresQuery = `
     businesses.id AS businessId,
     businesses.name AS ownerName,
     stores.id AS storeId,
-    stores.name AS storeName
+    stores.name AS storeName,
+    stores.store_type AS storeType
   FROM businesses
   INNER JOIN stores ON stores.business_id = businesses.id
   ORDER BY businesses.created_at ASC, stores.created_at ASC
@@ -116,25 +119,25 @@ export async function getOwnerStoreOverview(
   businessId: string,
   storeId: string,
 ) {
-  const newLocal = `
+  const overviewQuery = `
         SELECT
-          COUNT(catalogs.id) AS catalogCount,
+          COUNT(products.id) AS productCount,
           COALESCE(SUM(inventory.quantity), 0) AS itemsInStock
-        FROM catalogs
+        FROM products
         LEFT JOIN inventory
-          ON inventory.catalog_id = catalogs.id
-         AND inventory.business_id = catalogs.business_id
-         AND inventory.store_id = catalogs.store_id
-        WHERE catalogs.business_id = ?
-          AND catalogs.store_id = ?
-          AND catalogs.is_active = 1
+          ON inventory.product_id = products.id
+         AND inventory.business_id = products.business_id
+         AND inventory.store_id = products.store_id
+        WHERE products.business_id = ?
+          AND products.store_id = ?
+          AND products.is_active = 1
       `;
   return (
     (await db.getFirstAsync<OwnerStoreOverview>(
-      newLocal,
+      overviewQuery,
       businessId,
       storeId,
-    )) ?? { catalogCount: 0, itemsInStock: 0 }
+    )) ?? { productCount: 0, itemsInStock: 0 }
   );
 }
 
@@ -171,6 +174,7 @@ export async function createOwnerStore(
     ownerName: owner,
     storeId,
     storeName: store.name,
+    storeType: store.storeType,
   } satisfies OwnerStore;
 }
 
@@ -201,5 +205,6 @@ export async function createStoreForBusiness(
     ownerName: business.name,
     storeId,
     storeName: store.name,
+    storeType: store.storeType,
   } satisfies OwnerStore;
 }

@@ -1,7 +1,7 @@
 import { businessesSchema } from "./schema/businesses";
-import { catalogsSchema } from "./schema/catalogs";
 import { insightSnapshotsSchema } from "./schema/insight_snapshots";
 import { inventorySchema } from "./schema/inventory";
+import { productsSchema } from "./schema/products";
 import { schemaMigrationsSchema } from "./schema/schema_migrations";
 import { settingsSchema } from "./schema/settings";
 import { stockMovementsSchema } from "./schema/stock_movements";
@@ -12,7 +12,7 @@ export const DB_TABLES_SCHEMA = [
   businessesSchema,
   storesSchema,
   storeSettingsSchema,
-  catalogsSchema,
+  productsSchema,
   inventorySchema,
   stockMovementsSchema,
   settingsSchema,

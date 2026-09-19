@@ -94,7 +94,7 @@ function parseInventoryCsv(csv: string): InventoryRow[] {
     const name = values(row, "name")?.trim() ?? "";
     if (!name) throw new Error(`Row ${rowNumber}: name is required.`);
 
-    const sku = values(row, "sku")?.trim() || null;
+    const sku = values(row, "sku")?.trim().toUpperCase() || null;
     if (sku && seenSkus.has(sku)) throw new Error(`Row ${rowNumber}: SKU ${sku} appears more than once.`);
     if (sku) seenSkus.add(sku);
 
@@ -127,36 +127,41 @@ export async function importInventoryCsv(
     for (const row of rows) {
       const existing = row.sku
         ? await db.getFirstAsync<{ id: string }>(
-            "SELECT id FROM catalogs WHERE store_id = ? AND sku = ?",
+            "SELECT id FROM products WHERE business_id = ? AND store_id = ? AND sku = ? COLLATE NOCASE",
+            store.businessId,
             store.storeId,
             row.sku,
           )
         : null;
-      const catalogId = existing?.id ?? createId("catalog");
+      const productId = existing?.id ?? createId("product");
       const inventory = existing
         ? await db.getFirstAsync<{ quantity: number }>(
-            "SELECT quantity FROM inventory WHERE catalog_id = ?",
-            catalogId,
+            "SELECT quantity FROM inventory WHERE product_id = ? AND business_id = ? AND store_id = ?",
+            productId,
+            store.businessId,
+            store.storeId,
           )
         : null;
       const previousQuantity = inventory?.quantity ?? 0;
 
       if (existing) {
         await db.runAsync(
-          "UPDATE catalogs SET name = ?, reorder_level = ?, critical_level = ?, is_active = 1, updated_at = ? WHERE id = ?",
+          "UPDATE products SET name = ?, reorder_level = ?, critical_level = ?, is_active = 1, updated_at = ? WHERE id = ? AND business_id = ? AND store_id = ?",
           row.name,
           row.reorderLevel,
           row.criticalLevel,
           now,
-          catalogId,
+          productId,
+          store.businessId,
+          store.storeId,
         );
       } else {
         await db.runAsync(
-          `INSERT INTO catalogs (
+          `INSERT INTO products (
             id, business_id, store_id, name, sku, reorder_level, critical_level,
             is_active, created_at, updated_at
           ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
-          catalogId,
+          productId,
           store.businessId,
           store.storeId,
           row.name,
@@ -170,15 +175,17 @@ export async function importInventoryCsv(
 
       if (inventory) {
         await db.runAsync(
-          "UPDATE inventory SET quantity = ?, updated_at = ? WHERE catalog_id = ?",
+          "UPDATE inventory SET quantity = ?, updated_at = ? WHERE product_id = ? AND business_id = ? AND store_id = ?",
           row.quantity,
           now,
-          catalogId,
+          productId,
+          store.businessId,
+          store.storeId,
         );
       } else {
         await db.runAsync(
-          "INSERT INTO inventory (catalog_id, business_id, store_id, quantity, updated_at) VALUES (?, ?, ?, ?, ?)",
-          catalogId,
+          "INSERT INTO inventory (product_id, business_id, store_id, quantity, updated_at) VALUES (?, ?, ?, ?, ?)",
+          productId,
           store.businessId,
           store.storeId,
           row.quantity,
@@ -189,13 +196,13 @@ export async function importInventoryCsv(
       if (row.quantity !== previousQuantity) {
         await db.runAsync(
           `INSERT INTO stock_movements (
-            id, business_id, store_id, catalog_id, delta, quantity_before,
+            id, business_id, store_id, product_id, delta, quantity_before,
             quantity_after, reason, note, created_at
           ) VALUES (?, ?, ?, ?, ?, ?, ?, 'csv_import', ?, ?)`,
           createId("movement"),
           store.businessId,
           store.storeId,
-          catalogId,
+          productId,
           row.quantity - previousQuantity,
           previousQuantity,
           row.quantity,

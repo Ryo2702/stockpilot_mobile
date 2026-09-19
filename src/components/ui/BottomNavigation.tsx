@@ -2,9 +2,9 @@ import type { LucideIcon } from "lucide-react-native";
 import {
   Boxes,
   Camera,
-  LayoutDashboard,
-  Lightbulb,
-  Package,
+  ChartNoAxesCombined,
+  House,
+  Store,
 } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -19,11 +19,11 @@ export type BottomNavKey =
 
 const navItems: Array<{ key: BottomNavKey; label: string; icon: LucideIcon }> =
   [
-    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { key: "catalog", label: "Catalog", icon: Package },
+    { key: "dashboard", label: "Home", icon: House },
+    { key: "catalog", label: "Catalog", icon: Boxes },
     { key: "camera", label: "Camera", icon: Camera },
-    { key: "inventory", label: "Inventory", icon: Boxes },
-    { key: "insights", label: "Insights", icon: Lightbulb },
+    { key: "insights", label: "Insights", icon: ChartNoAxesCombined },
+    { key: "inventory", label: "Inventory", icon: Store },
   ];
 
 type BottomNavigationProps = {
@@ -52,6 +52,7 @@ export function BottomNavigation({
           >
             <View
               style={[
+                styles.iconSlot,
                 isCamera && styles.cameraButton,
                 active && !isCamera && styles.activeIcon,
               ]}
@@ -62,15 +63,13 @@ export function BottomNavigation({
                     ? colors.text.onPrimary
                     : active
                       ? colors.primary[600]
-                      : colors.text.muted
+                      : colors.text.primary
                 }
-                size={isCamera ? 22 : 20}
+                size={isCamera ? 22 : 21}
                 strokeWidth={active || isCamera ? 2.2 : 2}
               />
             </View>
-            <Text style={[styles.label, active && styles.activeLabel]}>
-              {label}
-            </Text>
+            <Text style={[styles.label, active && styles.activeLabel]}>{label}</Text>
           </Pressable>
         );
       })}
@@ -80,40 +79,41 @@ export function BottomNavigation({
 
 const styles = StyleSheet.create({
   container: {
-    minHeight: 72,
+    minHeight: 80,
     flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-around",
-    paddingTop: spacing[2],
-    borderTopWidth: 1,
-    borderTopColor: colors.border.default,
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: spacing[4],
+    marginBottom: spacing[2],
+    paddingHorizontal: spacing[1],
+    paddingVertical: spacing[1],
+    borderWidth: 1,
+    borderColor: colors.gray[900],
+    borderRadius: radii.xl,
     backgroundColor: colors.background.surface,
   },
   item: {
-    minWidth: 56,
-    minHeight: control.md,
+    minHeight: 72,
     flex: 1,
     alignItems: "center",
+    justifyContent: "center",
     gap: spacing[1],
   },
-  activeIcon: {
+  iconSlot: {
     width: control.md,
     height: control.md,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: radii.md,
+    borderRadius: radii.full,
+  },
+  activeIcon: {
     backgroundColor: colors.primary[50],
   },
   cameraButton: {
-    width: control.lg,
-    height: control.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: -spacing[3],
-    borderRadius: radii.full,
+    width: 52,
+    height: 52,
     backgroundColor: colors.primary[600],
-    borderWidth: 4,
-    borderColor: colors.background.app,
+    borderRadius: radii.full,
   },
   label: {
     ...typography.caption,
