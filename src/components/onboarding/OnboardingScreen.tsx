@@ -130,6 +130,7 @@ function FirstRunOnboarding({ onComplete }: Pick<OnboardingScreenProps, "onCompl
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}

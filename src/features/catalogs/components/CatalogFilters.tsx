@@ -107,7 +107,11 @@ export default function CatalogFilters({
 
       <Modal visible={sortOpen} transparent animationType="fade" onRequestClose={() => setSortOpen(false)}>
         <View style={styles.overlay}>
-          <View style={styles.sortSheet}>
+          <ScrollView
+            style={styles.sortSheet}
+            contentContainerStyle={styles.sortSheetContent}
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={styles.sortTitle}>Sort catalog</Text>
             {sortOptions.map((option) => (
               <Pressable
@@ -128,7 +132,7 @@ export default function CatalogFilters({
             <Pressable accessibilityRole="button" onPress={() => setSortOpen(false)} style={styles.cancelSort}>
               <Text style={styles.cancelText}>Cancel</Text>
             </Pressable>
-          </View>
+          </ScrollView>
         </View>
       </Modal>
     </View>
@@ -241,11 +245,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: "rgba(15, 23, 42, 0.32)",
   },
   sortSheet: {
-    gap: spacing[2],
-    padding: spacing[4],
+    maxHeight: "75%",
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,
     backgroundColor: colors.background.surface,
+  },
+  sortSheetContent: {
+    gap: spacing[2],
+    padding: spacing[4],
+    paddingBottom: spacing[8],
   },
   sortTitle: {
     ...typography.h3,

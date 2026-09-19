@@ -124,6 +124,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   details: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing[2],
@@ -138,12 +139,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   statusRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing[2],
   },
   thresholds: {
     ...typography.caption,
+    minWidth: 0,
+    flexShrink: 1,
     color: colors.text.muted,
+    textAlign: "right",
   },
 });

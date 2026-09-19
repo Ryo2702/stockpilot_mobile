@@ -1,5 +1,5 @@
 import { ArrowLeft, Check, Plus, Store } from "lucide-react-native";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import type { OwnerStore } from "@/services/owner-store.service";
@@ -54,7 +54,11 @@ export default function StoreList({
           {switchError}
         </Text>
       ) : null}
-      <View style={styles.storeList}>
+      <ScrollView
+        style={styles.storeListScroll}
+        contentContainerStyle={styles.storeList}
+        showsVerticalScrollIndicator={false}
+      >
         {stores.map((store) => {
           const selected =
             store.storeId === ownerStore.storeId && store.businessId === ownerStore.businessId;
@@ -76,7 +80,7 @@ export default function StoreList({
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
       {canCreateStore && !showAddStoreButton ? (
         <Button
           title="Add store"

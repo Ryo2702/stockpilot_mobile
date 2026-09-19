@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import StoreSelector from "@/components/store/StoreSelector";
 import { BottomNavigation, type BottomNavKey } from "@/components/ui/BottomNavigation";
 import { Button } from "@/components/ui/Button";
+import ScreenHeader from "@/components/ui/ScreenHeader";
 import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
@@ -44,7 +44,6 @@ export default function CatalogScreenView({
 }: CatalogScreenViewProps) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
-  const compactHeader = useWindowDimensions().width < 390;
   const {
     products,
     search,
@@ -108,30 +107,32 @@ export default function CatalogScreenView({
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <View style={styles.screen}>
         <ScrollView
+          style={styles.scroll}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={[styles.header, compactHeader && styles.compactHeader]}>
-            <View style={[styles.headingCopy, compactHeader && styles.compactHeadingCopy]}>
-              <Text style={styles.title}>Catalog</Text>
+          <ScreenHeader
+            title="Catalog"
+            context={
               <StoreSelector
                 ownerStore={ownerStore}
                 ownerStores={ownerStores}
                 onSelectStore={onSelectStore}
                 onCreateStore={onCreateStore}
               />
-            </View>
-            <Button
-              title="Add Product"
-              icon={Plus}
-              onPress={openCreate}
-              style={compactHeader && styles.compactHeaderButton}
-            />
-          </View>
+            }
+            actions={
+              <Button
+                title="Add Product"
+                icon={Plus}
+                onPress={openCreate}
+              />
+            }
+          />
 
           <View style={styles.listActions}>
-            <Text style={styles.storeName}>{ownerStore.storeName}</Text>
+            <Text numberOfLines={1} style={styles.storeName}>{ownerStore.storeName}</Text>
             <Button
               title={showArchived ? "Active Catalog" : "Archived Products"}
               icon={showArchived ? RotateCcw : Archive}
@@ -263,6 +264,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: {
     flex: 1,
   },
+  scroll: {
+    flex: 1,
+  },
   content: {
     flexGrow: 1,
     gap: spacing[4],
@@ -273,33 +277,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingTop: spacing[4],
     paddingBottom: spacing[8],
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing[3],
-  },
-  compactHeader: {
-    flexDirection: "column",
-    alignItems: "stretch",
-  },
-  headingCopy: {
-    minWidth: 0,
-    flex: 1,
-    gap: spacing[2],
-  },
-  compactHeadingCopy: {
-    flex: 0,
-  },
-  compactHeaderButton: {
-    alignSelf: "flex-end",
-  },
-  title: {
-    ...typography.h2,
-    color: colors.text.primary,
-  },
   storeName: {
     ...typography.caption,
+    minWidth: 0,
+    flexShrink: 1,
     color: colors.text.muted,
   },
   listActions: {

@@ -42,6 +42,7 @@ export default function StoreCreateForm({
         <Text style={styles.modalTitle}>Add store</Text>
       </View>
       <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={styles.createForm}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}

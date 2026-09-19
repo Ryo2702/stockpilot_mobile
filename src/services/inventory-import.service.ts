@@ -216,7 +216,7 @@ export async function importInventoryCsv(
       stores.store_type AS storeType
     FROM businesses
     INNER JOIN stores ON stores.business_id = businesses.id
-    WHERE businesses.id = ?
+    WHERE businesses.id = ? AND stores.status = 'active'
   `, store.businessId);
   for (const businessStore of businessStores) {
     storesByName.set(storeNameKey(businessStore.storeName), businessStore);

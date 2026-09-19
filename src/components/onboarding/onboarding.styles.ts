@@ -8,6 +8,9 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.surface,
   },
+  scrollView: {
+    flex: 1,
+  },
   container: {
     flexGrow: 1,
     justifyContent: "center",
@@ -68,11 +71,14 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   columnGroup: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing[3],
   },
   column: {
-    flex: 1,
-    minWidth: 0,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 140,
+    minWidth: 140,
     gap: spacing[1],
   },
   fieldLabel: {

@@ -75,6 +75,10 @@ export const createStoreSelectorStyles = (colors: ThemeColors) => StyleSheet.cre
   storeList: {
     gap: spacing[3],
   },
+  storeListScroll: {
+    flex: 1,
+    minHeight: 0,
+  },
   storeItem: {
     minHeight: control.lg,
     flexDirection: "row",

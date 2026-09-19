@@ -200,6 +200,7 @@ export default function CatalogFormModal({
           <Text style={styles.title}>{product ? "Edit Product" : "Add Product"}</Text>
         </View>
         <ScrollView
+          style={styles.scroll}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -392,7 +393,7 @@ function DropdownField({
         <View style={styles.dropdownOverlay}>
           <SafeAreaView style={styles.dropdownSheet} edges={["bottom"]}>
             <Text style={styles.dropdownTitle}>Select {label.toLowerCase()}</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.dropdownOptions} showsVerticalScrollIndicator={false}>
               {options.map((option) => {
                 const isSelected = option.value === value;
                 return (
@@ -455,6 +456,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     padding: spacing[4],
     paddingBottom: spacing[10],
   },
+  scroll: {
+    flex: 1,
+  },
   fieldGroup: {
     gap: spacing[2],
   },
@@ -468,8 +472,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   levelField: {
-    minWidth: 0,
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 140,
+    minWidth: 140,
   },
   label: {
     ...typography.label,
@@ -518,6 +524,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderTopRightRadius: radii.xl,
     backgroundColor: colors.background.surface,
   },
+  dropdownOptions: {
+    flexShrink: 1,
+  },
   dropdownTitle: {
     ...typography.h3,
     paddingBottom: spacing[2],
@@ -558,6 +567,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   levelRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing[3],
   },
   hint: {

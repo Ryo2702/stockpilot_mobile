@@ -1,7 +1,8 @@
 import { EllipsisVertical } from "lucide-react-native";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable } from "react-native";
 
 import StoreSelector from "@/components/store/StoreSelector";
+import ScreenHeader from "@/components/ui/ScreenHeader";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import type { OwnerStore } from "@/services/owner-store.service";
 import { useTheme, useThemeStyles } from "@/theme/ThemeProvider";
@@ -30,8 +31,10 @@ export default function OwnerStoreHeader({
   const styles = useThemeStyles(createOwnerStoreStyles);
 
   return (
-    <>
-      <View style={styles.header}>
+    <ScreenHeader
+      title={`Hi ${ownerStore.ownerName}!`}
+      subtitle="Here's your store overview."
+      leading={
         <Image
           accessible
           accessibilityLabel="StockPilot mascot"
@@ -39,14 +42,17 @@ export default function OwnerStoreHeader({
           resizeMode="contain"
           style={styles.brandMark}
         />
+      }
+      context={
         <StoreSelector
           ownerStore={ownerStore}
           ownerStores={ownerStores}
           onSelectStore={onSelectStore}
           onCreateStore={onCreateStore}
-          compact
         />
-        <View style={styles.headerActions}>
+      }
+      actions={
+        <>
           <ThemeToggle />
           <Pressable
             accessibilityRole="button"
@@ -59,17 +65,8 @@ export default function OwnerStoreHeader({
           >
             <EllipsisVertical color={colors.text.secondary} size={21} />
           </Pressable>
-        </View>
-      </View>
-
-      <View style={styles.greetingRow}>
-        <View style={styles.greetingCopy}>
-          <Text style={styles.greeting}>Hi {ownerStore.ownerName}!</Text>
-          <Text style={styles.subtitle}>
-            Here's your store overview.
-          </Text>
-        </View>
-      </View>
-    </>
+        </>
+      }
+    />
   );
 }

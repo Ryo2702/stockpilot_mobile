@@ -1,70 +1,37 @@
-import type { SQLiteDatabase } from "expo-sqlite";
-
+import type { StoreSchema } from "../validation/store.validation";
 import {
   ownerNameSchema,
   storeSchema,
-  type StoreType,
   type StoreInput,
-  type StoreSchema,
 } from "../validation/store.validation";
+import {
+  deleteStore as deleteStoreRecord,
+  findBusinessName,
+  findOwnerStore,
+  findStoreDetails,
+  getStoreOverview,
+  insertBusiness,
+  insertStore,
+  listOwnerStores,
+  updateStore as updateStoreRecord,
+  type OwnerStoreRecord,
+  type StoreDetailsRow,
+  type StoreRepositoryDatabase,
+  type StoreOverviewRecord,
+  type StoreWriteDatabase,
+} from "../database/repositories/store.repository";
 
-export type OwnerStore = {
-  businessId: string;
-  ownerName: string;
-  storeId: string;
-  storeName: string;
-  storeType: StoreType;
-};
+export type OwnerStore = OwnerStoreRecord;
+export type OwnerStoreDetails = OwnerStore & StoreSchema;
+export type OwnerStoreOverview = StoreOverviewRecord;
+export type OwnerStoreDatabase = StoreRepositoryDatabase;
 
-export type OwnerStoreOverview = {
-  productCount: number;
-  itemsInStock: number;
-};
-
-export type OwnerStoreDatabase = Pick<
-  SQLiteDatabase,
-  "getAllAsync" | "getFirstAsync" | "runAsync" | "withTransactionAsync"
->;
-
-type StoreInsertDatabase = Pick<SQLiteDatabase, "runAsync">;
-
-const ownerStoresQuery = `
-  SELECT
-    businesses.id AS businessId,
-    businesses.name AS ownerName,
-    stores.id AS storeId,
-    stores.name AS storeName,
-    stores.store_type AS storeType
-  FROM businesses
-  INNER JOIN stores ON stores.business_id = businesses.id
-  ORDER BY businesses.created_at ASC, stores.created_at ASC
-`;
-
-const insertStoreQuery = `
-  INSERT INTO stores (
-    id,
-    business_id,
-    name,
-    code,
-    store_type,
-    custom_store_type,
-    currency_mode,
-    currency_code,
-    custom_currency_name,
-    custom_currency_symbol,
-    currency_decimal_places,
-    address_line_1,
-    address_line_2,
-    barangay,
-    city,
-    province_state,
-    postal_code,
-    country_code,
-    status,
-    created_at,
-    updated_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`;
+export class OwnerStoreNotFoundError extends Error {
+  constructor() {
+    super("Store not found.");
+    this.name = "OwnerStoreNotFoundError";
+  }
+}
 
 function createId(prefix: string) {
   return (
@@ -73,52 +40,15 @@ function createId(prefix: string) {
   );
 }
 
-async function insertStore(
-  db: StoreInsertDatabase,
+async function createStoreRecord(
+  db: StoreWriteDatabase,
   businessId: string,
+  ownerName: string,
   store: StoreSchema,
   storeId: string,
   now: string,
 ) {
-  await db.runAsync(
-    insertStoreQuery,
-    storeId,
-    businessId,
-    store.name,
-    store.code ?? null,
-    store.storeType,
-    store.storeType === "other" ? (store.customStoreType ?? null) : null,
-    store.currencyMode,
-    store.currencyMode === "iso" ? store.currencyCode : null,
-    store.currencyMode === "custom" ? (store.customCurrencyName ?? null) : null,
-    store.currencyMode === "custom"
-      ? (store.customCurrencySymbol ?? null)
-      : null,
-    store.currencyDecimalPlaces,
-    store.addressLine1 ?? null,
-    store.addressLine2 ?? null,
-    store.barangay ?? null,
-    store.city ?? null,
-    store.provinceState ?? null,
-    store.postalCode ?? null,
-    store.countryCode ?? null,
-    store.status,
-    now,
-    now,
-  );
-}
-
-export async function insertStoreForBusiness(
-  db: StoreInsertDatabase,
-  businessId: string,
-  ownerName: string,
-  store: StoreSchema,
-) {
-  const storeId = createId("store");
-  const now = new Date().toISOString();
-
   await insertStore(db, businessId, store, storeId, now);
-
   return {
     businessId,
     ownerName,
@@ -128,12 +58,96 @@ export async function insertStoreForBusiness(
   } satisfies OwnerStore;
 }
 
+export async function insertStoreForBusiness(
+  db: StoreWriteDatabase,
+  businessId: string,
+  ownerName: string,
+  store: StoreSchema,
+) {
+  return createStoreRecord(
+    db,
+    businessId,
+    ownerName,
+    store,
+    createId("store"),
+    new Date().toISOString(),
+  );
+}
+
 export async function getOwnerStore(db: OwnerStoreDatabase) {
-  return db.getFirstAsync<OwnerStore>(`${ownerStoresQuery} LIMIT 1`);
+  return findOwnerStore(db);
 }
 
 export async function getOwnerStores(db: OwnerStoreDatabase) {
-  return db.getAllAsync<OwnerStore>(ownerStoresQuery);
+  return listOwnerStores(db);
+}
+
+export async function getOwnerStoreDetails(
+  db: OwnerStoreDatabase,
+  businessId: string,
+  storeId: string,
+): Promise<OwnerStoreDetails | null> {
+  const row = await findStoreDetails(db, businessId, storeId);
+  if (!row) return null;
+
+  const details = storeSchema.parse({
+    name: row.name,
+    code: row.code ?? undefined,
+    storeType: row.storeType,
+    customStoreType: row.customStoreType ?? undefined,
+    currencyMode: row.currencyMode,
+    currencyCode: row.currencyCode ?? undefined,
+    customCurrencyName: row.customCurrencyName ?? undefined,
+    customCurrencySymbol: row.customCurrencySymbol ?? undefined,
+    currencyDecimalPlaces: row.currencyDecimalPlaces,
+    addressLine1: row.addressLine1 ?? undefined,
+    addressLine2: row.addressLine2 ?? undefined,
+    barangay: row.barangay ?? undefined,
+    city: row.city ?? undefined,
+    provinceState: row.provinceState ?? undefined,
+    postalCode: row.postalCode ?? undefined,
+    countryCode: row.countryCode ?? undefined,
+    status: row.status,
+  });
+
+  return {
+    businessId: row.businessId,
+    ownerName: row.ownerName,
+    storeId: row.storeId,
+    storeName: row.storeName,
+    ...details,
+  };
+}
+
+export async function updateOwnerStore(
+  db: OwnerStoreDatabase,
+  businessId: string,
+  storeId: string,
+  storeInput: StoreInput,
+) {
+  const store = storeSchema.parse(storeInput);
+  const changes = await updateStoreRecord(
+    db,
+    businessId,
+    storeId,
+    store,
+    new Date().toISOString(),
+  );
+  if (!changes) throw new OwnerStoreNotFoundError();
+
+  const updatedStore = await getOwnerStoreDetails(db, businessId, storeId);
+  if (!updatedStore) throw new OwnerStoreNotFoundError();
+  return updatedStore;
+}
+
+export async function deleteOwnerStore(
+  db: OwnerStoreDatabase,
+  businessId: string,
+  storeId: string,
+) {
+  if (!(await deleteStoreRecord(db, businessId, storeId))) {
+    throw new OwnerStoreNotFoundError();
+  }
 }
 
 export async function getOwnerStoreOverview(
@@ -141,26 +155,7 @@ export async function getOwnerStoreOverview(
   businessId: string,
   storeId: string,
 ) {
-  const overviewQuery = `
-        SELECT
-          COUNT(products.id) AS productCount,
-          COALESCE(SUM(inventory.quantity), 0) AS itemsInStock
-        FROM products
-        LEFT JOIN inventory
-          ON inventory.product_id = products.id
-         AND inventory.business_id = products.business_id
-         AND inventory.store_id = products.store_id
-        WHERE products.business_id = ?
-          AND products.store_id = ?
-          AND products.is_active = 1
-      `;
-  return (
-    (await db.getFirstAsync<OwnerStoreOverview>(
-      overviewQuery,
-      businessId,
-      storeId,
-    )) ?? { productCount: 0, itemsInStock: 0 }
-  );
+  return getStoreOverview(db, businessId, storeId);
 }
 
 export async function createOwnerStore(
@@ -173,31 +168,20 @@ export async function createOwnerStore(
     typeof storeInput === "string" ? { name: storeInput } : storeInput,
   );
   const existing = await getOwnerStore(db);
-
   if (existing) return existing;
 
   const businessId = createId("business");
   const storeId = createId("store");
   const now = new Date().toISOString();
+  const result: { store?: OwnerStore } = {};
 
   await db.withTransactionAsync(async () => {
-    await db.runAsync(
-      "INSERT INTO businesses (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)",
-      businessId,
-      owner,
-      now,
-      now,
-    );
-    await insertStore(db, businessId, store, storeId, now);
+    await insertBusiness(db, businessId, owner, now);
+    result.store = await createStoreRecord(db, businessId, owner, store, storeId, now);
   });
 
-  return {
-    businessId,
-    ownerName: owner,
-    storeId,
-    storeName: store.name,
-    storeType: store.storeType,
-  } satisfies OwnerStore;
+  if (!result.store) throw new Error("Store creation failed.");
+  return result.store;
 }
 
 export async function createStoreForBusiness(
@@ -208,17 +192,12 @@ export async function createStoreForBusiness(
   const store = storeSchema.parse(
     typeof storeInput === "string" ? { name: storeInput } : storeInput,
   );
-  const business = await db.getFirstAsync<{ name: string }>(
-    "SELECT name FROM businesses WHERE id = ?",
-    businessId,
-  );
-
-  if (!business) throw new Error("Business not found");
+  const ownerName = await findBusinessName(db, businessId);
+  if (!ownerName) throw new Error("Business not found.");
 
   const result: { store?: OwnerStore } = {};
-
   await db.withTransactionAsync(async () => {
-    result.store = await insertStoreForBusiness(db, businessId, business.name, store);
+    result.store = await insertStoreForBusiness(db, businessId, ownerName, store);
   });
 
   if (!result.store) throw new Error("Store creation failed.");

@@ -4,8 +4,10 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import StoreSwitchModal from "@/components/store/StoreSwitchModal";
 import type { BottomNavKey } from "@/components/ui/BottomNavigation";
 import {
+  deleteOwnerStore,
   createStoreForBusiness,
   getOwnerStores,
+  updateOwnerStore as updateOwnerStoreRecord,
   type OwnerStore,
 } from "@/services/owner-store.service";
 import type { StoreInput } from "@/validation/store.validation";
@@ -15,6 +17,7 @@ import { LoadErrorScreen, LoadingScreen } from "./HomeStatusScreens";
 const OnboardingScreen = lazy(() => import("@/components/onboarding/OnboardingScreen"));
 const OwnerStoreScreen = lazy(() => import("@/components/store/OwnerStoreScreen"));
 const CatalogScreen = lazy(() => import("@/features/catalogs/CatalogScreen"));
+const ModuleEmptyScreen = lazy(() => import("./ModuleEmptyScreen"));
 
 export default function HomeScreen() {
   const db = useSQLiteContext();
@@ -22,7 +25,9 @@ export default function HomeScreen() {
   const [ownerStore, setOwnerStore] = useState<OwnerStore | null>(null);
   const [ownerStores, setOwnerStores] = useState<OwnerStore[]>([]);
   const [showEntry, setShowEntry] = useState(false);
-  const [activeSection, setActiveSection] = useState<"dashboard" | "catalog">("dashboard");
+  const [activeSection, setActiveSection] = useState<
+    "dashboard" | "catalog" | "inventory" | "insights"
+  >("dashboard");
   const [cameraRequest, setCameraRequest] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -83,10 +88,49 @@ export default function HomeScreen() {
     return store;
   };
 
+  const updateStore = async (storeInput: StoreInput) => {
+    if (!ownerStore) throw new Error("No owner store is available.");
+    const details = await updateOwnerStoreRecord(
+      db,
+      ownerStore.businessId,
+      ownerStore.storeId,
+      storeInput,
+    );
+    const updatedStore: OwnerStore = {
+      businessId: details.businessId,
+      ownerName: details.ownerName,
+      storeId: details.storeId,
+      storeName: details.name,
+      storeType: details.storeType,
+    };
+    setOwnerStore(updatedStore);
+    setOwnerStores((stores) =>
+      stores.map((store) =>
+        store.storeId === updatedStore.storeId && store.businessId === updatedStore.businessId
+          ? updatedStore
+          : store,
+      ),
+    );
+    return details;
+  };
+
+  const deleteStore = async () => {
+    if (!ownerStore) throw new Error("No owner store is available.");
+    await deleteOwnerStore(db, ownerStore.businessId, ownerStore.storeId);
+    const remainingStores = ownerStores.filter(
+      (store) =>
+        store.storeId !== ownerStore.storeId || store.businessId !== ownerStore.businessId,
+    );
+    setOwnerStores(remainingStores);
+    setOwnerStore(remainingStores[0] ?? null);
+    setActiveSection("dashboard");
+    setShowEntry(false);
+  };
+
   const navigate = (key: BottomNavKey) => {
-    if (key === "dashboard" || key === "catalog") {
+    if (key !== "camera") {
       setActiveSection(key);
-    } else if (key === "camera") {
+    } else {
       setActiveSection("catalog");
       setCameraRequest((request) => request + 1);
     }
@@ -97,7 +141,16 @@ export default function HomeScreen() {
 
   const screen =
     ownerStore && !showEntry ? (
-      activeSection === "catalog" ? (
+      activeSection === "inventory" || activeSection === "insights" ? (
+        <ModuleEmptyScreen
+          activeKey={activeSection}
+          ownerStore={ownerStore}
+          ownerStores={ownerStores}
+          onSelectStore={switchStore}
+          onCreateStore={createStore}
+          onNavigate={navigate}
+        />
+      ) : activeSection === "catalog" ? (
         <CatalogScreen
           ownerStore={ownerStore}
           ownerStores={ownerStores}
@@ -114,6 +167,8 @@ export default function HomeScreen() {
           ownerStores={ownerStores}
           onSelectStore={switchStore}
           onCreateStore={createStore}
+          onUpdateStore={updateStore}
+          onDeleteStore={deleteStore}
           onNavigate={navigate}
           onExit={() => {
             setActiveSection("dashboard");

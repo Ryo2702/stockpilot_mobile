@@ -3,7 +3,7 @@ import { File as ExpoFile } from "expo-file-system";
 import { useSQLiteContext } from "expo-sqlite";
 import { Upload } from "lucide-react-native";
 import { useState } from "react";
-import { Image, Platform, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import StoreSelector from "@/components/store/StoreSelector";
@@ -151,7 +151,11 @@ export default function ExistingStoreSelectionStep({
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-      <View style={styles.content}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Image
           accessible
           accessibilityLabel="StockPilot mascot"
@@ -233,7 +237,7 @@ export default function ExistingStoreSelectionStep({
           onPress={enter}
           style={styles.button}
         />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -244,11 +248,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.background.surface,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: spacing[4],
-    padding: spacing[6],
+    width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
+    padding: spacing[4],
   },
   mascot: {
     width: 150,

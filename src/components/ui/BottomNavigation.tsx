@@ -74,7 +74,7 @@ export function BottomNavigation({
                 strokeWidth={active || isCamera ? 2.2 : 2}
               />
             </View>
-            <Text style={[styles.label, active && styles.activeLabel]}>
+            <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.label, active && styles.activeLabel]}>
               {label}
             </Text>
           </Pressable>
@@ -90,7 +90,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginHorizontal: spacing[4],
+    marginHorizontal: spacing[3],
     marginBottom: spacing[2],
     paddingHorizontal: spacing[1],
     paddingVertical: spacing[1],

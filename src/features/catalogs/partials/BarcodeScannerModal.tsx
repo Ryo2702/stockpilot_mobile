@@ -1,7 +1,7 @@
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import { ChevronLeft } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Modal, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Modal, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
@@ -19,6 +19,9 @@ type BarcodeScannerModalProps = {
 export default function BarcodeScannerModal({ visible, onClose, onScanned }: BarcodeScannerModalProps) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+  const { height } = useWindowDimensions();
+  const previewHeight = Math.min(360, Math.max(112, (height - 152) * 0.65));
+  const frameHeight = Math.min(108, previewHeight * 0.4);
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraError, setCameraError] = useState(false);
   const handledScan = useRef(false);
@@ -43,7 +46,7 @@ export default function BarcodeScannerModal({ visible, onClose, onScanned }: Bar
           <IconButton icon={ChevronLeft} label="Close barcode scanner" onPress={onClose} />
           <Text style={styles.title}>Scan Barcode</Text>
         </View>
-        <View style={styles.content}>
+        <View style={[styles.content, { paddingVertical: Math.min(spacing[4], height * 0.025) }]}>
           {!visible ? null : !permission ? (
             <ActivityIndicator color={colors.primary[600]} />
           ) : !permission.granted ? (
@@ -57,14 +60,14 @@ export default function BarcodeScannerModal({ visible, onClose, onScanned }: Bar
             </View>
           ) : (
             <>
-              <View style={styles.preview}>
+              <View style={[styles.preview, { height: previewHeight }]}>
                 <CameraView
                   style={styles.camera}
                   facing="back"
                   onBarcodeScanned={handleScanned}
                   onMountError={() => setCameraError(true)}
                 />
-                <View pointerEvents="none" style={styles.scanFrame} />
+                <View pointerEvents="none" style={[styles.scanFrame, { height: frameHeight }]} />
               </View>
               <Text style={styles.instructions}>Align a barcode or QR code inside the frame.</Text>
             </>
@@ -104,7 +107,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   preview: {
     width: "100%",
     maxWidth: 520,
-    height: 360,
     overflow: "hidden",
     borderRadius: radii.lg,
     backgroundColor: colors.text.primary,
@@ -117,7 +119,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     top: "35%",
     left: "12%",
     width: "76%",
-    height: 108,
     borderWidth: 2,
     borderColor: colors.primary[500],
     borderRadius: radii.md,

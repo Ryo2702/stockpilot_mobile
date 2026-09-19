@@ -61,7 +61,7 @@ export default function ProductDetailsModal({
           <IconButton icon={ChevronLeft} label="Close product details" onPress={onClose} />
           <Text style={styles.headerTitle}>Product Details</Text>
         </View>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
           <View style={styles.identity}>
             <Text style={styles.name}>{product.name}</Text>
@@ -175,6 +175,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     padding: spacing[4],
     paddingBottom: spacing[10],
   },
+  scroll: {
+    flex: 1,
+  },
   identity: {
     gap: spacing[1],
   },
@@ -217,10 +220,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   detailLabel: {
     ...typography.bodySmall,
+    minWidth: 0,
+    flex: 1,
+    flexShrink: 1,
     color: colors.text.muted,
   },
   detailValue: {
     ...typography.bodySmall,
+    minWidth: 0,
     flex: 1,
     color: colors.text.primary,
     textAlign: "right",

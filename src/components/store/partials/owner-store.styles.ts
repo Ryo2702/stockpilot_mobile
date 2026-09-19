@@ -11,23 +11,17 @@ export const createOwnerStoreStyles = (colors: ThemeColors) => StyleSheet.create
   screen: {
     flex: 1,
   },
+  scroll: {
+    flex: 1,
+  },
   content: {
     gap: spacing[8],
-    paddingHorizontal: spacing[6],
+    width: "100%",
+    maxWidth: 760,
+    alignSelf: "center",
+    paddingHorizontal: spacing[4],
     paddingTop: spacing[4],
     paddingBottom: spacing[10],
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing[2],
-    width: "100%",
-  },
-  headerActions: {
-    flexShrink: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing[2],
   },
   brandMark: {
     width: 44,
@@ -46,18 +40,6 @@ export const createOwnerStoreStyles = (colors: ThemeColors) => StyleSheet.create
   pressed: {
     opacity: 0.7,
   },
-  greetingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  greetingCopy: {
-    gap: spacing[1],
-  },
-  greeting: {
-    ...typography.h3,
-    color: colors.text.primary,
-  },
   menuSafeArea: {
     flex: 1,
     alignItems: "flex-end",
@@ -65,19 +47,42 @@ export const createOwnerStoreStyles = (colors: ThemeColors) => StyleSheet.create
   },
   menuCard: {
     width: 220,
-    gap: spacing[2],
+    maxHeight: "90%",
     marginTop: spacing[2],
     marginRight: spacing[4],
-    padding: spacing[3],
     borderWidth: 1,
     borderColor: colors.border.default,
     borderRadius: radii.lg,
     backgroundColor: colors.background.surface,
   },
+  menuContent: {
+    gap: spacing[2],
+    padding: spacing[3],
+  },
+  menuConfirmCard: {
+    width: 320,
+    maxWidth: "90%",
+  },
   menuTitle: {
     ...typography.label,
     paddingHorizontal: spacing[2],
     color: colors.text.muted,
+  },
+  menuDescription: {
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+  },
+  menuError: {
+    ...typography.caption,
+    color: colors.semantic.danger,
+  },
+  menuActions: {
+    flexDirection: "row",
+    gap: spacing[2],
+  },
+  menuActionButton: {
+    flex: 1,
+    minWidth: 0,
   },
   menuButton: {
     width: "100%",
@@ -137,6 +142,13 @@ export const createOwnerStoreStyles = (colors: ThemeColors) => StyleSheet.create
     ...typography.bodySmall,
     color: colors.text.secondary,
   },
+  storeDetails: {
+    gap: spacing[1],
+  },
+  storeDetailText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
   sectionHeader: {
     gap: spacing[1],
   },
@@ -150,10 +162,14 @@ export const createOwnerStoreStyles = (colors: ThemeColors) => StyleSheet.create
   },
   overviewRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing[4],
   },
   overviewCard: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 145,
+    minWidth: 145,
     minHeight: 140,
     gap: spacing[3],
     padding: spacing[5],

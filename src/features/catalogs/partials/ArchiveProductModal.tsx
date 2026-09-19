@@ -1,5 +1,5 @@
 import { Archive } from "lucide-react-native";
-import { Modal, StyleSheet, Text, View } from "react-native";
+import { Modal, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { radii, spacing, typography, useThemeStyles } from "@/theme";
@@ -25,6 +25,7 @@ export default function ArchiveProductModal({
 }: ArchiveProductModalProps) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+  const compact = useWindowDimensions().width < 360;
 
   return (
     <Modal
@@ -36,7 +37,11 @@ export default function ArchiveProductModal({
       }}
     >
       <View style={styles.overlay}>
-        <View style={styles.card}>
+        <ScrollView
+          style={styles.card}
+          contentContainerStyle={styles.cardContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.icon}>
             <Archive color={colors.semantic.danger} size={22} />
           </View>
@@ -46,13 +51,13 @@ export default function ArchiveProductModal({
             and it can be restored later.
           </Text>
           {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
-          <View style={styles.actions}>
+          <View style={[styles.actions, compact && styles.compactActions]}>
             <Button
               title="Cancel"
               variant="ghost"
               disabled={archiving}
               onPress={onClose}
-              style={styles.actionButton}
+              style={[styles.actionButton, compact && styles.compactActionButton]}
             />
             <Button
               title="Archive Product"
@@ -60,10 +65,10 @@ export default function ArchiveProductModal({
               variant="danger"
               loading={archiving}
               onPress={onConfirm}
-              style={styles.actionButton}
+              style={[styles.actionButton, compact && styles.compactActionButton]}
             />
           </View>
-        </View>
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -80,11 +85,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     width: "100%",
     maxWidth: 400,
+    maxHeight: "90%",
+    borderRadius: radii.lg,
+    backgroundColor: colors.background.surface,
+  },
+  cardContent: {
+    width: "100%",
     alignItems: "center",
     gap: spacing[3],
     padding: spacing[5],
-    borderRadius: radii.lg,
-    backgroundColor: colors.background.surface,
   },
   icon: {
     width: 48,
@@ -113,9 +122,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: "row",
     gap: spacing[2],
   },
+  compactActions: {
+    flexDirection: "column",
+  },
   actionButton: {
     minWidth: 0,
     flex: 1,
     paddingHorizontal: spacing[2],
+  },
+  compactActionButton: {
+    width: "100%",
+    flex: 0,
   },
 });

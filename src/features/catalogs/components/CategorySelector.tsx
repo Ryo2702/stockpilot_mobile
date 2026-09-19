@@ -40,7 +40,7 @@ export default function CategorySelector({ categories, value, onChange }: Catego
         <View style={styles.overlay}>
           <SafeAreaView style={styles.sheet} edges={["bottom"]}>
             <Text style={styles.title}>Select category</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.options} showsVerticalScrollIndicator={false}>
               {categories.map(({ value: category, label, icon: Icon }) => {
                 const isSelected = category === value;
                 return (
@@ -103,6 +103,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,
     backgroundColor: colors.background.surface,
+  },
+  options: {
+    flexShrink: 1,
   },
   title: {
     ...typography.h3,
