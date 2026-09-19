@@ -12,7 +12,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import StoreSelector from "@/components/store/StoreSelector";
 import { BottomNavigation, type BottomNavKey } from "@/components/ui/BottomNavigation";
 import { Button } from "@/components/ui/Button";
-import { colors, control, radii, spacing, typography } from "@/theme";
+import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 
 import CatalogFilters from "../components/CatalogFilters";
 import CatalogItemCard from "../components/CatalogItemCard";
@@ -40,6 +42,8 @@ export default function CatalogScreenView({
   categories,
   catalog,
 }: CatalogScreenViewProps) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
   const compactHeader = useWindowDimensions().width < 390;
   const {
     products,
@@ -251,7 +255,7 @@ export default function CatalogScreenView({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background.app,

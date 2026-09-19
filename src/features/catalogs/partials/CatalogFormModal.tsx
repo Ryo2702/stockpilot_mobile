@@ -19,7 +19,9 @@ import { IconButton } from "@/components/ui/IconButton";
 import type { CatalogCategory } from "@/domain/catalog";
 import type { Product } from "@/domain/product";
 import { CatalogError } from "@/features/catalogs/errors/catalog.errors";
-import { colors, control, radii, spacing, typography } from "@/theme";
+import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 import {
   createProductSchema,
   updateProductSchema,
@@ -101,6 +103,8 @@ export default function CatalogFormModal({
   onSave,
   scannedBarcode,
 }: CatalogFormModalProps) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
   const [form, setForm] = useState(() => createDraft(product, categories));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -327,6 +331,9 @@ function FormField({
   containerStyle?: StyleProp<ViewStyle>;
   numericOnly?: boolean;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
+
   return (
     <View style={[styles.fieldGroup, containerStyle]}>
       <Text style={styles.label}>{label}</Text>
@@ -360,6 +367,8 @@ function DropdownField({
   error?: string;
   containerStyle?: StyleProp<ViewStyle>;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.value === value);
 
@@ -419,7 +428,7 @@ function DropdownField({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background.app,

@@ -5,7 +5,9 @@ import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getProductStockStatus, type Product } from "@/domain/product";
-import { colors, radii, spacing, typography } from "@/theme";
+import { radii, spacing, typography, useThemeStyles } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 
 import { getCatalogCategoryOption } from "../data/catalog.data";
 
@@ -26,6 +28,8 @@ export default function CatalogItemCard({
   onArchive,
   onRestore,
 }: CatalogItemCardProps) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
   const category = getCatalogCategoryOption(product.category);
   const CategoryIcon = category.icon;
   return (
@@ -85,7 +89,7 @@ export default function CatalogItemCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     gap: spacing[3],
   },

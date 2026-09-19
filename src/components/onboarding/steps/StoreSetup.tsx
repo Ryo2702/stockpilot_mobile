@@ -3,9 +3,9 @@ import { Text, View } from "react-native";
 
 import StoreFormFields from "@/components/store/partials/StoreFormFields";
 import { Button } from "@/components/ui/Button";
-import { colors } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
 
-import { onboardingStyles as styles } from "../onboarding.styles";
+import { useOnboardingStyles } from "../onboarding.styles";
 import type { OnboardingStepProps } from "./types";
 
 type StoreSetupProps = Pick<
@@ -20,6 +20,9 @@ export default function StoreSetup({
   onStoreFieldChange,
   onCreateStore,
 }: StoreSetupProps) {
+  const { colors } = useTheme();
+  const styles = useOnboardingStyles();
+
   return (
     <>
       <View style={styles.hero}>

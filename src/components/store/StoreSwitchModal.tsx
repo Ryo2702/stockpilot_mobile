@@ -1,8 +1,13 @@
 import { ActivityIndicator, Modal, StyleSheet, Text, View } from "react-native";
 
-import { colors, radii, spacing, typography } from "@/theme";
+import { radii, spacing, typography, useThemeStyles } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 
 export default function StoreSwitchModal({ visible }: { visible: boolean }) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={() => undefined}>
       <View style={styles.overlay}>
@@ -15,7 +20,7 @@ export default function StoreSwitchModal({ visible }: { visible: boolean }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   overlay: {
     flex: 1,
     alignItems: "center",

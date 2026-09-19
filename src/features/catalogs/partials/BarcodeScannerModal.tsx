@@ -6,7 +6,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
-import { colors, control, radii, spacing, typography } from "@/theme";
+import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 
 type BarcodeScannerModalProps = {
   visible: boolean;
@@ -15,6 +17,8 @@ type BarcodeScannerModalProps = {
 };
 
 export default function BarcodeScannerModal({ visible, onClose, onScanned }: BarcodeScannerModalProps) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraError, setCameraError] = useState(false);
   const handledScan = useRef(false);
@@ -71,7 +75,7 @@ export default function BarcodeScannerModal({ visible, onClose, onScanned }: Bar
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background.app,

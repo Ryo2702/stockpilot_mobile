@@ -4,7 +4,9 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 
 import type { CatalogCategory } from "@/domain/catalog";
 import type { ProductSort, ProductStockFilter } from "@/domain/product";
-import { colors, control, radii, spacing, typography } from "@/theme";
+import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 
 import type { CatalogCategoryOption } from "../data/catalog.data";
 
@@ -40,6 +42,8 @@ export default function CatalogFilters({
   onStockStatusChange,
   onSortChange,
 }: CatalogFiltersProps) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
   const [sortOpen, setSortOpen] = useState(false);
   const sortLabel = sortOptions.find((option) => option.value === sort)?.label ?? "Name A–Z";
   const SortIcon = sort === "name_desc" ? ArrowUpAZ : ArrowDownAZ;
@@ -146,6 +150,9 @@ function CategoryChip({
   selected: boolean;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -159,7 +166,7 @@ function CategoryChip({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     gap: spacing[2],
   },

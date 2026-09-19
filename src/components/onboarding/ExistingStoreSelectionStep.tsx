@@ -10,7 +10,8 @@ import StoreSelector from "@/components/store/StoreSelector";
 import { Button } from "@/components/ui/Button";
 import { importInventoryCsv } from "@/services/inventory-import.service";
 import type { OwnerStore } from "@/services/owner-store.service";
-import { colors, radii, spacing, typography } from "@/theme";
+import { radii, spacing, typography, useThemeStyles } from "@/theme";
+import type { ThemeColors } from "@/theme/tokens";
 import type { StoreInput } from "@/validation/store.validation";
 
 const headMascot = require("../../../assets/images/stockpilot/headMascot-transparent.png");
@@ -37,6 +38,7 @@ export default function ExistingStoreSelectionStep({
   onCreateStore,
   onComplete,
 }: ExistingStoreSelectionStepProps) {
+  const styles = useThemeStyles(createStyles);
   const db = useSQLiteContext();
   const [selectedStore, setSelectedStore] = useState(ownerStore);
   const [importedStores, setImportedStores] = useState<OwnerStore[]>([]);
@@ -236,7 +238,7 @@ export default function ExistingStoreSelectionStep({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background.surface,

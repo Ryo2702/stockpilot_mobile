@@ -1,11 +1,11 @@
 import type { PropsWithChildren } from "react";
 import { Pressable, Text, TextInput, View, type TextInputProps } from "react-native";
 
-import { colors } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
 
 import { currencyModeOptions, decimalPlaceOptions, storeTypeOptions } from "../store.data";
 import type { StoreErrors, StoreFieldChange, StoreForm } from "../store.types";
-import { onboardingStyles as styles } from "../../onboarding/onboarding.styles";
+import { useOnboardingStyles } from "../../onboarding/onboarding.styles";
 
 type StoreFormFieldsProps = {
   storeForm: StoreForm;
@@ -20,26 +20,33 @@ type TextFieldProps = TextInputProps & {
 };
 
 function TextField({ label, optional, error, style, ...props }: TextFieldProps) {
+  const { colors } = useTheme();
+  const styles = useOnboardingStyles();
+
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>
         {label} {optional ? <Text style={styles.optional}>(optional)</Text> : null}
       </Text>
-      <TextInput {...props} style={[styles.input, error ? styles.inputError : null, style]} />
+      <TextInput {...props} placeholderTextColor={colors.text.muted} style={[styles.input, error ? styles.inputError : null, style]} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
 }
 
 function ColumnGroup({ children }: PropsWithChildren) {
+  const styles = useOnboardingStyles();
   return <View style={styles.columnGroup}>{children}</View>;
 }
 
 function Column({ children }: PropsWithChildren) {
+  const styles = useOnboardingStyles();
   return <View style={styles.column}>{children}</View>;
 }
 
 function Choice({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  const styles = useOnboardingStyles();
+
   return (
     <Pressable
       accessibilityRole="radio"
@@ -53,6 +60,8 @@ function Choice({ label, selected, onPress }: { label: string; selected: boolean
 }
 
 function StoreDetailsSection({ storeForm, storeErrors, onStoreFieldChange }: StoreFormFieldsProps) {
+  const styles = useOnboardingStyles();
+
   return (
     <View style={styles.formSection}>
       <Text style={styles.sectionTitle}>Store details</Text>
@@ -65,7 +74,6 @@ function StoreDetailsSection({ storeForm, storeErrors, onStoreFieldChange }: Sto
             autoCorrect={false}
             onChangeText={(value) => onStoreFieldChange("name", value)}
             placeholder="e.g. Main Store"
-            placeholderTextColor={colors.text.muted}
             value={storeForm.name ?? ""}
             error={storeErrors.name}
           />
@@ -79,7 +87,6 @@ function StoreDetailsSection({ storeForm, storeErrors, onStoreFieldChange }: Sto
             autoCorrect={false}
             onChangeText={(value) => onStoreFieldChange("code", value)}
             placeholder="e.g. MAIN-01"
-            placeholderTextColor={colors.text.muted}
             value={storeForm.code ?? ""}
             error={storeErrors.code}
           />
@@ -105,7 +112,6 @@ function StoreDetailsSection({ storeForm, storeErrors, onStoreFieldChange }: Sto
             autoCorrect={false}
             onChangeText={(value) => onStoreFieldChange("customStoreType", value)}
             placeholder="Describe your store type"
-            placeholderTextColor={colors.text.muted}
             value={storeForm.customStoreType ?? ""}
             error={storeErrors.customStoreType}
           />
@@ -116,6 +122,7 @@ function StoreDetailsSection({ storeForm, storeErrors, onStoreFieldChange }: Sto
 }
 
 function CurrencySection({ storeForm, storeErrors, onStoreFieldChange }: StoreFormFieldsProps) {
+  const styles = useOnboardingStyles();
   const currencyMode = storeForm.currencyMode ?? "iso";
 
   return (
@@ -140,7 +147,6 @@ function CurrencySection({ storeForm, storeErrors, onStoreFieldChange }: StoreFo
           maxLength={3}
           onChangeText={(value) => onStoreFieldChange("currencyCode", value)}
           placeholder="e.g. PHP"
-          placeholderTextColor={colors.text.muted}
           value={storeForm.currencyCode ?? ""}
           error={storeErrors.currencyCode}
         />
@@ -153,7 +159,6 @@ function CurrencySection({ storeForm, storeErrors, onStoreFieldChange }: StoreFo
               autoCapitalize="words"
               onChangeText={(value) => onStoreFieldChange("customCurrencyName", value)}
               placeholder="e.g. Credits"
-              placeholderTextColor={colors.text.muted}
               value={storeForm.customCurrencyName ?? ""}
               error={storeErrors.customCurrencyName}
             />
@@ -165,7 +170,6 @@ function CurrencySection({ storeForm, storeErrors, onStoreFieldChange }: StoreFo
               autoCapitalize="none"
               onChangeText={(value) => onStoreFieldChange("customCurrencySymbol", value)}
               placeholder="e.g. ¤"
-              placeholderTextColor={colors.text.muted}
               value={storeForm.customCurrencySymbol ?? ""}
               error={storeErrors.customCurrencySymbol}
             />
@@ -193,6 +197,8 @@ function CurrencySection({ storeForm, storeErrors, onStoreFieldChange }: StoreFo
 }
 
 function AddressSection({ storeForm, storeErrors, onStoreFieldChange }: StoreFormFieldsProps) {
+  const styles = useOnboardingStyles();
+
   return (
     <View style={styles.formSection}>
       <Text style={styles.sectionTitle}>
@@ -203,7 +209,6 @@ function AddressSection({ storeForm, storeErrors, onStoreFieldChange }: StoreFor
         label="Address line 1"
         onChangeText={(value) => onStoreFieldChange("addressLine1", value)}
         placeholder="Street, building, or unit"
-        placeholderTextColor={colors.text.muted}
         value={storeForm.addressLine1 ?? ""}
         error={storeErrors.addressLine1}
       />
@@ -213,7 +218,6 @@ function AddressSection({ storeForm, storeErrors, onStoreFieldChange }: StoreFor
         optional
         onChangeText={(value) => onStoreFieldChange("addressLine2", value)}
         placeholder="Additional address details"
-        placeholderTextColor={colors.text.muted}
         value={storeForm.addressLine2 ?? ""}
         error={storeErrors.addressLine2}
       />
@@ -224,7 +228,6 @@ function AddressSection({ storeForm, storeErrors, onStoreFieldChange }: StoreFor
             label="Barangay"
             onChangeText={(value) => onStoreFieldChange("barangay", value)}
             placeholder="Barangay"
-            placeholderTextColor={colors.text.muted}
             value={storeForm.barangay ?? ""}
             error={storeErrors.barangay}
           />
@@ -235,7 +238,6 @@ function AddressSection({ storeForm, storeErrors, onStoreFieldChange }: StoreFor
             label="City"
             onChangeText={(value) => onStoreFieldChange("city", value)}
             placeholder="City"
-            placeholderTextColor={colors.text.muted}
             value={storeForm.city ?? ""}
             error={storeErrors.city}
           />
@@ -248,7 +250,6 @@ function AddressSection({ storeForm, storeErrors, onStoreFieldChange }: StoreFor
             label="Province / state"
             onChangeText={(value) => onStoreFieldChange("provinceState", value)}
             placeholder="Province / state"
-            placeholderTextColor={colors.text.muted}
             value={storeForm.provinceState ?? ""}
             error={storeErrors.provinceState}
           />
@@ -260,7 +261,6 @@ function AddressSection({ storeForm, storeErrors, onStoreFieldChange }: StoreFor
             keyboardType="numbers-and-punctuation"
             onChangeText={(value) => onStoreFieldChange("postalCode", value)}
             placeholder="Postal code"
-            placeholderTextColor={colors.text.muted}
             value={storeForm.postalCode ?? ""}
             error={storeErrors.postalCode}
           />
@@ -274,7 +274,6 @@ function AddressSection({ storeForm, storeErrors, onStoreFieldChange }: StoreFor
         maxLength={2}
         onChangeText={(value) => onStoreFieldChange("countryCode", value)}
         placeholder="e.g. PH"
-        placeholderTextColor={colors.text.muted}
         value={storeForm.countryCode ?? ""}
         error={storeErrors.countryCode}
       />

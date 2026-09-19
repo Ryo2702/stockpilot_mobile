@@ -62,6 +62,73 @@ export const colors = {
   },
 } as const;
 
+type StringPalette<T> = {
+  [K in keyof T]: T[K] extends string ? string : StringPalette<T[K]>;
+};
+
+export type ThemeColors = StringPalette<typeof colors>;
+export type ColorScheme = "light" | "dark";
+
+export const darkColors: ThemeColors = {
+  primary: {
+    50: "#172554",
+    100: "#1e3a8a",
+    200: "#1e40af",
+    300: "#1d4ed8",
+    400: "#3b82f6",
+    500: "#60a5fa",
+    600: "#60a5fa",
+    700: "#93c5fd",
+    800: "#bfdbfe",
+    900: "#dbeafe",
+  },
+  gray: {
+    50: "#0f172a",
+    100: "#1e293b",
+    200: "#334155",
+    300: "#475569",
+    400: "#64748b",
+    500: "#94a3b8",
+    600: "#cbd5e1",
+    700: "#e2e8f0",
+    800: "#f1f5f9",
+    900: "#f8fafc",
+  },
+  white: colors.white,
+  semantic: {
+    success: "#4ade80",
+    successBackground: "#052e16",
+    warning: "#fbbf24",
+    warningBackground: "#422006",
+    danger: "#f87171",
+    dangerBackground: "#450a0a",
+    info: "#60a5fa",
+    infoBackground: "#172554",
+  },
+  background: {
+    app: "#0f172a",
+    surface: "#1e293b",
+    subtle: "#172033",
+  },
+  text: {
+    primary: "#f8fafc",
+    secondary: "#cbd5e1",
+    muted: "#94a3b8",
+    disabled: "#64748b",
+    onPrimary: "#ffffff",
+  },
+  border: {
+    default: "#334155",
+    strong: "#475569",
+    focus: "#60a5fa",
+  },
+};
+
+export const themeColors: Record<ColorScheme, ThemeColors> = {
+  light: colors,
+  dark: darkColors,
+};
+
 export const spacing = {
   1: 4,
   2: 8,
@@ -158,4 +225,3 @@ export const motion = {
   fast: 120,
   normal: 180,
 } as const;
-

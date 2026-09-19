@@ -4,10 +4,14 @@ import { SQLiteProvider } from "expo-sqlite";
 import { Platform, Text, View } from "react-native";
 
 import { migrate } from "@/database/migrate";
+import { ThemeProvider } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
+
+type DatabaseTab = "checking" | "ready" | "busy";
 
 export default function RootLayout() {
   // ponytail: Web SQLite is single-tab until Expo supports shared OPFS handles.
-  const [databaseTab, setDatabaseTab] = useState<"checking" | "ready" | "busy">(
+  const [databaseTab, setDatabaseTab] = useState<DatabaseTab>(
     Platform.OS === "web" ? "checking" : "ready",
   );
 
@@ -43,11 +47,21 @@ export default function RootLayout() {
     };
   }, []);
 
+  return (
+    <ThemeProvider>
+      <RootContent databaseTab={databaseTab} />
+    </ThemeProvider>
+  );
+}
+
+function RootContent({ databaseTab }: { databaseTab: DatabaseTab }) {
+  const { colors } = useTheme();
+
   if (databaseTab === "checking") return null;
   if (databaseTab === "busy") {
     return (
-      <View style={{ flex: 1, justifyContent: "center", padding: 24 }}>
-        <Text accessibilityRole="alert">
+      <View style={{ flex: 1, justifyContent: "center", padding: 24, backgroundColor: colors.background.app }}>
+        <Text accessibilityRole="alert" style={{ color: colors.text.primary }}>
           StockPilot’s web database is already open in another tab. Close that tab and reload this page.
         </Text>
       </View>
@@ -57,7 +71,10 @@ export default function RootLayout() {
   return (
     <Suspense fallback={null}>
       <SQLiteProvider databaseName="stockpilot.db" onInit={migrate} useSuspense>
-        <Stack screenOptions={{ headerShown: false }} />
+        <Stack screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.background.app },
+        }} />
       </SQLiteProvider>
     </Suspense>
   );

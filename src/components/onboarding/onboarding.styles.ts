@@ -1,8 +1,9 @@
 import { StyleSheet } from "react-native";
 
-import { colors, control, radii, spacing, typography } from "@/theme";
+import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
+import type { ThemeColors } from "@/theme/tokens";
 
-export const onboardingStyles = StyleSheet.create({
+const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background.surface,
@@ -196,3 +197,7 @@ export const onboardingStyles = StyleSheet.create({
     color: colors.text.secondary,
   },
 });
+
+export function useOnboardingStyles() {
+  return useThemeStyles(createOnboardingStyles);
+}

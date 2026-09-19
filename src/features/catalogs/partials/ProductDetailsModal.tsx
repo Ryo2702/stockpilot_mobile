@@ -15,7 +15,9 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getProductStockStatus, type Product, type ProductStockMovement } from "@/domain/product";
-import { colors, control, radii, spacing, typography } from "@/theme";
+import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 
 import { getCatalogCategoryOption } from "../data/catalog.data";
 
@@ -42,6 +44,8 @@ export default function ProductDetailsModal({
   onEdit,
   onArchive,
 }: ProductDetailsModalProps) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
   const [historyVisible, setHistoryVisible] = useState(false);
 
   useEffect(() => setHistoryVisible(false), [product?.id, visible]);
@@ -125,6 +129,8 @@ export default function ProductDetailsModal({
 }
 
 function Detail({ label, value }: { label: string; value: string }) {
+  const styles = useThemeStyles(createStyles);
+
   return (
     <View style={styles.detailRow}>
       <Text style={styles.detailLabel}>{label}</Text>
@@ -142,7 +148,7 @@ function formatDate(value: string) {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background.app,

@@ -3,7 +3,9 @@ import { useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { colors, control, radii, spacing, typography } from "@/theme";
+import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 import type { CatalogCategory } from "@/domain/catalog";
 
 import type { CatalogCategoryOption } from "../data/catalog.data";
@@ -15,6 +17,8 @@ type CategorySelectorProps = {
 };
 
 export default function CategorySelector({ categories, value, onChange }: CategorySelectorProps) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
   const [open, setOpen] = useState(false);
   const selected = categories.find((category) => category.value === value);
 
@@ -67,7 +71,7 @@ export default function CategorySelector({ categories, value, onChange }: Catego
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   selector: {
     minHeight: control.md,
     flexDirection: "row",

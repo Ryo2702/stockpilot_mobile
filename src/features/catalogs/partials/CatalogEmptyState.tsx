@@ -2,7 +2,8 @@ import { Plus } from "lucide-react-native";
 import { Image, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
-import { colors, spacing, typography } from "@/theme";
+import { spacing, typography, useThemeStyles } from "@/theme";
+import type { ThemeColors } from "@/theme/tokens";
 
 const boxMascot = require("../../../../assets/images/stockpilot/empty state png/box.png");
 const searchMascot = require("../../../../assets/images/stockpilot/empty state png/search.png");
@@ -21,6 +22,7 @@ export default function CatalogEmptyState({
   onAddProduct,
   onImportInventory,
 }: CatalogEmptyStateProps) {
+  const styles = useThemeStyles(createStyles);
   const image = archived ? archiveMascot : filtered ? searchMascot : boxMascot;
 
   return (
@@ -46,7 +48,7 @@ export default function CatalogEmptyState({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   empty: {
     flex: 1,
     alignItems: "center",

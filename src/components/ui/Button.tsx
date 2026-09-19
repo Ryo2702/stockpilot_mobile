@@ -9,7 +9,9 @@ import {
   type ViewStyle,
 } from "react-native";
 
-import { colors, control, radii, spacing, typography } from "@/theme";
+import { control, radii, spacing, typography } from "@/theme";
+import { useTheme, useThemeStyles } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
@@ -33,6 +35,8 @@ export function Button({
   style,
   ...props
 }: ButtonProps) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
   const isDisabled = disabled || loading;
   const isLight = variant === "secondary" || variant === "ghost";
   const iconColor = variant === "primary" || variant === "danger" ? colors.text.onPrimary : colors.text.secondary;
@@ -64,7 +68,7 @@ export function Button({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   base: {
     minWidth: 88,
     flexDirection: "row",
@@ -116,4 +120,3 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
 });
-

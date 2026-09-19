@@ -3,12 +3,14 @@ import { Text, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 
-import { onboardingStyles as styles } from "../onboarding.styles";
+import { useOnboardingStyles } from "../onboarding.styles";
 import type { OnboardingStepProps } from "./types";
 
 type WelcomeStepProps = Pick<OnboardingStepProps, "player" | "ownerName" | "onAdvance">;
 
 export default function WelcomeStep({ player, ownerName, onAdvance }: WelcomeStepProps) {
+  const styles = useOnboardingStyles();
+
   return (
     <>
       <View style={styles.hero}>

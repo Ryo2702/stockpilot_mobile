@@ -2,7 +2,9 @@ import { Archive } from "lucide-react-native";
 import { Modal, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
-import { colors, radii, spacing, typography } from "@/theme";
+import { radii, spacing, typography, useThemeStyles } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 
 type ArchiveProductModalProps = {
   visible: boolean;
@@ -21,6 +23,9 @@ export default function ArchiveProductModal({
   onClose,
   onConfirm,
 }: ArchiveProductModalProps) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
+
   return (
     <Modal
       visible={visible}
@@ -64,7 +69,7 @@ export default function ArchiveProductModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   overlay: {
     flex: 1,
     alignItems: "center",

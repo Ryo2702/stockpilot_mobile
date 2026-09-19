@@ -1,7 +1,9 @@
 import type { LucideIcon } from "lucide-react-native";
 import { Pressable, StyleSheet, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 
-import { colors, control, radii } from "@/theme";
+import { control, radii } from "@/theme";
+import { useTheme, useThemeStyles } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 
 type IconButtonProps = Omit<PressableProps, "children"> & {
   icon: LucideIcon;
@@ -19,6 +21,8 @@ export function IconButton({
   style,
   ...props
 }: IconButtonProps) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
   const iconColor =
     variant === "primary"
       ? colors.text.onPrimary
@@ -44,7 +48,7 @@ export function IconButton({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   base: {
     width: control.md,
     height: control.md,
@@ -67,4 +71,3 @@ const styles = StyleSheet.create({
     opacity: 0.76,
   },
 });
-

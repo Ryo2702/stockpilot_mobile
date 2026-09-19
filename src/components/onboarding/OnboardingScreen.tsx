@@ -12,7 +12,7 @@ import { storeSchema, type StoreInput } from "@/validation/store.validation";
 import ExistingStoreSelectionStep from "./ExistingStoreSelectionStep";
 import OnboardingStep from "./OnboardingStep";
 import { mascotVideo, ownerNameSchema } from "./onboarding.data";
-import { onboardingStyles as styles } from "./onboarding.styles";
+import { useOnboardingStyles } from "./onboarding.styles";
 
 type OnboardingScreenProps = {
   onComplete: (ownerStore: OwnerStore) => void;
@@ -45,6 +45,7 @@ export default function OnboardingScreen({
 }
 
 function FirstRunOnboarding({ onComplete }: Pick<OnboardingScreenProps, "onComplete">) {
+  const styles = useOnboardingStyles();
   const db = useSQLiteContext();
   const [step, setStep] = useState(0);
   const [ownerName, setOwnerName] = useState("");

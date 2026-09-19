@@ -1,14 +1,19 @@
 import { Text, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
+import { useTheme } from "@/theme/ThemeProvider";
 
-import { features } from "../onboarding.data";
-import { onboardingStyles as styles } from "../onboarding.styles";
+import { getFeatures } from "../onboarding.data";
+import { useOnboardingStyles } from "../onboarding.styles";
 import type { OnboardingStepProps } from "./types";
 
 type FeaturesStepProps = Pick<OnboardingStepProps, "onAdvance">;
 
 export default function FeaturesStep({ onAdvance }: FeaturesStepProps) {
+  const { colors } = useTheme();
+  const styles = useOnboardingStyles();
+  const features = getFeatures(colors);
+
   return (
     <>
       <View style={styles.hero}>

@@ -1,14 +1,16 @@
 import { CircleAlert, CircleCheck, Info, TriangleAlert, type LucideIcon } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors, radii, spacing, typography } from "@/theme";
+import { radii, spacing, typography } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 
 export type StockStatus = "healthy" | "low" | "critical" | "neutral";
 
-const statusConfig: Record<
+const createStatusConfig = (colors: ThemeColors): Record<
   StockStatus,
   { label: string; color: string; backgroundColor: string; icon: LucideIcon }
-> = {
+> => ({
   healthy: {
     label: "Healthy",
     color: colors.semantic.success,
@@ -33,7 +35,7 @@ const statusConfig: Record<
     backgroundColor: colors.gray[100],
     icon: Info,
   },
-};
+});
 
 type StatusBadgeProps = {
   status: StockStatus;
@@ -41,7 +43,8 @@ type StatusBadgeProps = {
 };
 
 export function StatusBadge({ status, label }: StatusBadgeProps) {
-  const config = statusConfig[status];
+  const { colors } = useTheme();
+  const config = createStatusConfig(colors)[status];
   const Icon = config.icon;
 
   return (

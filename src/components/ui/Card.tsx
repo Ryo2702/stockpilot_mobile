@@ -1,7 +1,9 @@
 import type { PropsWithChildren } from "react";
 import { StyleSheet, View, type StyleProp, type ViewProps, type ViewStyle } from "react-native";
 
-import { colors, radii, spacing } from "@/theme";
+import { radii, spacing } from "@/theme";
+import { useThemeStyles } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 
 export type CardVariant = "default" | "interactive" | "selected" | "critical";
 
@@ -13,6 +15,8 @@ type CardProps = PropsWithChildren<
 >;
 
 export function Card({ children, variant = "default", style, ...props }: CardProps) {
+  const styles = useThemeStyles(createStyles);
+
   return (
     <View style={[styles.base, styles[variant], style]} {...props}>
       {children}
@@ -20,7 +24,7 @@ export function Card({ children, variant = "default", style, ...props }: CardPro
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   base: {
     padding: spacing[4],
     backgroundColor: colors.background.surface,
@@ -41,4 +45,3 @@ const styles = StyleSheet.create({
     borderColor: colors.semantic.danger,
   },
 });
-

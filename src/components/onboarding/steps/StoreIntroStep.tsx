@@ -3,15 +3,18 @@ import { Text, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { colors } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
 
 import { nextSteps } from "../onboarding.data";
-import { onboardingStyles as styles } from "../onboarding.styles";
+import { useOnboardingStyles } from "../onboarding.styles";
 import type { OnboardingStepProps } from "./types";
 
 type StoreIntroStepProps = Pick<OnboardingStepProps, "onAdvance">;
 
 export default function StoreIntroStep({ onAdvance }: StoreIntroStepProps) {
+  const { colors } = useTheme();
+  const styles = useOnboardingStyles();
+
   return (
     <>
       <View style={styles.hero}>

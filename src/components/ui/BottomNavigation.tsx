@@ -8,7 +8,9 @@ import {
 } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors, control, radii, spacing, typography } from "@/theme";
+import { control, radii, spacing, typography } from "@/theme";
+import { useTheme, useThemeStyles } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 
 export type BottomNavKey =
   | "dashboard"
@@ -35,6 +37,9 @@ export function BottomNavigation({
   activeKey,
   onChange,
 }: BottomNavigationProps) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
+
   return (
     <View style={styles.container}>
       {navItems.map(({ key, label, icon: Icon }) => {
@@ -69,7 +74,9 @@ export function BottomNavigation({
                 strokeWidth={active || isCamera ? 2.2 : 2}
               />
             </View>
-            <Text style={[styles.label, active && styles.activeLabel]}>{label}</Text>
+            <Text style={[styles.label, active && styles.activeLabel]}>
+              {label}
+            </Text>
           </Pressable>
         );
       })}
@@ -77,7 +84,7 @@ export function BottomNavigation({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     minHeight: 80,
     flexDirection: "row",
@@ -88,7 +95,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[1],
     paddingVertical: spacing[1],
     borderWidth: 1,
-    borderColor: colors.gray[900],
+    borderColor: colors.border.default,
     borderRadius: radii.xl,
     backgroundColor: colors.background.surface,
   },

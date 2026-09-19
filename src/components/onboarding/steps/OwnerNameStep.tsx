@@ -2,9 +2,9 @@ import { VideoView } from "expo-video";
 import { Text, TextInput, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
-import { colors } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
 
-import { onboardingStyles as styles } from "../onboarding.styles";
+import { useOnboardingStyles } from "../onboarding.styles";
 import type { OnboardingStepProps } from "./types";
 
 type OwnerNameStepProps = Pick<
@@ -19,6 +19,9 @@ export default function OwnerNameStep({
   onOwnerNameChange,
   onOwnerContinue,
 }: OwnerNameStepProps) {
+  const { colors } = useTheme();
+  const styles = useOnboardingStyles();
+
   return (
     <>
       <View style={styles.hero}>

@@ -2,11 +2,16 @@ import { ActivityIndicator, Image, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
-import { colors, spacing, typography } from "@/theme";
+import { spacing, typography, useThemeStyles } from "@/theme";
+import { useTheme } from "@/theme/ThemeProvider";
+import type { ThemeColors } from "@/theme/tokens";
 
 const headMascot = require("../../../assets/images/stockpilot/headMascot-transparent.png");
 
 export function LoadingScreen() {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createStyles);
+
   return (
     <SafeAreaView style={styles.centered}>
       <Image
@@ -23,6 +28,8 @@ export function LoadingScreen() {
 }
 
 export function LoadErrorScreen({ onRetry }: { onRetry: () => void }) {
+  const styles = useThemeStyles(createStyles);
+
   return (
     <SafeAreaView style={styles.centered}>
       <Text style={styles.errorTitle}>Your store couldn&apos;t be loaded.</Text>
@@ -32,7 +39,7 @@ export function LoadErrorScreen({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   centered: {
     flex: 1,
     alignItems: "center",
