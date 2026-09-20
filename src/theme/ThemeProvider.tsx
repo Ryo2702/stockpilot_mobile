@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState, type PropsWithChildren } from "react";
-import { Appearance, useColorScheme, View } from "react-native";
+import { Appearance, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
 import { themeColors, type ColorScheme, type ThemeColors } from "./tokens";
@@ -13,21 +13,19 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: PropsWithChildren) {
-  const systemScheme: ColorScheme = useColorScheme() === "dark" ? "dark" : "light";
-  const [schemeOverride, setSchemeOverride] = useState<ColorScheme | null>(null);
-  const scheme = schemeOverride ?? systemScheme;
+  const [scheme, setScheme] = useState<ColorScheme>("light");
   const value = useMemo<ThemeContextValue>(
     () => ({
       scheme,
       colors: themeColors[scheme],
       setColorScheme: (nextScheme) => {
-        setSchemeOverride(nextScheme);
+        setScheme(nextScheme);
         if (typeof Appearance.setColorScheme === "function") {
           Appearance.setColorScheme(nextScheme);
         }
       },
     }),
-    [scheme, setSchemeOverride],
+    [scheme],
   );
 
   return (

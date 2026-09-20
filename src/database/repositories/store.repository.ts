@@ -38,6 +38,9 @@ export type StoreDetailsRow = OwnerStoreRecord & {
 export type StoreOverviewRecord = {
   productCount: number;
   itemsInStock: number;
+  healthyCount: number;
+  lowStockCount: number;
+  criticalCount: number;
 };
 
 const ownerStoresQuery = `
@@ -281,7 +284,10 @@ export async function getStoreOverview(
   const overviewQuery = `
     SELECT
       COUNT(products.id) AS productCount,
-      COALESCE(SUM(inventory.quantity), 0) AS itemsInStock
+      COALESCE(SUM(inventory.quantity), 0) AS itemsInStock,
+      COALESCE(SUM(CASE WHEN COALESCE(inventory.quantity, 0) > products.reorder_level THEN 1 ELSE 0 END), 0) AS healthyCount,
+      COALESCE(SUM(CASE WHEN COALESCE(inventory.quantity, 0) > 0 AND COALESCE(inventory.quantity, 0) <= products.reorder_level THEN 1 ELSE 0 END), 0) AS lowStockCount,
+      COALESCE(SUM(CASE WHEN COALESCE(inventory.quantity, 0) <= 0 THEN 1 ELSE 0 END), 0) AS criticalCount
     FROM products
     LEFT JOIN inventory
       ON inventory.product_id = products.id
@@ -295,6 +301,9 @@ export async function getStoreOverview(
     (await db.getFirstAsync<StoreOverviewRecord>(overviewQuery, businessId, storeId)) ?? {
       productCount: 0,
       itemsInStock: 0,
+      healthyCount: 0,
+      lowStockCount: 0,
+      criticalCount: 0,
     }
   );
 }

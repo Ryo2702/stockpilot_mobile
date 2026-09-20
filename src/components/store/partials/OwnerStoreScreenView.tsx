@@ -2,6 +2,7 @@ import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BottomNavigation } from "@/components/ui/BottomNavigation";
+import { OwnerStoreOverview } from "@/features/dashboard";
 import { useThemeStyles } from "@/theme/ThemeProvider";
 
 import type { OwnerStoreScreenProps } from "../OwnerStoreScreen";
@@ -9,7 +10,6 @@ import useOwnerStoreScreen from "../hooks/useOwnerStoreScreen";
 import StoreEditModal from "./StoreEditModal";
 import OwnerStoreHeader from "./OwnerStoreHeader";
 import OwnerStoreMenu from "./OwnerStoreMenu";
-import OwnerStoreOverviewSection from "./OwnerStoreOverview";
 import { createOwnerStoreStyles } from "./owner-store.styles";
 
 type OwnerStoreScreenViewProps = OwnerStoreScreenProps &
@@ -55,12 +55,7 @@ export default function OwnerStoreScreenView({
             onCreateStore={onCreateStore}
             onOpenMenu={openMenu}
           />
-          <OwnerStoreOverviewSection
-            ownerStore={ownerStore}
-            storeDetails={storeDetails}
-            overview={overview}
-            onNavigate={onNavigate}
-          />
+          <OwnerStoreOverview overview={overview} onNavigate={onNavigate} />
         </ScrollView>
         <BottomNavigation activeKey="dashboard" onChange={onNavigate} />
       </View>

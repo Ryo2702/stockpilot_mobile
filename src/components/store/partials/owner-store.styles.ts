@@ -15,17 +15,13 @@ export const createOwnerStoreStyles = (colors: ThemeColors) => StyleSheet.create
     flex: 1,
   },
   content: {
-    gap: spacing[8],
+    gap: spacing[4],
     width: "100%",
     maxWidth: 760,
     alignSelf: "center",
     paddingHorizontal: spacing[4],
     paddingTop: spacing[4],
     paddingBottom: spacing[10],
-  },
-  brandMark: {
-    width: 44,
-    height: 44,
   },
   overflowButton: {
     width: control.md,
@@ -87,99 +83,5 @@ export const createOwnerStoreStyles = (colors: ThemeColors) => StyleSheet.create
   menuButton: {
     width: "100%",
     justifyContent: "flex-start",
-  },
-  subtitle: {
-    ...typography.bodySmall,
-    color: colors.text.secondary,
-  },
-  storeCard: {
-    gap: spacing[6],
-    padding: spacing[6],
-  },
-  stockHealth: {
-    gap: spacing[3],
-  },
-  stockHealthEmpty: {
-    alignItems: "center",
-    gap: spacing[3],
-  },
-  stockHealthImage: {
-    width: 148,
-    height: 148,
-    backgroundColor: colors.background.surface,
-  },
-  stockHealthCopy: {
-    ...typography.bodySmall,
-    color: colors.text.secondary,
-    textAlign: "center",
-  },
-  storeHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing[4],
-  },
-  storeIcon: {
-    width: 48,
-    height: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: radii.lg,
-    backgroundColor: colors.background.surface,
-  },
-  storeCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  cardLabel: {
-    ...typography.caption,
-    color: colors.text.secondary,
-  },
-  storeName: {
-    ...typography.h3,
-    color: colors.text.primary,
-  },
-  cardDescription: {
-    ...typography.bodySmall,
-    color: colors.text.secondary,
-  },
-  storeDetails: {
-    gap: spacing[1],
-  },
-  storeDetailText: {
-    ...typography.caption,
-    color: colors.text.secondary,
-  },
-  sectionHeader: {
-    gap: spacing[1],
-  },
-  sectionTitle: {
-    ...typography.title,
-    color: colors.text.primary,
-  },
-  sectionHint: {
-    ...typography.caption,
-    color: colors.text.muted,
-  },
-  overviewRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing[4],
-  },
-  overviewCard: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 145,
-    minWidth: 145,
-    minHeight: 140,
-    gap: spacing[3],
-    padding: spacing[5],
-  },
-  overviewValue: {
-    ...typography.h1,
-    color: colors.text.primary,
-  },
-  overviewLabel: {
-    ...typography.caption,
-    color: colors.text.secondary,
   },
 });

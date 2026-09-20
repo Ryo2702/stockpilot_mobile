@@ -1,5 +1,5 @@
 import { EllipsisVertical } from "lucide-react-native";
-import { Image, Pressable } from "react-native";
+import { Pressable } from "react-native";
 
 import StoreSelector from "@/components/store/StoreSelector";
 import ScreenHeader from "@/components/ui/ScreenHeader";
@@ -9,8 +9,6 @@ import { useTheme, useThemeStyles } from "@/theme/ThemeProvider";
 import type { StoreInput } from "@/validation/store.validation";
 
 import { createOwnerStoreStyles } from "./owner-store.styles";
-
-const headMascot = require("../../../../assets/images/stockpilot/headMascot-transparent.png");
 
 type OwnerStoreHeaderProps = {
   ownerStore: OwnerStore;
@@ -29,20 +27,12 @@ export default function OwnerStoreHeader({
 }: OwnerStoreHeaderProps) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createOwnerStoreStyles);
+  const ownerFirstName = ownerStore.ownerName.trim().split(/\s+/)[0] || "there";
 
   return (
     <ScreenHeader
-      title={`Hi ${ownerStore.ownerName}!`}
-      subtitle="Here's your store overview."
-      leading={
-        <Image
-          accessible
-          accessibilityLabel="StockPilot mascot"
-          source={headMascot}
-          resizeMode="contain"
-          style={styles.brandMark}
-        />
-      }
+      title={`Hi ${ownerFirstName}!`}
+      subtitle="Here's your inventory at a glance."
       context={
         <StoreSelector
           ownerStore={ownerStore}
