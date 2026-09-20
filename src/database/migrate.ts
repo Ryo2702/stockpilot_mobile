@@ -32,11 +32,16 @@ DROP TABLE IF EXISTS businesses;
 DROP TABLE IF EXISTS settings;
 DROP TABLE IF EXISTS schema_migrations;`.trim();
 
-export async function migrate(db: DatabaseExecutor) {
+// Version 0 records the one-time destructive reset. Numbered schema migrations start at 1.
+const FRESH_RESET_VERSION = 0;
+
+async function prepareDatabase(db: DatabaseExecutor) {
   await db.execAsync(
     `PRAGMA foreign_keys = ON;\nPRAGMA journal_mode = WAL;\n${schemaMigrationsSchema}`,
   );
+}
 
+async function applyMigrations(db: DatabaseExecutor) {
   for (const migration of migrations) {
     const applied = await db.getFirstAsync<{ version: number }>(
       "SELECT version FROM schema_migrations WHERE version = ?",
@@ -65,7 +70,30 @@ export async function migrate(db: DatabaseExecutor) {
   }
 }
 
+export async function migrate(db: DatabaseExecutor) {
+  await prepareDatabase(db);
+
+  const resetApplied = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version = ?",
+    FRESH_RESET_VERSION,
+  );
+
+  if (!resetApplied) {
+    await migrateFresh(db);
+    return;
+  }
+
+  await applyMigrations(db);
+}
+
 export async function migrateFresh(db: DatabaseExecutor) {
   await db.execAsync(DROP_ALL_TABLES);
-  await migrate(db);
+  await prepareDatabase(db);
+  await db.runAsync(
+    "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
+    FRESH_RESET_VERSION,
+    "one_time_fresh_reset",
+    new Date().toISOString(),
+  );
+  await applyMigrations(db);
 }
