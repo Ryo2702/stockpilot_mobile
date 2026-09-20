@@ -139,7 +139,7 @@ export default function useCatalogScreen({
       })
       .catch((error) => {
         if (active) {
-          setLoadError(error instanceof CatalogError ? error.message : "Couldn't load products.");
+          setLoadError(error instanceof CatalogError ? error.message : "Couldn't load items.");
         }
       })
       .finally(() => {
@@ -209,10 +209,10 @@ export default function useCatalogScreen({
   const saveProduct = async (input: CreateProductInput | UpdateProductInput) => {
     if (editingProduct) {
       await updateProduct(db, ownerStore, editingProduct.id, input as UpdateProductInput);
-      setSuccessMessage("Product Updated");
+      setSuccessMessage("Item updated");
     } else {
       await createProduct(db, ownerStore, input as CreateProductInput);
-      setSuccessMessage("Product Added");
+      setSuccessMessage("Item added");
     }
     setUndoArchivedProduct(null);
     setFormBarcode(null);
@@ -230,7 +230,7 @@ export default function useCatalogScreen({
       const history = await getProductStockMovements(db, ownerStore, product.id);
       setMovements(history);
     } catch (error) {
-      setActionError(error instanceof CatalogError ? error.message : "Couldn't load product details.");
+      setActionError(error instanceof CatalogError ? error.message : "Couldn't load item details.");
     } finally {
       setLoadingHistory(false);
     }
@@ -248,7 +248,7 @@ export default function useCatalogScreen({
         if (active) await openProductDetails(product);
       })
       .catch((error) => {
-        if (active) setActionError(error instanceof CatalogError ? error.message : "Couldn't open this Catalog product.");
+        if (active) setActionError(error instanceof CatalogError ? error.message : "Couldn't open this catalog item.");
       })
       .finally(() => {
         if (active) onProductRequestHandled?.();
@@ -275,7 +275,7 @@ export default function useCatalogScreen({
       setProducts((current) => [...current, ...items]);
       setHasMore(items.length === PAGE_SIZE);
     } catch (error) {
-      setLoadError(error instanceof CatalogError ? error.message : "Couldn't load more products.");
+      setLoadError(error instanceof CatalogError ? error.message : "Couldn't load more items.");
     } finally {
       setLoadingMore(false);
     }
@@ -291,10 +291,10 @@ export default function useCatalogScreen({
       setDetailVisible(false);
       setDetailProduct(null);
       setUndoArchivedProduct(archiveTarget);
-      setSuccessMessage("Product archived");
+      setSuccessMessage("Item archived");
       setReloadKey((current) => current + 1);
     } catch (error) {
-      setActionError(error instanceof CatalogError ? error.message : "Couldn't archive this product.");
+      setActionError(error instanceof CatalogError ? error.message : "Couldn't archive this item.");
     } finally {
       setArchiving(false);
     }
@@ -305,10 +305,10 @@ export default function useCatalogScreen({
     try {
       await restoreProduct(db, ownerStore, product.id);
       setUndoArchivedProduct(null);
-      setSuccessMessage("Product restored");
+      setSuccessMessage("Item restored");
       setReloadKey((current) => current + 1);
     } catch (error) {
-      setActionError(error instanceof CatalogError ? error.message : "Couldn't restore this product.");
+      setActionError(error instanceof CatalogError ? error.message : "Couldn't restore this item.");
     }
   };
 
@@ -317,10 +317,10 @@ export default function useCatalogScreen({
     try {
       await restoreProduct(db, ownerStore, undoArchivedProduct.id);
       setUndoArchivedProduct(null);
-      setSuccessMessage("Product restored");
+      setSuccessMessage("Item restored");
       setReloadKey((current) => current + 1);
     } catch (error) {
-      setActionError(error instanceof CatalogError ? error.message : "Couldn't restore this product.");
+      setActionError(error instanceof CatalogError ? error.message : "Couldn't restore this item.");
     }
   };
 

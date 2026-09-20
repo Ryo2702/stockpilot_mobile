@@ -84,7 +84,10 @@ export const storeTypeOptions: Array<{
 }> = [
   { value: "retail", label: "Retail" },
   { value: "grocery", label: "Grocery" },
-  { value: "convenience", label: "Convenience" },
+  { value: "mini_store", label: "Mini Store" },
+  { value: "convenience", label: "Convenience Store" },
+  { value: "cafe_shop", label: "Cafe Shop" },
+  { value: "motor_shop", label: "Motor Shop" },
   { value: "pharmacy", label: "Pharmacy" },
   { value: "hardware", label: "Hardware" },
   { value: "apparel", label: "Apparel" },

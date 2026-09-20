@@ -1,11 +1,12 @@
-export const storesSchema = `
-CREATE TABLE IF NOT EXISTS stores (
+export function createStoresTableSchema(tableName: "stores" | "stores_new" = "stores") {
+  return `
+CREATE TABLE ${tableName === "stores" ? "IF NOT EXISTS " : ""}${tableName} (
   id TEXT PRIMARY KEY,
   business_id TEXT NOT NULL REFERENCES businesses(id),
   name TEXT NOT NULL,
   code TEXT NULL,
   store_type TEXT NOT NULL DEFAULT 'retail'
-    CHECK (store_type IN ('retail', 'grocery', 'convenience', 'pharmacy', 'hardware', 'apparel', 'electronics', 'food_beverage', 'wholesale', 'warehouse', 'other')),
+    CHECK (store_type IN ('retail', 'grocery', 'mini_store', 'convenience', 'cafe_shop', 'motor_shop', 'pharmacy', 'hardware', 'apparel', 'electronics', 'food_beverage', 'wholesale', 'warehouse', 'other')),
   custom_store_type TEXT NULL,
   currency_mode TEXT NOT NULL DEFAULT 'iso'
     CHECK (currency_mode IN ('iso', 'custom')),
@@ -34,6 +35,9 @@ CREATE TABLE IF NOT EXISTS stores (
       AND custom_currency_symbol IS NOT NULL AND length(trim(custom_currency_symbol)) > 0)
   )
 );`.trim();
+}
+
+export const storesSchema = createStoresTableSchema();
 
 export const storesIndexesSchema = `
 CREATE INDEX IF NOT EXISTS stores_business_id_idx

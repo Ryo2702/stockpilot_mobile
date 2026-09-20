@@ -126,7 +126,7 @@ export default function StoreStatusCards({ overview }: { overview: OwnerStoreOve
             adjustsFontSizeToFit
             style={[styles.catalogLabel, compact && { fontSize: 10 }]}
           >
-            Total Products
+            Total Items
           </Text>
           <Boxes color={colors.primary[600]} size={compact ? 16 : 19} />
         </View>

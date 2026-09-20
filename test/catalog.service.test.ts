@@ -7,7 +7,6 @@ import {
   DuplicateBarcodeError,
   DuplicateSkuError,
   InvalidCatalogInputError,
-  InvalidCategoryForStoreError,
   ProductNotFoundError,
 } from "../src/features/catalogs/errors/catalog.errors";
 import {
@@ -91,7 +90,7 @@ describe("catalog product service", () => {
     }
   });
 
-  test("rejects invalid categories and duplicate SKU or barcode within one store", async () => {
+  test("allows global categories and rejects invalid input or duplicate SKU or barcode", async () => {
     const { database, db } = createDatabase();
     try {
       const store = await createOwnerStore(db as unknown as OwnerStoreDatabase, "Maria", {
@@ -103,7 +102,7 @@ describe("catalog product service", () => {
       ).rejects.toBeInstanceOf(InvalidCatalogInputError);
       await expect(
         createProduct(db as never, store, newProduct("Phone", { category: "electronics" })),
-      ).rejects.toBeInstanceOf(InvalidCategoryForStoreError);
+      ).resolves.toMatchObject({ category: "electronics" });
       await createProduct(db as never, store, newProduct("Rice", { sku: "RICE-1", barcode: "0001" }));
       await expect(
         createProduct(db as never, store, newProduct("Rice Two", { sku: "rice-1" })),
@@ -111,7 +110,7 @@ describe("catalog product service", () => {
       await expect(
         createProduct(db as never, store, newProduct("Rice Three", { barcode: "0001" })),
       ).rejects.toBeInstanceOf(DuplicateBarcodeError);
-      expect(database.prepare("SELECT COUNT(*) AS count FROM products").get()).toEqual({ count: 1 });
+      expect(database.prepare("SELECT COUNT(*) AS count FROM products").get()).toEqual({ count: 2 });
     } finally {
       database.close();
     }
@@ -159,29 +158,18 @@ describe("catalog product service", () => {
         storeType: "grocery",
       });
       const product = await createProduct(db as never, store, newProduct("Rice", { initialQuantity: 7 }));
-      await expect(
-        updateProduct(db as never, store, product.id, {
-          name: "Rice",
-          sku: undefined,
-          barcode: undefined,
-          category: "electronics",
-          unit: "ea",
-          reorderLevel: 0,
-          criticalLevel: 0,
-          notes: undefined,
-        }),
-      ).rejects.toBeInstanceOf(InvalidCategoryForStoreError);
-      await updateProduct(db as never, store, product.id, {
+      const updated = await updateProduct(db as never, store, product.id, {
         name: "Jasmine Rice",
         sku: "RICE-7",
         barcode: "1234",
-        category: "grocery",
+        category: "electronics",
         unit: "bag",
         reorderLevel: 10,
         criticalLevel: 2,
         notes: "Long grain",
       });
 
+      expect(updated.category).toBe("electronics");
       expect((await getProduct(db as never, store, product.id)).quantity).toBe(7);
       await archiveProduct(db as never, store, product.id);
       expect(await listProducts(db as never, store)).toHaveLength(0);

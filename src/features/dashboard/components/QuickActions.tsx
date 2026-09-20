@@ -75,7 +75,7 @@ export default function QuickActions({ onNavigate }: { onNavigate?: (key: Bottom
       background: colors.primary[50],
     },
     {
-      label: "Add Product",
+      label: "Add Item",
       Icon: Plus,
       key: "catalog",
       color: colors.primary[600],

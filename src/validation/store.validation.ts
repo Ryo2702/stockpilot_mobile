@@ -9,7 +9,10 @@ export const ownerNameSchema = z
 export const storeTypeValues = [
   "retail",
   "grocery",
+  "mini_store",
   "convenience",
+  "cafe_shop",
+  "motor_shop",
   "pharmacy",
   "hardware",
   "apparel",

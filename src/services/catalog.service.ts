@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 import type { SQLiteDatabase } from "expo-sqlite";
 
-import { getCatalogCategoryValues, type CatalogCategory } from "@/domain/catalog";
+import type { CatalogCategory } from "@/domain/catalog";
 import {
   type Product,
   type ProductSort,
@@ -12,7 +12,6 @@ import {
   DuplicateBarcodeError,
   DuplicateSkuError,
   InvalidCatalogInputError,
-  InvalidCategoryForStoreError,
   ProductNotFoundError,
   StoreNotFoundError,
 } from "@/features/catalogs/errors/catalog.errors";
@@ -22,8 +21,6 @@ import {
   type CreateProductInput,
   type UpdateProductInput,
 } from "@/validation/product.validation";
-import type { StoreType } from "@/validation/store.validation";
-
 import type { OwnerStore } from "./owner-store.service";
 
 type CatalogExecutor = Pick<SQLiteDatabase, "getAllAsync" | "getFirstAsync" | "runAsync">;
@@ -58,20 +55,13 @@ async function withProductTransaction(
   }
 }
 
-async function getStoreType(db: CatalogExecutor, store: OwnerStore): Promise<StoreType> {
-  const result = await db.getFirstAsync<{ storeType: StoreType }>(
-    "SELECT store_type AS storeType FROM stores WHERE id = ? AND business_id = ?",
+async function assertStoreExists(db: CatalogExecutor, store: OwnerStore) {
+  const result = await db.getFirstAsync<{ id: string }>(
+    "SELECT id FROM stores WHERE id = ? AND business_id = ?",
     store.storeId,
     store.businessId,
   );
   if (!result) throw new StoreNotFoundError();
-  return result.storeType;
-}
-
-function assertCategory(category: CatalogCategory, storeType: StoreType) {
-  if (!getCatalogCategoryValues(storeType).includes(category)) {
-    throw new InvalidCategoryForStoreError();
-  }
 }
 
 async function assertUniqueSku(
@@ -276,15 +266,14 @@ export async function createProduct(
 ) {
   const parsed = createProductSchema.safeParse(input);
   if (!parsed.success) {
-    throw new InvalidCatalogInputError(parsed.error.issues[0]?.message ?? "Check the product details.");
+    throw new InvalidCatalogInputError(parsed.error.issues[0]?.message ?? "Check the item details.");
   }
   const product = parsed.data;
   const id = createId("product");
   const now = new Date().toISOString();
 
   await withProductTransaction(db, async (tx) => {
-    const storeType = await getStoreType(tx, store);
-    assertCategory(product.category, storeType);
+    await assertStoreExists(tx, store);
     await assertUniqueSku(tx, store, product.sku);
     await assertUniqueBarcode(tx, store, product.barcode);
     await tx.runAsync(
@@ -361,14 +350,13 @@ export async function updateProduct(
 ) {
   const parsed = updateProductSchema.safeParse(input);
   if (!parsed.success) {
-    throw new InvalidCatalogInputError(parsed.error.issues[0]?.message ?? "Check the product details.");
+    throw new InvalidCatalogInputError(parsed.error.issues[0]?.message ?? "Check the item details.");
   }
   const product = parsed.data;
   const now = new Date().toISOString();
 
   await withProductTransaction(db, async (tx) => {
-    const storeType = await getStoreType(tx, store);
-    assertCategory(product.category, storeType);
+    await assertStoreExists(tx, store);
     const existing = await tx.getFirstAsync<{ id: string; currentPrice: number | null }>(
       `SELECT id, current_price AS currentPrice FROM products
        WHERE id = ? AND business_id = ? AND store_id = ? AND is_active = 1`,
@@ -408,7 +396,7 @@ export async function updateProduct(
 
 export async function archiveProduct(db: CatalogDatabase, store: OwnerStore, productId: string) {
   await withProductTransaction(db, async (tx) => {
-    await getStoreType(tx, store);
+    await assertStoreExists(tx, store);
     const existing = await tx.getFirstAsync<{ id: string }>(
       `SELECT id FROM products
        WHERE id = ? AND business_id = ? AND store_id = ? AND is_active = 1`,
@@ -430,7 +418,7 @@ export async function archiveProduct(db: CatalogDatabase, store: OwnerStore, pro
 
 export async function restoreProduct(db: CatalogDatabase, store: OwnerStore, productId: string) {
   await withProductTransaction(db, async (tx) => {
-    await getStoreType(tx, store);
+    await assertStoreExists(tx, store);
     const existing = await tx.getFirstAsync<{ id: string }>(
       `SELECT id FROM products
        WHERE id = ? AND business_id = ? AND store_id = ? AND is_active = 0`,

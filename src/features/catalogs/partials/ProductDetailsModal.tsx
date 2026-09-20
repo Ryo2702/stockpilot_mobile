@@ -61,8 +61,8 @@ export default function ProductDetailsModal({
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         <View style={styles.header}>
-          <IconButton icon={ChevronLeft} label="Close product details" onPress={onClose} />
-          <Text style={styles.headerTitle}>Product Details</Text>
+          <IconButton icon={ChevronLeft} label="Close item details" onPress={onClose} />
+          <Text style={styles.headerTitle}>Item Details</Text>
         </View>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
@@ -127,8 +127,8 @@ export default function ProductDetailsModal({
             </View>
           ) : null}
 
-          <Button title="Edit Product" icon={Pencil} onPress={onEdit} />
-          <Button title="Archive Product" icon={Archive} variant="danger" onPress={onArchive} />
+          <Button title="Edit Item" icon={Pencil} onPress={onEdit} />
+          <Button title="Archive Item" icon={Archive} variant="danger" onPress={onArchive} />
         </ScrollView>
       </SafeAreaView>
     </Modal>

@@ -166,7 +166,7 @@ export default function CatalogFormModal({
       await onSave(result.data);
     } catch (error) {
       setErrors({
-        form: error instanceof CatalogError ? error.message : "Couldn't save this product.",
+        form: error instanceof CatalogError ? error.message : "Couldn't save this item.",
       });
     } finally {
       setSaving(false);
@@ -198,11 +198,11 @@ export default function CatalogFormModal({
         <View style={styles.header}>
           <IconButton
             icon={ChevronLeft}
-            label="Close product form"
+            label="Close item form"
             disabled={saving}
             onPress={close}
           />
-          <Text style={styles.title}>{product ? "Edit Product" : "Add Product"}</Text>
+          <Text style={styles.title}>{product ? "Edit Item" : "Add Item"}</Text>
         </View>
         <ScrollView
           style={styles.scroll}
@@ -211,8 +211,8 @@ export default function CatalogFormModal({
           showsVerticalScrollIndicator={false}
         >
           <FormField
-            label="Product Name *"
-            accessibilityLabel="Product name"
+            label="Item Name *"
+            accessibilityLabel="Item name"
             value={form.name}
             onChangeText={(value) => updateField("name", value)}
             placeholder="e.g. Jasmine rice"
@@ -305,7 +305,7 @@ export default function CatalogFormModal({
           </View>
           <FormField
             label="Notes"
-            accessibilityLabel="Product notes"
+            accessibilityLabel="Item notes"
             value={form.notes}
             onChangeText={(value) => updateField("notes", value)}
             placeholder="Optional details"
@@ -323,7 +323,7 @@ export default function CatalogFormModal({
             </Text>
           ) : null}
           <Button
-            title={product ? "Save Changes" : "Save Product"}
+            title={product ? "Save Changes" : "Save Item"}
             loading={saving}
             onPress={() => void save()}
             style={styles.saveButton}

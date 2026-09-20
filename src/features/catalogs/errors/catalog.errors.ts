@@ -7,7 +7,7 @@ export class CatalogError extends Error {
 
 export class ProductNotFoundError extends CatalogError {
   constructor() {
-    super("This product is no longer available in the selected store.");
+    super("This item is no longer available in the selected store.");
   }
 }
 
@@ -25,13 +25,7 @@ export class DuplicateSkuError extends CatalogError {
 
 export class DuplicateBarcodeError extends CatalogError {
   constructor() {
-    super("This barcode is already assigned to another product in this store.");
-  }
-}
-
-export class InvalidCategoryForStoreError extends CatalogError {
-  constructor() {
-    super("This category is not available for the selected store type.");
+    super("This barcode is already assigned to another item in this store.");
   }
 }
 

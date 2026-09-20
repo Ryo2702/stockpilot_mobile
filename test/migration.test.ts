@@ -57,6 +57,9 @@ describe("database migration", () => {
         { version: 4 },
         { version: 5 },
         { version: 6 },
+        { version: 7 },
+        { version: 8 },
+        { version: 9 },
       ]);
       expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'products'")).toEqual({ name: "products" });
       expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'catalogs'")).toBeUndefined();
@@ -104,6 +107,9 @@ describe("database migration", () => {
         { version: 4 },
         { version: 5 },
         { version: 6 },
+        { version: 7 },
+        { version: 8 },
+        { version: 9 },
       ]);
     } finally {
       database.close();
@@ -188,7 +194,7 @@ describe("database migration", () => {
       expect(database.first<{ product_id: string }>("SELECT product_id FROM stock_movements")).toEqual({
         product_id: "product-1",
       });
-      expect(database.all<{ version: number }>("SELECT version FROM schema_migrations ORDER BY version")).toHaveLength(6);
+      expect(database.all<{ version: number }>("SELECT version FROM schema_migrations ORDER BY version")).toHaveLength(9);
       expect(database.all("PRAGMA foreign_key_check")).toHaveLength(0);
     } finally {
       database.close();

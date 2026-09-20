@@ -125,7 +125,7 @@ export default function CatalogScreenView({
             }
             actions={
               <Button
-                title="Add Product"
+                title="Add Item"
                 icon={Plus}
                 onPress={openCreate}
               />
@@ -135,7 +135,7 @@ export default function CatalogScreenView({
           <View style={styles.listActions}>
             <Text numberOfLines={1} style={styles.storeName}>{ownerStore.storeName}</Text>
             <Button
-              title={showArchived ? "Active Catalog" : "Archived Products"}
+              title={showArchived ? "Active Catalog" : "Archived Items"}
               icon={showArchived ? RotateCcw : Archive}
               size="sm"
               variant="secondary"
@@ -184,7 +184,7 @@ export default function CatalogScreenView({
           ) : products.length ? (
             <View style={styles.list}>
               <Text style={styles.resultCount}>
-                {products.length}{hasMore ? "+" : ""} {products.length === 1 ? "product" : "products"}
+                {products.length}{hasMore ? "+" : ""} {products.length === 1 ? "item" : "items"}
               </Text>
               {products.map((product) => (
                 <CatalogItemCard

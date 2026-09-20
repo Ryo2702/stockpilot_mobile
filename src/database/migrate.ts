@@ -15,6 +15,7 @@ export type DatabaseExecutor = Pick<
 export type Migration = {
   version: number;
   name: string;
+  disableForeignKeys?: boolean;
   up: (db: DatabaseExecutor) => Promise<void>;
   isApplied?: (db: DatabaseExecutor) => Promise<boolean>;
 };
@@ -45,17 +46,22 @@ export async function migrate(db: DatabaseExecutor) {
     if (applied && (!migration.isApplied || (await migration.isApplied(db))))
       continue;
 
-    await db.withTransactionAsync(async () => {
-      await migration.up(db);
-      if (!applied) {
-        await db.runAsync(
-          "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
-          migration.version,
-          migration.name,
-          new Date().toISOString(),
-        );
-      }
-    });
+    if (migration.disableForeignKeys) await db.execAsync("PRAGMA foreign_keys = OFF;");
+    try {
+      await db.withTransactionAsync(async () => {
+        await migration.up(db);
+        if (!applied) {
+          await db.runAsync(
+            "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
+            migration.version,
+            migration.name,
+            new Date().toISOString(),
+          );
+        }
+      });
+    } finally {
+      if (migration.disableForeignKeys) await db.execAsync("PRAGMA foreign_keys = ON;");
+    }
   }
 }
 

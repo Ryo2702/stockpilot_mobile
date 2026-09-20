@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 import { Platform } from "react-native";
 
-import { catalogCategoryValues, getCatalogCategoryValues, type CatalogCategory } from "@/domain/catalog";
+import { catalogCategoryValues, type CatalogCategory } from "@/domain/catalog";
 import { createProductSchema } from "@/validation/product.validation";
 
 import { storeSchema } from "../validation/store.validation";
@@ -205,7 +205,7 @@ async function parseInventoryCsv(
     const category = rawCategory
       ? catalogCategoryValues.find((value) => value === rawCategory) ?? null
       : null;
-    if (rawCategory && !category) throw new Error(`Row ${rowNumber}: ${rawCategory} is not a valid product category.`);
+    if (rawCategory && !category) throw new Error(`Row ${rowNumber}: ${rawCategory} isn't a supported category.`);
     const unit = values(row, "unit")?.trim() || null;
     if (sku) {
       const skuStoreKey = storeNameKey(storeName ?? defaultStoreName);
@@ -386,8 +386,8 @@ async function buildActiveImportPlan(
     let newProduct: ActiveImportPlanRow["newProduct"] = null;
     if (!existing) {
       const category = row.category ?? "other";
-      if (!getCatalogCategoryValues(store.storeType).includes(category)) {
-        throw new Error(`Row ${row.rowNumber}: category ${category} isn't available in ${store.storeName}. Choose a compatible category or destination store.`);
+      if (!catalogCategoryValues.includes(category)) {
+        throw new Error(`Row ${row.rowNumber}: category ${category} isn't supported.`);
       }
       const parsed = createProductSchema.safeParse({
         name: row.name,
@@ -402,7 +402,7 @@ async function buildActiveImportPlan(
         initialQuantity: row.quantity,
       });
       if (!parsed.success) {
-        throw new Error(`Row ${row.rowNumber}: ${parsed.error.issues[0]?.message ?? "Check the product details."}`);
+        throw new Error(`Row ${row.rowNumber}: ${parsed.error.issues[0]?.message ?? "Check the item details."}`);
       }
       newProduct = parsed.data;
     }

@@ -1,12 +1,18 @@
 import { Check, ChevronDown } from "lucide-react-native";
 import { useState, type PropsWithChildren } from "react";
-import { Modal, Pressable, ScrollView, Text, TextInput, View, type TextInputProps } from "react-native";
+import { Image, Modal, Pressable, ScrollView, Text, TextInput, View, type TextInputProps } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getCurrencySymbol } from "@/domain/currency";
 import { useTheme } from "@/theme/ThemeProvider";
 
-import { currencyModeOptions, currencyOptions, decimalPlaceOptions, storeTypeOptions } from "../store.data";
+import {
+  countryCodeOptions,
+  currencyModeOptions,
+  currencyOptions,
+  decimalPlaceOptions,
+  storeTypeOptions,
+} from "../store.data";
 import type { StoreErrors, StoreFieldChange, StoreForm } from "../store.types";
 import { useOnboardingStyles } from "../../onboarding/onboarding.styles";
 
@@ -64,6 +70,7 @@ function Choice({ label, selected, onPress }: { label: string; selected: boolean
 }
 
 function StoreDetailsSection({ storeForm, storeErrors, onStoreFieldChange }: StoreFormFieldsProps) {
+  const { colors } = useTheme();
   const styles = useOnboardingStyles();
 
   return (
@@ -98,15 +105,32 @@ function StoreDetailsSection({ storeForm, storeErrors, onStoreFieldChange }: Sto
       </ColumnGroup>
       <View style={styles.field}>
         <Text style={styles.fieldLabel}>Store type</Text>
-        <View style={styles.choiceList}>
-          {storeTypeOptions.map(({ value, label }) => (
-            <Choice
-              key={value}
-              label={label}
-              selected={storeForm.storeType === value}
-              onPress={() => onStoreFieldChange("storeType", value)}
-            />
-          ))}
+        <View style={styles.storeTypeList}>
+          {storeTypeOptions.map(({ value, label, image }) => {
+            const selected = storeForm.storeType === value;
+            return (
+              <Pressable
+                key={value}
+                accessibilityRole="radio"
+                accessibilityLabel={label}
+                accessibilityHint="Select this store type"
+                accessibilityState={{ selected }}
+                onPress={() => onStoreFieldChange("storeType", value)}
+                style={({ pressed }) => [
+                  styles.storeTypeChoice,
+                  selected && styles.storeTypeChoiceSelected,
+                  pressed && styles.choicePressed,
+                ]}
+              >
+                <Image accessible={false} source={image} resizeMode="contain" style={styles.storeTypeImage} />
+                {selected ? (
+                  <View style={styles.storeTypeCheck}>
+                    <Check color={colors.text.onPrimary} size={12} strokeWidth={3} />
+                  </View>
+                ) : null}
+              </Pressable>
+            );
+          })}
         </View>
         {storeForm.storeType === "other" ? (
           <TextField
@@ -125,6 +149,127 @@ function StoreDetailsSection({ storeForm, storeErrors, onStoreFieldChange }: Sto
   );
 }
 
+type DropdownOption = { value: string; label: string };
+
+function DropdownField({
+  label,
+  value,
+  error,
+  onChange,
+  options,
+  searchPlaceholder,
+}: {
+  label: string;
+  value?: string;
+  error?: string;
+  onChange: (value: string) => void;
+  options: DropdownOption[];
+  searchPlaceholder?: string;
+}) {
+  const { colors } = useTheme();
+  const styles = useOnboardingStyles();
+  const [open, setOpen] = useState(false);
+  const selectedCode = value?.trim().toUpperCase();
+  const selected = options.find((option) => option.value === selectedCode);
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredOptions = searchPlaceholder && normalizedQuery
+    ? options.filter(({ value: code, label: optionLabel }) =>
+        `${optionLabel} ${code}`.toLowerCase().includes(normalizedQuery),
+      )
+    : options;
+
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${label}, ${selected?.label ?? `select ${label.toLowerCase()}`}`}
+        accessibilityState={{ expanded: open }}
+        onPress={() => {
+          setQuery("");
+          setOpen(true);
+        }}
+        style={({ pressed }) => [styles.dropdownSelector, pressed && styles.choicePressed]}
+      >
+        <Text numberOfLines={1} style={[styles.dropdownText, !selected && styles.dropdownPlaceholder]}>
+          {selected?.label ?? `Select ${label.toLowerCase()}`}
+        </Text>
+        <ChevronDown color={colors.text.secondary} size={18} />
+      </Pressable>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+      <Modal
+        visible={open}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setQuery("");
+          setOpen(false);
+        }}
+      >
+        <View style={styles.dropdownOverlay}>
+          <SafeAreaView style={styles.dropdownSheet} edges={["bottom"]}>
+            <Text style={styles.dropdownTitle}>Select {label.toLowerCase()}</Text>
+            {searchPlaceholder ? (
+              <TextInput
+                accessibilityLabel={searchPlaceholder}
+                autoCapitalize="none"
+                autoCorrect={false}
+                onChangeText={setQuery}
+                placeholder={searchPlaceholder}
+                placeholderTextColor={colors.text.muted}
+                style={styles.input}
+                value={query}
+              />
+            ) : null}
+            {filteredOptions.length ? (
+              <ScrollView
+                style={styles.dropdownOptions}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                {filteredOptions.map((option) => {
+                  const isSelected = option.value === selectedCode;
+                  return (
+                    <Pressable
+                      key={option.value}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isSelected }}
+                      onPress={() => {
+                        onChange(option.value);
+                        setQuery("");
+                        setOpen(false);
+                      }}
+                      style={({ pressed }) => [styles.dropdownOption, pressed && styles.choicePressed]}
+                    >
+                      <Text style={[styles.dropdownOptionLabel, isSelected && styles.dropdownSelectedLabel]}>
+                        {option.label}
+                      </Text>
+                      {isSelected ? <Check color={colors.primary[600]} size={18} /> : null}
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            ) : (
+              <Text style={styles.dropdownPlaceholder}>No matching options.</Text>
+            )}
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setQuery("");
+                setOpen(false);
+              }}
+              style={styles.dropdownClose}
+            >
+              <Text style={styles.dropdownCloseText}>Cancel</Text>
+            </Pressable>
+          </SafeAreaView>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
 function CurrencyDropdown({
   value,
   error,
@@ -134,9 +279,6 @@ function CurrencyDropdown({
   error?: string;
   onChange: (value: string) => void;
 }) {
-  const { colors } = useTheme();
-  const styles = useOnboardingStyles();
-  const [open, setOpen] = useState(false);
   const selectedCode = value?.trim().toUpperCase();
   const options = selectedCode && !currencyOptions.some((option) => option.value === selectedCode)
     ? [
@@ -147,61 +289,41 @@ function CurrencyDropdown({
         ...currencyOptions,
       ]
     : currencyOptions;
-  const selected = options.find((option) => option.value === selectedCode);
 
   return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>Currency</Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Currency, ${selected?.label ?? "select currency"}`}
-        accessibilityState={{ expanded: open }}
-        onPress={() => setOpen(true)}
-        style={({ pressed }) => [styles.dropdownSelector, pressed && styles.choicePressed]}
-      >
-        <Text numberOfLines={1} style={[styles.dropdownText, !selected && styles.dropdownPlaceholder]}>
-          {selected?.label ?? "Select currency"}
-        </Text>
-        <ChevronDown color={colors.text.secondary} size={18} />
-      </Pressable>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <View style={styles.dropdownOverlay}>
-          <SafeAreaView style={styles.dropdownSheet} edges={["bottom"]}>
-            <Text style={styles.dropdownTitle}>Select currency</Text>
-            <ScrollView style={styles.dropdownOptions} showsVerticalScrollIndicator={false}>
-              {options.map((option) => {
-                const isSelected = option.value === selectedCode;
-                return (
-                  <Pressable
-                    key={option.value}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: isSelected }}
-                    onPress={() => {
-                      onChange(option.value);
-                      setOpen(false);
-                    }}
-                    style={({ pressed }) => [styles.dropdownOption, pressed && styles.choicePressed]}
-                  >
-                    <Text style={[styles.dropdownOptionLabel, isSelected && styles.dropdownSelectedLabel]}>
-                      {option.label}
-                    </Text>
-                    {isSelected ? <Check color={colors.primary[600]} size={18} /> : null}
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => setOpen(false)}
-              style={styles.dropdownClose}
-            >
-              <Text style={styles.dropdownCloseText}>Cancel</Text>
-            </Pressable>
-          </SafeAreaView>
-        </View>
-      </Modal>
-    </View>
+    <DropdownField
+      label="Currency"
+      value={selectedCode}
+      error={error}
+      onChange={onChange}
+      options={options}
+    />
+  );
+}
+
+function CountryCodeDropdown({
+  value,
+  error,
+  onChange,
+}: {
+  value?: string;
+  error?: string;
+  onChange: (value: string) => void;
+}) {
+  const selectedCode = value?.trim().toUpperCase();
+  const options = selectedCode && !countryCodeOptions.some((option) => option.value === selectedCode)
+    ? [{ value: selectedCode, label: `Unknown country (${selectedCode})` }, ...countryCodeOptions]
+    : countryCodeOptions;
+
+  return (
+    <DropdownField
+      label="Country code"
+      value={selectedCode}
+      error={error}
+      onChange={onChange}
+      options={options}
+      searchPlaceholder="Search countries or codes"
+    />
   );
 }
 
@@ -351,15 +473,9 @@ function AddressSection({ storeForm, storeErrors, onStoreFieldChange }: StoreFor
           />
         </Column>
       </ColumnGroup>
-      <TextField
-        accessibilityLabel="Country code"
-        label="Country code"
-        autoCapitalize="characters"
-        autoCorrect={false}
-        maxLength={2}
-        onChangeText={(value) => onStoreFieldChange("countryCode", value)}
-        placeholder="e.g. PH"
-        value={storeForm.countryCode ?? ""}
+      <CountryCodeDropdown
+        value={storeForm.countryCode}
+        onChange={(value) => onStoreFieldChange("countryCode", value)}
         error={storeErrors.countryCode}
       />
     </View>

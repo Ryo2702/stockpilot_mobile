@@ -45,7 +45,7 @@ export default function ArchiveProductModal({
           <View style={styles.icon}>
             <Archive color={colors.semantic.danger} size={22} />
           </View>
-          <Text style={styles.title}>Archive Product?</Text>
+          <Text style={styles.title}>Archive Item?</Text>
           <Text style={styles.copy}>
             This will remove “{productName}” from the active catalog. Its stock history will be kept
             and it can be restored later.
@@ -60,7 +60,7 @@ export default function ArchiveProductModal({
               style={[styles.actionButton, compact && styles.compactActionButton]}
             />
             <Button
-              title="Archive Product"
+              title="Archive Item"
               icon={Archive}
               variant="danger"
               loading={archiving}

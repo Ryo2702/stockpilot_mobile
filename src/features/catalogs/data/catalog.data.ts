@@ -13,10 +13,9 @@ import {
 } from "lucide-react-native";
 
 import {
-  getCatalogCategoryValues,
+  catalogCategoryValues,
   type CatalogCategory,
 } from "@/domain/catalog";
-import type { StoreType } from "@/validation/store.validation";
 
 export type CatalogCategoryOption = {
   value: CatalogCategory;
@@ -37,9 +36,9 @@ const categoryOptions: Record<CatalogCategory, CatalogCategoryOption> = {
   other: { value: "other", label: "Other", icon: Package },
 };
 
-export function getCatalogCategoryOptions(storeType: StoreType) {
-  return getCatalogCategoryValues(storeType).map((category) => categoryOptions[category]);
-}
+export const catalogCategoryOptions = catalogCategoryValues.map(
+  (category) => categoryOptions[category],
+);
 
 export function getCatalogCategoryOption(category: CatalogCategory) {
   return categoryOptions[category];

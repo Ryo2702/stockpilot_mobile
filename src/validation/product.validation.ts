@@ -37,8 +37,8 @@ const productFields = {
   name: z
     .string()
     .trim()
-    .min(1, "Product name is required.")
-    .max(120, "Product names must be 120 characters or fewer.")
+    .min(1, "Item name is required.")
+    .max(120, "Item names must be 120 characters or fewer.")
     .transform((value) => value.replace(/\s+/g, " ")),
   sku: skuSchema,
   barcode: optionalText(128),

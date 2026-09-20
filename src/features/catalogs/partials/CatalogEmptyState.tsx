@@ -29,18 +29,18 @@ export default function CatalogEmptyState({
     <View style={styles.empty}>
       <Image accessible={false} source={image} resizeMode="contain" style={styles.image} />
       <Text style={styles.title}>
-        {archived ? "No archived products" : filtered ? "No matching products" : "No products yet"}
+        {archived ? "No archived items" : filtered ? "No matching items" : "No items yet"}
       </Text>
       <Text style={styles.copy}>
         {archived
-          ? "Archived products will appear here and can be restored."
+          ? "Archived items will appear here and can be restored."
           : filtered
             ? "Try changing your search or filters."
-            : "Start building this store's catalog by adding your first product."}
+            : "Start building this store's catalog by adding your first item."}
       </Text>
       {!archived && !filtered ? (
         <View style={styles.actions}>
-          <Button title="Add Product" icon={Plus} onPress={onAddProduct} />
+          <Button title="Add Item" icon={Plus} onPress={onAddProduct} />
           <Button title="Import Inventory" variant="secondary" onPress={onImportInventory} />
         </View>
       ) : null}
