@@ -11,7 +11,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import StoreSelector from "@/components/store/StoreSelector";
 import { BottomNavigation, type BottomNavKey } from "@/components/ui/BottomNavigation";
 import { Button } from "@/components/ui/Button";
-import ScreenHeader from "@/components/ui/ScreenHeader";
 import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
@@ -113,34 +112,29 @@ export default function CatalogScreenView({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <ScreenHeader
-            title="Catalog"
-            context={
-              <StoreSelector
-                ownerStore={ownerStore}
-                ownerStores={ownerStores}
-                onSelectStore={onSelectStore}
-                onCreateStore={onCreateStore}
-              />
-            }
-            actions={
+          <View style={styles.catalogHeader}>
+            <View style={styles.headerTop}>
+              <Text accessibilityRole="header" style={styles.headerTitle}>Catalog</Text>
+              <Button title="Add Item" icon={Plus} onPress={openCreate} />
+            </View>
+            <View style={styles.headerContext}>
+              <View style={styles.storeSelector}>
+                <StoreSelector
+                  compact
+                  ownerStore={ownerStore}
+                  ownerStores={ownerStores}
+                  onSelectStore={onSelectStore}
+                  onCreateStore={onCreateStore}
+                />
+              </View>
               <Button
-                title="Add Item"
-                icon={Plus}
-                onPress={openCreate}
+                title={showArchived ? "Active Catalog" : "Archived Items"}
+                icon={showArchived ? RotateCcw : Archive}
+                size="sm"
+                variant="secondary"
+                onPress={toggleArchived}
               />
-            }
-          />
-
-          <View style={styles.listActions}>
-            <Text numberOfLines={1} style={styles.storeName}>{ownerStore.storeName}</Text>
-            <Button
-              title={showArchived ? "Active Catalog" : "Archived Items"}
-              icon={showArchived ? RotateCcw : Archive}
-              size="sm"
-              variant="secondary"
-              onPress={toggleArchived}
-            />
+            </View>
           </View>
 
           <CatalogFilters
@@ -281,17 +275,30 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingTop: spacing[4],
     paddingBottom: spacing[8],
   },
-  storeName: {
-    ...typography.caption,
-    minWidth: 0,
-    flexShrink: 1,
-    color: colors.text.muted,
+  catalogHeader: {
+    width: "100%",
+    gap: spacing[3],
   },
-  listActions: {
+  headerTop: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: spacing[3],
+  },
+  headerTitle: {
+    ...typography.h2,
+    minWidth: 0,
+    flexShrink: 1,
+    color: colors.text.primary,
+  },
+  headerContext: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing[2],
+  },
+  storeSelector: {
+    minWidth: 0,
+    flex: 1,
   },
   list: {
     gap: spacing[3],
