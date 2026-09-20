@@ -43,6 +43,15 @@ export type StoreOverviewRecord = {
   criticalCount: number;
 };
 
+export type RecentStoreActivityRecord = {
+  id: string;
+  productName: string;
+  unit: string;
+  delta: number;
+  reason: string;
+  createdAt: string;
+};
+
 const ownerStoresQuery = `
   SELECT
     businesses.id AS businessId,
@@ -305,5 +314,31 @@ export async function getStoreOverview(
       lowStockCount: 0,
       criticalCount: 0,
     }
+  );
+}
+
+export async function listRecentStoreActivities(
+  db: StoreRepositoryDatabase,
+  businessId: string,
+  storeId: string,
+) {
+  return db.getAllAsync<RecentStoreActivityRecord>(
+    `SELECT
+       movements.id,
+       products.name AS productName,
+       products.unit,
+       movements.delta,
+       movements.reason,
+       movements.created_at AS createdAt
+     FROM stock_movements AS movements
+     INNER JOIN products
+       ON products.id = movements.product_id
+      AND products.business_id = movements.business_id
+      AND products.store_id = movements.store_id
+     WHERE movements.business_id = ? AND movements.store_id = ?
+     ORDER BY movements.created_at DESC, movements.id DESC
+     LIMIT 5`,
+    businessId,
+    storeId,
   );
 }

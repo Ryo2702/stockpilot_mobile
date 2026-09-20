@@ -15,6 +15,7 @@ export type Product = {
   barcode: string | null;
   category: CatalogCategory;
   unit: string;
+  currentPrice: number | null;
   reorderLevel: number;
   criticalLevel: number;
   notes: string | null;

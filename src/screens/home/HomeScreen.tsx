@@ -1,5 +1,5 @@
 import { useSQLiteContext } from "expo-sqlite";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 
 import StoreSwitchModal from "@/components/store/StoreSwitchModal";
 import type { BottomNavKey } from "@/components/ui/BottomNavigation";
@@ -17,6 +17,7 @@ import { LoadErrorScreen, LoadingScreen } from "./HomeStatusScreens";
 const OnboardingScreen = lazy(() => import("@/components/onboarding/OnboardingScreen"));
 const OwnerStoreScreen = lazy(() => import("@/components/store/OwnerStoreScreen"));
 const CatalogScreen = lazy(() => import("@/features/catalogs/CatalogScreen"));
+const InventoryScreen = lazy(() => import("@/features/inventory/InventoryScreen"));
 const ModuleEmptyScreen = lazy(() => import("./ModuleEmptyScreen"));
 
 export default function HomeScreen() {
@@ -29,6 +30,7 @@ export default function HomeScreen() {
     "dashboard" | "catalog" | "inventory" | "insights"
   >("dashboard");
   const [cameraRequest, setCameraRequest] = useState(0);
+  const [catalogProductRequest, setCatalogProductRequest] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSwitching, setIsSwitching] = useState(false);
   const [error, setError] = useState(false);
@@ -136,12 +138,28 @@ export default function HomeScreen() {
     }
   };
 
+  const openCatalogProduct = (productId: string) => {
+    setCatalogProductRequest(productId);
+    setActiveSection("catalog");
+  };
+  const handleCatalogProductRequest = useCallback(() => setCatalogProductRequest(null), []);
+
   if (loading) return <LoadingScreen />;
   if (error) return <LoadErrorScreen onRetry={() => setAttempt((value) => value + 1)} />;
 
   const screen =
     ownerStore && !showEntry ? (
-      activeSection === "inventory" || activeSection === "insights" ? (
+      activeSection === "inventory" ? (
+        <InventoryScreen
+          key={`${ownerStore.businessId}:${ownerStore.storeId}`}
+          ownerStore={ownerStore}
+          ownerStores={ownerStores}
+          onSelectStore={switchStore}
+          onCreateStore={createStore}
+          onOpenCatalogProduct={openCatalogProduct}
+          onNavigate={navigate}
+        />
+      ) : activeSection === "insights" ? (
         <ModuleEmptyScreen
           activeKey={activeSection}
           ownerStore={ownerStore}
@@ -157,6 +175,8 @@ export default function HomeScreen() {
           onSelectStore={switchStore}
           onCreateStore={createStore}
           onImportInventory={() => setShowEntry(true)}
+          productRequest={catalogProductRequest}
+          onProductRequestHandled={handleCatalogProductRequest}
           onNavigate={navigate}
           cameraRequest={cameraRequest}
           onCameraRequestHandled={() => setCameraRequest(0)}

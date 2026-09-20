@@ -46,6 +46,7 @@ export default function CatalogScreenView({
   const styles = useThemeStyles(createStyles);
   const {
     products,
+    currency,
     search,
     category,
     stockStatus,
@@ -189,6 +190,7 @@ export default function CatalogScreenView({
                 <CatalogItemCard
                   key={product.id}
                   product={product}
+                  currency={currency}
                   archived={showArchived}
                   onOpen={() => void openProductDetails(product)}
                   onEdit={() => openEditProduct(product)}
@@ -220,6 +222,7 @@ export default function CatalogScreenView({
       <CatalogFormModal
         visible={formVisible}
         product={editingProduct}
+        currency={currency}
         categories={categories}
         scannedBarcode={formBarcode}
         onClose={closeForm}
@@ -236,6 +239,7 @@ export default function CatalogScreenView({
       <ProductDetailsModal
         visible={detailVisible}
         product={detailProduct}
+        currency={currency}
         movements={movements}
         loadingHistory={loadingHistory}
         error={actionError}

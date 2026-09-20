@@ -176,6 +176,7 @@ export async function listProducts(
        products.barcode,
        products.category,
        products.unit,
+       products.current_price AS currentPrice,
        products.reorder_level AS reorderLevel,
        products.critical_level AS criticalLevel,
        products.notes,
@@ -209,6 +210,7 @@ export async function getProduct(db: CatalogExecutor, store: OwnerStore, product
        products.barcode,
        products.category,
        products.unit,
+       products.current_price AS currentPrice,
        products.reorder_level AS reorderLevel,
        products.critical_level AS criticalLevel,
        products.notes,
@@ -287,9 +289,9 @@ export async function createProduct(
     await assertUniqueBarcode(tx, store, product.barcode);
     await tx.runAsync(
       `INSERT INTO products (
-        id, business_id, store_id, name, sku, barcode, category, unit,
+        id, business_id, store_id, name, sku, barcode, category, unit, current_price,
         reorder_level, critical_level, notes, is_active, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
       id,
       store.businessId,
       store.storeId,
@@ -298,6 +300,7 @@ export async function createProduct(
       product.barcode ?? null,
       product.category,
       product.unit,
+      product.currentPrice ?? null,
       product.reorderLevel,
       product.criticalLevel,
       product.notes ?? null,
@@ -316,9 +319,9 @@ export async function createProduct(
     if (product.initialQuantity > 0) {
       await tx.runAsync(
         `INSERT INTO stock_movements (
-          id, business_id, store_id, product_id, delta, quantity_before,
-          quantity_after, reason, note, created_at
-        ) VALUES (?, ?, ?, ?, ?, 0, ?, 'initial', NULL, ?)`,
+          id, business_id, store_id, product_id, movement_type, delta, quantity_before,
+          quantity_after, reason, reference, note, created_at
+        ) VALUES (?, ?, ?, ?, 'stock_in', ?, 0, ?, 'initial', NULL, NULL, ?)`,
         createId("movement"),
         store.businessId,
         store.storeId,
@@ -339,6 +342,7 @@ export async function createProduct(
     barcode: product.barcode ?? null,
     category: product.category,
     unit: product.unit,
+    currentPrice: product.currentPrice ?? null,
     reorderLevel: product.reorderLevel,
     criticalLevel: product.criticalLevel,
     notes: product.notes ?? null,
@@ -365,19 +369,22 @@ export async function updateProduct(
   await withProductTransaction(db, async (tx) => {
     const storeType = await getStoreType(tx, store);
     assertCategory(product.category, storeType);
-    const existing = await tx.getFirstAsync<{ id: string }>(
-      `SELECT id FROM products
+    const existing = await tx.getFirstAsync<{ id: string; currentPrice: number | null }>(
+      `SELECT id, current_price AS currentPrice FROM products
        WHERE id = ? AND business_id = ? AND store_id = ? AND is_active = 1`,
       productId,
       store.businessId,
       store.storeId,
     );
     if (!existing) throw new ProductNotFoundError();
+    const currentPrice = product.currentPrice === undefined
+      ? existing.currentPrice
+      : product.currentPrice;
     await assertUniqueSku(tx, store, product.sku, productId);
     await assertUniqueBarcode(tx, store, product.barcode, productId);
     await tx.runAsync(
       `UPDATE products
-       SET name = ?, sku = ?, barcode = ?, category = ?, unit = ?, reorder_level = ?,
+       SET name = ?, sku = ?, barcode = ?, category = ?, unit = ?, current_price = ?, reorder_level = ?,
            critical_level = ?, notes = ?, updated_at = ?
        WHERE id = ? AND business_id = ? AND store_id = ? AND is_active = 1`,
       product.name,
@@ -385,6 +392,7 @@ export async function updateProduct(
       product.barcode ?? null,
       product.category,
       product.unit,
+      currentPrice,
       product.reorderLevel,
       product.criticalLevel,
       product.notes ?? null,

@@ -28,6 +28,11 @@ const requiredQuantity = z.preprocess(
   z.coerce.number().int().min(0, "Quantity cannot be negative.").max(Number.MAX_SAFE_INTEGER),
 );
 
+const currentPrice = z.preprocess(
+  (value) => (typeof value === "string" ? value.trim().replace(",", ".") || null : value),
+  z.coerce.number().finite().min(0, "Price cannot be negative.").max(Number.MAX_SAFE_INTEGER).nullable().optional(),
+);
+
 const productFields = {
   name: z
     .string()
@@ -39,6 +44,7 @@ const productFields = {
   barcode: optionalText(128),
   category: z.enum(catalogCategoryValues),
   unit: unitSchema,
+  currentPrice,
   reorderLevel: nonNegativeInteger,
   criticalLevel: nonNegativeInteger,
   notes: optionalText(500),
@@ -63,5 +69,7 @@ export const createProductSchema = z
 
 export const updateProductSchema = z.object(productFields).superRefine(validateCriticalLevel);
 
-export type CreateProductInput = z.infer<typeof createProductSchema>;
-export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+type ProductInput<T> = Omit<T, "currentPrice"> & { currentPrice?: number | string | null };
+
+export type CreateProductInput = ProductInput<z.infer<typeof createProductSchema>>;
+export type UpdateProductInput = ProductInput<z.infer<typeof updateProductSchema>>;

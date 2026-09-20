@@ -39,6 +39,7 @@ export default function StoreSetup({
           storeForm={storeForm}
           storeErrors={storeErrors}
           onStoreFieldChange={onStoreFieldChange}
+          allowCustomCurrency={false}
         />
         {storeErrors.form ? <Text style={styles.error}>{storeErrors.form}</Text> : null}
         <Button title="Create Store" size="lg" loading={saving} onPress={onCreateStore} style={styles.action} />

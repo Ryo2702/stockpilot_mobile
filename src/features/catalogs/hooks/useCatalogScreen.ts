@@ -1,10 +1,11 @@
 import { useSQLiteContext } from "expo-sqlite";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import type { CatalogCategory } from "@/domain/catalog";
+import type { CurrencySettings } from "@/domain/currency";
 import type { Product, ProductSort, ProductStockFilter, ProductStockMovement } from "@/domain/product";
 import { CatalogError } from "@/features/catalogs/errors/catalog.errors";
-import type { OwnerStore } from "@/services/owner-store.service";
+import { getOwnerStoreDetails, type OwnerStore } from "@/services/owner-store.service";
 import {
   archiveProduct,
   createProduct,
@@ -19,12 +20,19 @@ import type { CreateProductInput, UpdateProductInput } from "@/validation/produc
 import type { CatalogCategoryOption } from "../data/catalog.data";
 
 const PAGE_SIZE = 50;
+const defaultCurrency: CurrencySettings = {
+  currencyMode: "iso",
+  currencyCode: "PHP",
+  currencyDecimalPlaces: 2,
+};
 
 type UseCatalogScreenOptions = {
   ownerStore: OwnerStore;
   categories: CatalogCategoryOption[];
   cameraRequest: number;
   onCameraRequestHandled?: () => void;
+  productRequest: string | null;
+  onProductRequestHandled?: () => void;
 };
 
 export default function useCatalogScreen({
@@ -32,8 +40,11 @@ export default function useCatalogScreen({
   categories,
   cameraRequest,
   onCameraRequestHandled,
+  productRequest,
+  onProductRequestHandled,
 }: UseCatalogScreenOptions) {
   const db = useSQLiteContext();
+  const [currency, setCurrency] = useState<CurrencySettings>(defaultCurrency);
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -77,6 +88,29 @@ export default function useCatalogScreen({
   useEffect(() => {
     setUndoArchivedProduct(null);
   }, [ownerStore.businessId, ownerStore.storeId]);
+
+  useEffect(() => {
+    let active = true;
+    setCurrency(defaultCurrency);
+    getOwnerStoreDetails(db, ownerStore.businessId, ownerStore.storeId)
+      .then((store) => {
+        if (active && store) {
+          setCurrency({
+            currencyMode: store.currencyMode,
+            currencyCode: store.currencyCode,
+            customCurrencySymbol: store.customCurrencySymbol,
+            currencyDecimalPlaces: store.currencyDecimalPlaces,
+          });
+        }
+      })
+      .catch(() => {
+        if (active) setCurrency(defaultCurrency);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [db, ownerStore.businessId, ownerStore.storeId]);
 
   useEffect(() => {
     if (category && !categories.some((option) => option.value === category)) {
@@ -186,25 +220,43 @@ export default function useCatalogScreen({
     setReloadKey((current) => current + 1);
   };
 
-  const openProductDetails = async (product: Product) => {
+  const openProductDetails = useCallback(async (product: Product) => {
     setActionError("");
     setDetailProduct(product);
     setDetailVisible(true);
     setMovements([]);
     setLoadingHistory(true);
     try {
-      const [details, history] = await Promise.all([
-        getProduct(db, ownerStore, product.id),
-        getProductStockMovements(db, ownerStore, product.id),
-      ]);
-      setDetailProduct(details);
+      const history = await getProductStockMovements(db, ownerStore, product.id);
       setMovements(history);
     } catch (error) {
       setActionError(error instanceof CatalogError ? error.message : "Couldn't load product details.");
     } finally {
       setLoadingHistory(false);
     }
-  };
+  }, [db, ownerStore.businessId, ownerStore.storeId]);
+
+  useEffect(() => {
+    if (!productRequest) return;
+    let active = true;
+    setSearch("");
+    setCategory(null);
+    setStockStatus("all");
+    setShowArchived(false);
+    getProduct(db, ownerStore, productRequest)
+      .then(async (product) => {
+        if (active) await openProductDetails(product);
+      })
+      .catch((error) => {
+        if (active) setActionError(error instanceof CatalogError ? error.message : "Couldn't open this Catalog product.");
+      })
+      .finally(() => {
+        if (active) onProductRequestHandled?.();
+      });
+    return () => {
+      active = false;
+    };
+  }, [db, onProductRequestHandled, openProductDetails, ownerStore, productRequest]);
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
@@ -286,6 +338,7 @@ export default function useCatalogScreen({
   };
 
   return {
+    currency,
     products,
     search,
     category,

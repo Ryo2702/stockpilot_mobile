@@ -95,12 +95,4 @@ export const storeTypeOptions: Array<{
   { value: "other", label: "Other" },
 ];
 
-export const currencyModeOptions: Array<{
-  value: NonNullable<StoreForm["currencyMode"]>;
-  label: string;
-}> = [
-  { value: "iso", label: "Standard currency" },
-  { value: "custom", label: "Custom currency" },
-];
-
 export const decimalPlaceOptions = [0, 1, 2, 3, 4];

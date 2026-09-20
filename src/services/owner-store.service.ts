@@ -13,8 +13,10 @@ import {
   insertBusiness,
   insertStore,
   listOwnerStores,
+  listRecentStoreActivities,
   updateStore as updateStoreRecord,
   type OwnerStoreRecord,
+  type RecentStoreActivityRecord,
   type StoreDetailsRow,
   type StoreRepositoryDatabase,
   type StoreOverviewRecord,
@@ -23,7 +25,9 @@ import {
 
 export type OwnerStore = OwnerStoreRecord;
 export type OwnerStoreDetails = OwnerStore & StoreSchema;
-export type OwnerStoreOverview = StoreOverviewRecord;
+export type OwnerStoreOverview = StoreOverviewRecord & {
+  recentActivities: RecentStoreActivityRecord[];
+};
 export type OwnerStoreDatabase = StoreRepositoryDatabase;
 
 export class OwnerStoreNotFoundError extends Error {
@@ -155,7 +159,11 @@ export async function getOwnerStoreOverview(
   businessId: string,
   storeId: string,
 ) {
-  return getStoreOverview(db, businessId, storeId);
+  const [overview, recentActivities] = await Promise.all([
+    getStoreOverview(db, businessId, storeId),
+    listRecentStoreActivities(db, businessId, storeId),
+  ]);
+  return { ...overview, recentActivities };
 }
 
 export async function createOwnerStore(

@@ -10,10 +10,9 @@ import { spacing, typography, useThemeStyles } from "@/theme";
 import type { ThemeColors } from "@/theme/tokens";
 import type { StoreInput } from "@/validation/store.validation";
 
-const inventoryImage = require("../../../assets/images/stockpilot/empty state png/box2.png");
 const insightsImage = require("../../../assets/images/stockpilot/empty state png/bulb2.png");
 
-type ModuleKey = Extract<BottomNavKey, "inventory" | "insights">;
+type ModuleKey = Extract<BottomNavKey, "insights">;
 
 type ModuleEmptyScreenProps = {
   activeKey: ModuleKey;
@@ -25,13 +24,6 @@ type ModuleEmptyScreenProps = {
 };
 
 const content = {
-  inventory: {
-    title: "Inventory",
-    subtitle: "Keep track of stock across your store.",
-    emptyTitle: "No inventory yet",
-    description: "Add products to your catalog to start tracking stock here.",
-    image: inventoryImage,
-  },
   insights: {
     title: "Insights",
     subtitle: "See how your store is performing.",

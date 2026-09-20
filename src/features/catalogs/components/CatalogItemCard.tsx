@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { formatCurrency, type CurrencySettings } from "@/domain/currency";
 import { getProductStockStatus, type Product } from "@/domain/product";
 import { radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -13,6 +14,7 @@ import { getCatalogCategoryOption } from "../data/catalog.data";
 
 type CatalogItemCardProps = {
   product: Product;
+  currency: CurrencySettings;
   archived?: boolean;
   onOpen?: () => void;
   onEdit?: () => void;
@@ -22,6 +24,7 @@ type CatalogItemCardProps = {
 
 export default function CatalogItemCard({
   product,
+  currency,
   archived = false,
   onOpen,
   onEdit,
@@ -75,6 +78,9 @@ export default function CatalogItemCard({
       </View>
       <View style={styles.details}>
         <Text style={styles.category}>{category.label}</Text>
+        <Text style={styles.priceText}>
+          Current Price: {product.currentPrice === null ? "—" : formatCurrency(product.currentPrice, currency)}
+        </Text>
         <Text style={styles.stockText}>
           {product.quantity} {product.unit} in stock
         </Text>
@@ -134,6 +140,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.text.secondary,
   },
   stockText: {
+    ...typography.label,
+    color: colors.text.primary,
+  },
+  priceText: {
     ...typography.label,
     color: colors.text.primary,
   },

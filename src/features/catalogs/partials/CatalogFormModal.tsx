@@ -17,6 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import type { CatalogCategory } from "@/domain/catalog";
+import { getCurrencySymbol, type CurrencySettings } from "@/domain/currency";
 import type { Product } from "@/domain/product";
 import { CatalogError } from "@/features/catalogs/errors/catalog.errors";
 import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
@@ -62,6 +63,7 @@ type ProductDraft = {
   barcode: string;
   category: CatalogCategory;
   unit: string;
+  currentPrice: string;
   initialQuantity: string;
   reorderLevel: string;
   criticalLevel: string;
@@ -71,6 +73,7 @@ type ProductDraft = {
 type CatalogFormModalProps = {
   visible: boolean;
   product: Product | null;
+  currency: CurrencySettings;
   categories: CatalogCategoryOption[];
   onClose: () => void;
   onScanBarcode: () => void;
@@ -87,6 +90,7 @@ function createDraft(product: Product | null, categories: CatalogCategoryOption[
     barcode: product?.barcode ?? "",
     category: category ?? categories[0]?.value ?? "other",
     unit: product?.unit ?? "ea",
+    currentPrice: String(product?.currentPrice ?? ""),
     initialQuantity: "0",
     reorderLevel: String(product?.reorderLevel ?? 0),
     criticalLevel: String(product?.criticalLevel ?? 0),
@@ -97,6 +101,7 @@ function createDraft(product: Product | null, categories: CatalogCategoryOption[
 export default function CatalogFormModal({
   visible,
   product,
+  currency,
   categories,
   onClose,
   onScanBarcode,
@@ -255,6 +260,17 @@ export default function CatalogFormModal({
             onChange={(value) => updateField("unit", value)}
             error={errors.unit}
           />
+          <FormField
+            label="Current Price"
+            accessibilityLabel="Current price"
+            value={form.currentPrice}
+            onChangeText={(value) => updateField("currentPrice", value)}
+            inputMode="decimal"
+            keyboardType="decimal-pad"
+            placeholder="0"
+            prefix={getCurrencySymbol(currency)}
+            error={errors.currentPrice}
+          />
           {!product ? (
             <FormField
               label="Initial Quantity *"
@@ -325,29 +341,41 @@ function FormField({
   containerStyle,
   multiline,
   numericOnly,
+  prefix,
   ...inputProps
 }: TextInputProps & {
   label: string;
   error?: string;
   containerStyle?: StyleProp<ViewStyle>;
   numericOnly?: boolean;
+  prefix?: string;
 }) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+  const input = (
+    <TextInput
+      {...inputProps}
+      inputMode={numericOnly ? "numeric" : inputProps.inputMode}
+      onChangeText={numericOnly
+        ? (value) => inputProps.onChangeText?.(value.replace(/\D/g, ""))
+        : inputProps.onChangeText}
+      multiline={multiline}
+      style={[styles.input, prefix ? styles.prefixedInputText : null, multiline && styles.multilineInput]}
+      placeholderTextColor={colors.text.muted}
+    />
+  );
 
   return (
     <View style={[styles.fieldGroup, containerStyle]}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput
-        {...inputProps}
-        inputMode={numericOnly ? "numeric" : inputProps.inputMode}
-        onChangeText={numericOnly
-          ? (value) => inputProps.onChangeText?.(value.replace(/\D/g, ""))
-          : inputProps.onChangeText}
-        multiline={multiline}
-        style={[styles.input, multiline && styles.multilineInput]}
-        placeholderTextColor={colors.text.muted}
-      />
+      {prefix ? (
+        <View style={[styles.prefixedInput, error ? styles.inputError : null]}>
+          <Text style={styles.inputPrefix}>{prefix}</Text>
+          {input}
+        </View>
+      ) : (
+        input
+      )}
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
@@ -490,6 +518,30 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.background.surface,
     ...typography.bodySmall,
     color: colors.text.primary,
+  },
+  prefixedInput: {
+    minHeight: control.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+    paddingHorizontal: spacing[3],
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    borderRadius: radii.md,
+    backgroundColor: colors.background.surface,
+  },
+  inputError: { borderColor: colors.semantic.danger },
+  inputPrefix: {
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+  },
+  prefixedInputText: {
+    minWidth: 0,
+    flex: 1,
+    paddingHorizontal: 0,
+    borderWidth: 0,
+    borderRadius: 0,
+    backgroundColor: "transparent",
   },
   dropdownSelector: {
     minHeight: control.md,

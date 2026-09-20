@@ -4,7 +4,7 @@ import {
   Camera,
   ChartNoAxesCombined,
   House,
-  Store,
+  Package,
 } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -25,7 +25,7 @@ const navItems: Array<{ key: BottomNavKey; label: string; icon: LucideIcon }> =
     { key: "catalog", label: "Catalog", icon: Boxes },
     { key: "camera", label: "Camera", icon: Camera },
     { key: "insights", label: "Insights", icon: ChartNoAxesCombined },
-    { key: "inventory", label: "Inventory", icon: Store },
+    { key: "inventory", label: "Inventory", icon: Package },
   ];
 
 type BottomNavigationProps = {

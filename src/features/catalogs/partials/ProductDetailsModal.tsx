@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { formatCurrency, type CurrencySettings } from "@/domain/currency";
 import { getProductStockStatus, type Product, type ProductStockMovement } from "@/domain/product";
 import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -26,6 +27,7 @@ const noHistoryMascot = require("../../../../assets/images/stockpilot/empty stat
 type ProductDetailsModalProps = {
   visible: boolean;
   product: Product | null;
+  currency: CurrencySettings;
   movements: ProductStockMovement[];
   loadingHistory: boolean;
   error?: string;
@@ -37,6 +39,7 @@ type ProductDetailsModalProps = {
 export default function ProductDetailsModal({
   visible,
   product,
+  currency,
   movements,
   loadingHistory,
   error,
@@ -78,6 +81,10 @@ export default function ProductDetailsModal({
           <View style={styles.detailsCard}>
             <Detail label="Category" value={category.label} />
             <Detail label="Unit" value={product.unit} />
+            <Detail
+              label="Current Price"
+              value={product.currentPrice === null ? "—" : formatCurrency(product.currentPrice, currency)}
+            />
             <Detail label="Reorder Level" value={`${product.reorderLevel} ${product.unit}`} />
             <Detail label="Critical Level" value={`${product.criticalLevel} ${product.unit}`} />
             <Detail label="Notes" value={product.notes || "—"} />

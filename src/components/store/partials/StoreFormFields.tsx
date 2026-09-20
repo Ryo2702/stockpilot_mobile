@@ -1,9 +1,12 @@
-import type { PropsWithChildren } from "react";
-import { Pressable, Text, TextInput, View, type TextInputProps } from "react-native";
+import { Check, ChevronDown } from "lucide-react-native";
+import { useState, type PropsWithChildren } from "react";
+import { Modal, Pressable, ScrollView, Text, TextInput, View, type TextInputProps } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+import { getCurrencySymbol } from "@/domain/currency";
 import { useTheme } from "@/theme/ThemeProvider";
 
-import { currencyModeOptions, decimalPlaceOptions, storeTypeOptions } from "../store.data";
+import { currencyModeOptions, currencyOptions, decimalPlaceOptions, storeTypeOptions } from "../store.data";
 import type { StoreErrors, StoreFieldChange, StoreForm } from "../store.types";
 import { useOnboardingStyles } from "../../onboarding/onboarding.styles";
 
@@ -11,6 +14,7 @@ type StoreFormFieldsProps = {
   storeForm: StoreForm;
   storeErrors: StoreErrors;
   onStoreFieldChange: StoreFieldChange;
+  allowCustomCurrency?: boolean;
 };
 
 type TextFieldProps = TextInputProps & {
@@ -121,34 +125,115 @@ function StoreDetailsSection({ storeForm, storeErrors, onStoreFieldChange }: Sto
   );
 }
 
-function CurrencySection({ storeForm, storeErrors, onStoreFieldChange }: StoreFormFieldsProps) {
+function CurrencyDropdown({
+  value,
+  error,
+  onChange,
+}: {
+  value?: string;
+  error?: string;
+  onChange: (value: string) => void;
+}) {
+  const { colors } = useTheme();
   const styles = useOnboardingStyles();
-  const currencyMode = storeForm.currencyMode ?? "iso";
+  const [open, setOpen] = useState(false);
+  const selectedCode = value?.trim().toUpperCase();
+  const options = selectedCode && !currencyOptions.some((option) => option.value === selectedCode)
+    ? [
+        {
+          value: selectedCode,
+          label: `${selectedCode} (${getCurrencySymbol({ currencyMode: "iso", currencyCode: selectedCode })})`,
+        },
+        ...currencyOptions,
+      ]
+    : currencyOptions;
+  const selected = options.find((option) => option.value === selectedCode);
+
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>Currency</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Currency, ${selected?.label ?? "select currency"}`}
+        accessibilityState={{ expanded: open }}
+        onPress={() => setOpen(true)}
+        style={({ pressed }) => [styles.dropdownSelector, pressed && styles.choicePressed]}
+      >
+        <Text numberOfLines={1} style={[styles.dropdownText, !selected && styles.dropdownPlaceholder]}>
+          {selected?.label ?? "Select currency"}
+        </Text>
+        <ChevronDown color={colors.text.secondary} size={18} />
+      </Pressable>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <View style={styles.dropdownOverlay}>
+          <SafeAreaView style={styles.dropdownSheet} edges={["bottom"]}>
+            <Text style={styles.dropdownTitle}>Select currency</Text>
+            <ScrollView style={styles.dropdownOptions} showsVerticalScrollIndicator={false}>
+              {options.map((option) => {
+                const isSelected = option.value === selectedCode;
+                return (
+                  <Pressable
+                    key={option.value}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    onPress={() => {
+                      onChange(option.value);
+                      setOpen(false);
+                    }}
+                    style={({ pressed }) => [styles.dropdownOption, pressed && styles.choicePressed]}
+                  >
+                    <Text style={[styles.dropdownOptionLabel, isSelected && styles.dropdownSelectedLabel]}>
+                      {option.label}
+                    </Text>
+                    {isSelected ? <Check color={colors.primary[600]} size={18} /> : null}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setOpen(false)}
+              style={styles.dropdownClose}
+            >
+              <Text style={styles.dropdownCloseText}>Cancel</Text>
+            </Pressable>
+          </SafeAreaView>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+function CurrencySection({
+  storeForm,
+  storeErrors,
+  onStoreFieldChange,
+  allowCustomCurrency = true,
+}: StoreFormFieldsProps) {
+  const styles = useOnboardingStyles();
+  const currencyMode = allowCustomCurrency ? storeForm.currencyMode ?? "iso" : "iso";
 
   return (
     <View style={styles.formSection}>
       <Text style={styles.sectionTitle}>Currency</Text>
-      <View style={styles.choiceList}>
-        {currencyModeOptions.map(({ value, label }) => (
-          <Choice
-            key={value}
-            label={label}
-            selected={currencyMode === value}
-            onPress={() => onStoreFieldChange("currencyMode", value)}
-          />
-        ))}
-      </View>
+      {allowCustomCurrency ? (
+        <View style={styles.choiceList}>
+          {currencyModeOptions.map(({ value, label }) => (
+            <Choice
+              key={value}
+              label={label}
+              selected={currencyMode === value}
+              onPress={() => onStoreFieldChange("currencyMode", value)}
+            />
+          ))}
+        </View>
+      ) : null}
       {currencyMode === "iso" ? (
-        <TextField
-          accessibilityLabel="Currency code"
-          label="Currency code"
-          autoCapitalize="characters"
-          autoCorrect={false}
-          maxLength={3}
-          onChangeText={(value) => onStoreFieldChange("currencyCode", value)}
-          placeholder="e.g. PHP"
-          value={storeForm.currencyCode ?? ""}
+        <CurrencyDropdown
+          value={storeForm.currencyCode}
           error={storeErrors.currencyCode}
+          onChange={(value) => onStoreFieldChange("currencyCode", value)}
         />
       ) : (
         <ColumnGroup>
@@ -281,7 +366,12 @@ function AddressSection({ storeForm, storeErrors, onStoreFieldChange }: StoreFor
   );
 }
 
-export default function StoreFormFields({ storeForm, storeErrors, onStoreFieldChange }: StoreFormFieldsProps) {
+export default function StoreFormFields({
+  storeForm,
+  storeErrors,
+  onStoreFieldChange,
+  allowCustomCurrency,
+}: StoreFormFieldsProps) {
   return (
     <>
       <StoreDetailsSection
@@ -293,6 +383,7 @@ export default function StoreFormFields({ storeForm, storeErrors, onStoreFieldCh
         storeForm={storeForm}
         storeErrors={storeErrors}
         onStoreFieldChange={onStoreFieldChange}
+        allowCustomCurrency={allowCustomCurrency}
       />
       <AddressSection
         storeForm={storeForm}

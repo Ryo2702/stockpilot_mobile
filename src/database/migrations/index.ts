@@ -4,6 +4,8 @@ import { productsDomainMigration } from "./003_products_domain_compatibility";
 import { catalogCategoriesMigration } from "./004_catalog_categories";
 import { restoreProductsTableMigration } from "./005_restore_products_table";
 import { productMetadataMigration } from "./006_product_metadata";
+import { productCurrentPriceMigration } from "./007_product_current_price";
+import { inventoryMovementsMigration } from "./008_inventory_movements";
 
 export const migrations = [
   initialMigration,
@@ -12,4 +14,6 @@ export const migrations = [
   catalogCategoriesMigration,
   restoreProductsTableMigration,
   productMetadataMigration,
+  productCurrentPriceMigration,
+  inventoryMovementsMigration,
 ];
