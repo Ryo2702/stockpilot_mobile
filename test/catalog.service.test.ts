@@ -16,7 +16,7 @@ import {
   listProducts,
   restoreProduct,
   updateProduct,
-} from "../src/services/catalog.service";
+} from "../src/services/catalog";
 import { createOwnerStore, createStoreForBusiness, type OwnerStoreDatabase } from "../src/services/owner-store.service";
 import type { CreateProductInput, UpdateProductInput } from "../src/validation/product.validation";
 

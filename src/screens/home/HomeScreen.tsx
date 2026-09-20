@@ -18,7 +18,7 @@ const OnboardingScreen = lazy(() => import("@/components/onboarding/OnboardingSc
 const OwnerStoreScreen = lazy(() => import("@/components/store/OwnerStoreScreen"));
 const CatalogScreen = lazy(() => import("@/features/catalogs/CatalogScreen"));
 const InventoryScreen = lazy(() => import("@/features/inventory/InventoryScreen"));
-const ModuleEmptyScreen = lazy(() => import("./ModuleEmptyScreen"));
+const InsightsScreen = lazy(() => import("@/features/insights/InsightsScreen"));
 
 export default function HomeScreen() {
   const db = useSQLiteContext();
@@ -160,8 +160,8 @@ export default function HomeScreen() {
           onNavigate={navigate}
         />
       ) : activeSection === "insights" ? (
-        <ModuleEmptyScreen
-          activeKey={activeSection}
+        <InsightsScreen
+          key={`${ownerStore.businessId}:${ownerStore.storeId}`}
           ownerStore={ownerStore}
           ownerStores={ownerStores}
           onSelectStore={switchStore}

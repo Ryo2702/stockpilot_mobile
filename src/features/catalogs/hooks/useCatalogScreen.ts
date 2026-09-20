@@ -14,7 +14,7 @@ import {
   listProducts,
   restoreProduct,
   updateProduct,
-} from "@/services/catalog.service";
+} from "@/services/catalog";
 import type { CreateProductInput, UpdateProductInput } from "@/validation/product.validation";
 
 import type { CatalogCategoryOption } from "../data/catalog.data";
