@@ -14,8 +14,8 @@ const destination = {
 } as OwnerStore;
 
 const exportedCsv = [
-  "store_name,name,sku,barcode,category,unit,notes,quantity,reorder_level,critical_level",
-  '"Main Store","Rice 25kg","RC250","123456","grocery","kg","Stock note",3,20,5',
+  "store_name,name,sku,barcode,category,unit,notes,quantity,reorder_level,critical_level,current_price",
+  '"Main Store","Rice 25kg","RC250","123456","grocery","kg","Stock note",3,20,5,89.95',
 ].join("\n");
 
 function createDatabase(products: Array<Record<string, unknown>> = []) {
@@ -62,6 +62,7 @@ describe("inventory CSV transfer", () => {
     expect(result.updatedProductCount).toBe(0);
     expect(runAsync).toHaveBeenCalledTimes(3);
     expect(runAsync.mock.calls[0]?.[0]).toContain("INSERT INTO products");
+    expect(runAsync.mock.calls[0]?.[9]).toBe(89.95);
     expect(runAsync.mock.calls[1]?.[0]).toContain("INSERT INTO inventory");
     expect(runAsync.mock.calls[2]?.[0]).toContain("INSERT INTO stock_movements");
   });
@@ -127,5 +128,13 @@ describe("inventory CSV transfer", () => {
       { activeStoreOnly: true, expectedAnalysis: analysis },
     )).rejects.toThrow("Inventory changed after review");
     expect(runAsync).not.toHaveBeenCalled();
+  });
+
+  it("rejects a negative current price during analysis", async () => {
+    const { database } = createDatabase();
+    const csv = exportedCsv.replace(",89.95", ",-1");
+
+    await expect(analyzeInventoryImport(database, destination, csv, "main-store.csv"))
+      .rejects.toThrow("current_price must be a valid amount of 0 or more");
   });
 });

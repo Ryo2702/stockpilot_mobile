@@ -22,6 +22,7 @@ type InventoryRow = {
   category: CatalogCategory | null;
   unit: string | null;
   notes: string | null;
+  currentPrice: number | null;
   quantity: number;
   reorderLevel: number;
   criticalLevel: number;
@@ -152,6 +153,15 @@ function parseCount(value: string | undefined, label: string, rowNumber: number)
   return count;
 }
 
+function parsePrice(value: string | undefined, rowNumber: number) {
+  if (value === undefined || value.trim() === "") return null;
+  const price = Number(value.trim());
+  if (!Number.isFinite(price) || price < 0) {
+    throw new Error(`Row ${rowNumber}: current_price must be a valid amount of 0 or more.`);
+  }
+  return price;
+}
+
 async function parseInventoryCsv(
   csv: string,
   defaultStoreName: string,
@@ -220,6 +230,7 @@ async function parseInventoryCsv(
     const quantity = parseCount(values(row, "quantity"), "quantity", rowNumber);
     const reorderLevel = parseCount(values(row, "reorder_level"), "reorder_level", rowNumber);
     const criticalLevel = parseCount(values(row, "critical_level"), "critical_level", rowNumber);
+    const currentPrice = parsePrice(values(row, "current_price") ?? values(row, "price"), rowNumber);
     const notes = values(row, "notes")?.trim() || null;
     if (criticalLevel > reorderLevel) {
       throw new Error(`Row ${rowNumber}: critical_level cannot exceed reorder_level.`);
@@ -234,6 +245,7 @@ async function parseInventoryCsv(
       category,
       unit,
       notes,
+      currentPrice,
       quantity,
       reorderLevel,
       criticalLevel,
@@ -395,7 +407,7 @@ async function buildActiveImportPlan(
         barcode: row.barcode ?? undefined,
         category,
         unit: row.unit ?? "ea",
-        currentPrice: null,
+        currentPrice: row.currentPrice,
         reorderLevel: row.reorderLevel,
         criticalLevel: row.criticalLevel,
         notes: row.notes ?? undefined,
@@ -715,16 +727,21 @@ export async function importInventoryCsv(
       } else if (!existing) {
         await db.runAsync(
           `INSERT INTO products (
-            id, business_id, store_id, name, sku, reorder_level, critical_level,
-            is_active, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+            id, business_id, store_id, name, sku, barcode, category, unit, current_price,
+            reorder_level, critical_level, notes, is_active, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
           productId,
           targetStore.businessId,
           targetStore.storeId,
           row.name,
           row.sku,
+          row.barcode,
+          row.category ?? "other",
+          row.unit ?? "ea",
+          row.currentPrice,
           row.reorderLevel,
           row.criticalLevel,
+          row.notes,
           now,
           now,
         );

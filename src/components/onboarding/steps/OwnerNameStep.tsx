@@ -23,7 +23,17 @@ export default function OwnerNameStep({
   const styles = useOnboardingStyles();
 
   return (
-    <>
+    <View style={styles.ownerNameScreen}>
+      <View pointerEvents="none" style={styles.ownerNameBackdropTop} />
+      <View pointerEvents="none" style={styles.ownerNameBackdropBottom} />
+
+      <View style={styles.brand}>
+        <Text style={styles.brandName}>
+          Stock<Text style={styles.brandNameAccent}>Pilot</Text>
+        </Text>
+        <Text style={styles.brandTagline}>Smarter Inventory. Less Worry.</Text>
+      </View>
+
       <View style={styles.hero}>
         <VideoView
           player={player}
@@ -57,6 +67,6 @@ export default function OwnerNameStep({
         <Button title="Continue" size="lg" onPress={onOwnerContinue} style={styles.action} />
         <Text style={styles.helper}>Your name will be used locally on this device only.</Text>
       </View>
-    </>
+    </View>
   );
 }
