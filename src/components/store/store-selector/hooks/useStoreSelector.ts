@@ -2,7 +2,11 @@ import { useState } from "react";
 
 import { initialStoreForm } from "@/components/store/store.data";
 import type { StoreErrors, StoreFieldChange, StoreForm } from "@/components/store/store.types";
-import type { OwnerStore } from "@/services/owner-store.service";
+import {
+  MAX_STORES_PER_BUSINESS,
+  StoreLimitReachedError,
+  type OwnerStore,
+} from "@/services/owner-store.service";
 import { storeSchema } from "@/validation/store.validation";
 
 import type { SelectorView, StoreSelectorProps } from "../types";
@@ -56,6 +60,16 @@ export default function useStoreSelector({
 
   const openCreate = () => {
     resetCreateForm();
+    if (
+      stores.filter((store) => store.businessId === ownerStore.businessId).length >=
+      MAX_STORES_PER_BUSINESS
+    ) {
+      setSwitchError(new StoreLimitReachedError().message);
+      setView("list");
+      setOpen(true);
+      return;
+    }
+    setSwitchError("");
     setView("create");
     setOpen(true);
   };
@@ -122,8 +136,13 @@ export default function useStoreSelector({
       resetCreateForm();
       setView("list");
       await selectStore(store);
-    } catch {
-      setStoreErrors({ form: "Couldn't create your store. Please try again." });
+    } catch (error) {
+      setStoreErrors({
+        form:
+          error instanceof StoreLimitReachedError
+            ? error.message
+            : "Couldn't create your store. Please try again.",
+      });
     } finally {
       setSaving(false);
     }

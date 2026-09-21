@@ -128,6 +128,17 @@ export async function listOwnerStores(db: StoreRepositoryDatabase) {
   return db.getAllAsync<OwnerStoreRecord>(ownerStoresQuery);
 }
 
+export async function countActiveStoresForBusiness(
+  db: StoreRepositoryDatabase,
+  businessId: string,
+) {
+  const result = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) AS count FROM stores WHERE business_id = ? AND status = 'active'",
+    businessId,
+  );
+  return result?.count ?? 0;
+}
+
 export async function findStoreDetails(
   db: StoreRepositoryDatabase,
   businessId: string,

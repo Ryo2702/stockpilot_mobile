@@ -5,6 +5,7 @@ import {
   type StoreInput,
 } from "../validation/store.validation";
 import {
+  countActiveStoresForBusiness,
   deleteStore as deleteStoreRecord,
   findBusinessName,
   findOwnerStore,
@@ -30,11 +31,21 @@ export type OwnerStoreOverview = StoreOverviewRecord & {
   recentActivities: RecentStoreActivityRecord[];
 };
 export type OwnerStoreDatabase = StoreRepositoryDatabase;
+export const MAX_STORES_PER_BUSINESS = 3;
 
 export class OwnerStoreNotFoundError extends Error {
   constructor() {
     super("Store not found.");
     this.name = "OwnerStoreNotFoundError";
+  }
+}
+
+export class StoreLimitReachedError extends Error {
+  constructor() {
+    super(
+      `You can have up to ${MAX_STORES_PER_BUSINESS} active stores. Delete a store before adding another.`,
+    );
+    this.name = "StoreLimitReachedError";
   }
 }
 
@@ -64,11 +75,15 @@ async function createStoreRecord(
 }
 
 export async function insertStoreForBusiness(
-  db: StoreWriteDatabase,
+  db: StoreRepositoryDatabase,
   businessId: string,
   ownerName: string,
   store: StoreSchema,
 ) {
+  if ((await countActiveStoresForBusiness(db, businessId)) >= MAX_STORES_PER_BUSINESS) {
+    throw new StoreLimitReachedError();
+  }
+
   return createStoreRecord(
     db,
     businessId,

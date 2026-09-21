@@ -4,6 +4,7 @@ import { ScrollView, Text, View } from "react-native";
 import StoreFormFields from "@/components/store/partials/StoreFormFields";
 import type { StoreErrors, StoreFieldChange, StoreForm } from "@/components/store/store.types";
 import { Button } from "@/components/ui/Button";
+import { MAX_STORES_PER_BUSINESS } from "@/services/owner-store.service";
 import { useThemeStyles } from "@/theme/ThemeProvider";
 
 import { createStoreSelectorStyles } from "../store-selector.styles";
@@ -47,7 +48,9 @@ export default function StoreCreateForm({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.createIntro}>Each store has its own setup and inventory data.</Text>
+        <Text style={styles.createIntro}>
+          Each store has its own setup and inventory data. You can have up to {MAX_STORES_PER_BUSINESS} active stores for now.
+        </Text>
         <StoreFormFields
           storeForm={storeForm}
           storeErrors={storeErrors}
