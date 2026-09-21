@@ -144,6 +144,21 @@ export async function findBusinessName(db: StoreRepositoryDatabase, businessId: 
   return business?.name ?? null;
 }
 
+export async function updateBusinessName(
+  db: StoreRepositoryDatabase,
+  businessId: string,
+  name: string,
+  now: string,
+) {
+  const result = await db.runAsync(
+    "UPDATE businesses SET name = ?, updated_at = ? WHERE id = ?",
+    name,
+    now,
+    businessId,
+  );
+  return result.changes;
+}
+
 export async function insertBusiness(
   db: StoreWriteDatabase,
   businessId: string,

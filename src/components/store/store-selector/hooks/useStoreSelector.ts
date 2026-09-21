@@ -12,8 +12,9 @@ export default function useStoreSelector({
   ownerStores,
   onSelectStore,
   onCreateStore,
+  openOnMount,
 }: StoreSelectorProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(Boolean(openOnMount));
   const [view, setView] = useState<SelectorView>("list");
   const [storeForm, setStoreForm] = useState<StoreForm>({ ...initialStoreForm });
   const [storeErrors, setStoreErrors] = useState<StoreErrors>({});

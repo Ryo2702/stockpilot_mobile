@@ -52,4 +52,6 @@ export type StockAdjustmentInput = z.infer<typeof stockAdjustmentSchema>;
 
 export const inventoryPreferencesSchema = z.object({
   defaultSort: z.enum(inventorySortValues),
+  defaultReorderLevel: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
+  defaultUnit: z.string().trim().min(1).max(32).optional(),
 });

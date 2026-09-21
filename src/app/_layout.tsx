@@ -47,21 +47,11 @@ export default function RootLayout() {
     };
   }, []);
 
-  return (
-    <ThemeProvider>
-      <RootContent databaseTab={databaseTab} />
-    </ThemeProvider>
-  );
-}
-
-function RootContent({ databaseTab }: { databaseTab: DatabaseTab }) {
-  const { colors } = useTheme();
-
   if (databaseTab === "checking") return null;
   if (databaseTab === "busy") {
     return (
-      <View style={{ flex: 1, justifyContent: "center", padding: 24, backgroundColor: colors.background.app }}>
-        <Text accessibilityRole="alert" style={{ color: colors.text.primary }}>
+      <View style={{ flex: 1, justifyContent: "center", padding: 24, backgroundColor: "#f8fafc" }}>
+        <Text accessibilityRole="alert" style={{ color: "#111827" }}>
           StockPilot’s web database is already open in another tab. Close that tab and reload this page.
         </Text>
       </View>
@@ -71,11 +61,20 @@ function RootContent({ databaseTab }: { databaseTab: DatabaseTab }) {
   return (
     <Suspense fallback={null}>
       <SQLiteProvider databaseName="stockpilot.db" onInit={migrate} useSuspense>
-        <Stack screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.background.app },
-        }} />
+        <ThemeProvider>
+          <RootContent />
+        </ThemeProvider>
       </SQLiteProvider>
     </Suspense>
+  );
+}
+
+function RootContent() {
+  const { colors } = useTheme();
+  return (
+    <Stack screenOptions={{
+      headerShown: false,
+      contentStyle: { backgroundColor: colors.background.app },
+    }} />
   );
 }

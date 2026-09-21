@@ -7,9 +7,11 @@ import {
   deleteOwnerStore,
   createStoreForBusiness,
   getOwnerStores,
+  updateOwnerName as updateOwnerNameRecord,
   updateOwnerStore as updateOwnerStoreRecord,
   type OwnerStore,
 } from "@/services/owner-store.service";
+import { getActiveStoreSelection, saveActiveStoreSelection } from "@/services/settings.service";
 import type { StoreInput } from "@/validation/store.validation";
 
 import { LoadErrorScreen, LoadingScreen } from "./HomeStatusScreens";
@@ -19,16 +21,19 @@ const OwnerStoreScreen = lazy(() => import("@/components/store/OwnerStoreScreen"
 const CatalogScreen = lazy(() => import("@/features/catalogs/CatalogScreen"));
 const InventoryScreen = lazy(() => import("@/features/inventory/InventoryScreen"));
 const InsightsScreen = lazy(() => import("@/features/insights/InsightsScreen"));
+const MoreScreen = lazy(() => import("@/features/settings/MoreScreen"));
+
+type HomeSection = Exclude<BottomNavKey, "camera">;
+type InventoryActionRequest = { id: number; action: "import" | "export" };
 
 export default function HomeScreen() {
   const db = useSQLiteContext();
   const switchingRef = useRef(false);
+  const inventoryActionSequence = useRef(0);
   const [ownerStore, setOwnerStore] = useState<OwnerStore | null>(null);
   const [ownerStores, setOwnerStores] = useState<OwnerStore[]>([]);
-  const [showEntry, setShowEntry] = useState(false);
-  const [activeSection, setActiveSection] = useState<
-    "dashboard" | "catalog" | "inventory" | "insights"
-  >("dashboard");
+  const [activeSection, setActiveSection] = useState<HomeSection>("dashboard");
+  const [inventoryActionRequest, setInventoryActionRequest] = useState<InventoryActionRequest | null>(null);
   const [cameraRequest, setCameraRequest] = useState(0);
   const [catalogProductRequest, setCatalogProductRequest] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,10 +47,14 @@ export default function HomeScreen() {
     setError(false);
 
     getOwnerStores(db)
-      .then((stores) => {
+      .then(async (stores) => {
+        const selection = await getActiveStoreSelection(db).catch(() => null);
+        const selectedStore = stores.find(
+          (store) => store.businessId === selection?.businessId && store.storeId === selection.storeId,
+        ) ?? stores[0] ?? null;
         if (active) {
           setOwnerStores(stores);
-          setOwnerStore(stores[0] ?? null);
+          setOwnerStore(selectedStore);
         }
       })
       .catch(() => {
@@ -75,6 +84,10 @@ export default function HomeScreen() {
       );
       if (!validStore) throw new Error("The selected store is no longer available.");
 
+      await saveActiveStoreSelection(db, {
+        businessId: validStore.businessId,
+        storeId: validStore.storeId,
+      });
       setOwnerStores(stores);
       setOwnerStore(validStore);
     } finally {
@@ -123,10 +136,45 @@ export default function HomeScreen() {
       (store) =>
         store.storeId !== ownerStore.storeId || store.businessId !== ownerStore.businessId,
     );
+    void saveActiveStoreSelection(
+      db,
+      remainingStores[0]
+        ? { businessId: remainingStores[0].businessId, storeId: remainingStores[0].storeId }
+        : null,
+    ).catch(() => undefined);
     setOwnerStores(remainingStores);
     setOwnerStore(remainingStores[0] ?? null);
     setActiveSection("dashboard");
-    setShowEntry(false);
+  };
+
+  const updateOwnerName = async (businessId: string, name: string) => {
+    const ownerName = await updateOwnerNameRecord(db, businessId, name);
+    setOwnerStore((current) =>
+      current?.businessId === businessId ? { ...current, ownerName } : current,
+    );
+    setOwnerStores((stores) =>
+      stores.map((store) => store.businessId === businessId ? { ...store, ownerName } : store),
+    );
+  };
+
+  const refreshStores = async () => {
+    const stores = await getOwnerStores(db);
+    const selection = await getActiveStoreSelection(db).catch(() => null);
+    const selectedStore = stores.find(
+      (store) => store.businessId === selection?.businessId && store.storeId === selection.storeId,
+    ) ?? stores[0] ?? null;
+    setOwnerStores(stores);
+    setOwnerStore(selectedStore);
+  };
+
+  const openInventoryAction = (action: InventoryActionRequest["action"]) => {
+    inventoryActionSequence.current += 1;
+    setInventoryActionRequest({ id: inventoryActionSequence.current, action });
+    setActiveSection("inventory");
+  };
+
+  const markInventoryActionHandled = (id: number) => {
+    setInventoryActionRequest((current) => current?.id === id ? null : current);
   };
 
   const navigate = (key: BottomNavKey) => {
@@ -147,77 +195,74 @@ export default function HomeScreen() {
   if (loading) return <LoadingScreen />;
   if (error) return <LoadErrorScreen onRetry={() => setAttempt((value) => value + 1)} />;
 
-  const screen =
-    ownerStore && !showEntry ? (
-      activeSection === "inventory" ? (
-        <InventoryScreen
-          key={`${ownerStore.businessId}:${ownerStore.storeId}`}
-          ownerStore={ownerStore}
-          ownerStores={ownerStores}
-          onSelectStore={switchStore}
-          onCreateStore={createStore}
-          onOpenCatalogProduct={openCatalogProduct}
-          onNavigate={navigate}
-        />
-      ) : activeSection === "insights" ? (
-        <InsightsScreen
-          key={`${ownerStore.businessId}:${ownerStore.storeId}`}
-          ownerStore={ownerStore}
-          ownerStores={ownerStores}
-          onSelectStore={switchStore}
-          onCreateStore={createStore}
-          onNavigate={navigate}
-        />
-      ) : activeSection === "catalog" ? (
-        <CatalogScreen
-          ownerStore={ownerStore}
-          ownerStores={ownerStores}
-          onSelectStore={switchStore}
-          onCreateStore={createStore}
-          onImportInventory={() => setShowEntry(true)}
-          productRequest={catalogProductRequest}
-          onProductRequestHandled={handleCatalogProductRequest}
-          onNavigate={navigate}
-          cameraRequest={cameraRequest}
-          onCameraRequestHandled={() => setCameraRequest(0)}
-        />
-      ) : (
-        <OwnerStoreScreen
-          ownerStore={ownerStore}
-          ownerStores={ownerStores}
-          onSelectStore={switchStore}
-          onCreateStore={createStore}
-          onUpdateStore={updateStore}
-          onDeleteStore={deleteStore}
-          onNavigate={navigate}
-          onExit={() => {
-            setActiveSection("dashboard");
-            setShowEntry(true);
-          }}
-        />
-      )
-    ) : ownerStore ? (
-      <OnboardingScreen
-        existingStores={ownerStores}
-        selectedStore={ownerStore}
+  const screen = ownerStore ? (
+    activeSection === "more" ? (
+      <MoreScreen
+        ownerStore={ownerStore}
+        ownerStores={ownerStores}
         onSelectStore={switchStore}
         onCreateStore={createStore}
-        onComplete={(store) => {
-          setOwnerStore(store);
-          setActiveSection("dashboard");
-          setShowEntry(false);
-        }}
+        onUpdateStore={updateStore}
+        onUpdateOwnerName={updateOwnerName}
+        onDeleteStore={deleteStore}
+        onOpenStoreManagement={() => setActiveSection("dashboard")}
+        onOpenInventoryAction={openInventoryAction}
+        onRestoreComplete={refreshStores}
+        onNavigate={navigate}
+      />
+    ) : activeSection === "inventory" ? (
+      <InventoryScreen
+        key={`${ownerStore.businessId}:${ownerStore.storeId}`}
+        ownerStore={ownerStore}
+        ownerStores={ownerStores}
+        onSelectStore={switchStore}
+        onCreateStore={createStore}
+        onOpenCatalogProduct={openCatalogProduct}
+        onNavigate={navigate}
+        actionRequest={inventoryActionRequest}
+        onActionRequestHandled={markInventoryActionHandled}
+      />
+    ) : activeSection === "insights" ? (
+      <InsightsScreen
+        key={`${ownerStore.businessId}:${ownerStore.storeId}`}
+        ownerStore={ownerStore}
+        ownerStores={ownerStores}
+        onSelectStore={switchStore}
+        onCreateStore={createStore}
+        onNavigate={navigate}
+      />
+    ) : activeSection === "catalog" ? (
+      <CatalogScreen
+        ownerStore={ownerStore}
+        ownerStores={ownerStores}
+        onSelectStore={switchStore}
+        onCreateStore={createStore}
+        onImportInventory={() => openInventoryAction("import")}
+        productRequest={catalogProductRequest}
+        onProductRequestHandled={handleCatalogProductRequest}
+        onNavigate={navigate}
+        cameraRequest={cameraRequest}
+        onCameraRequestHandled={() => setCameraRequest(0)}
       />
     ) : (
-      <OnboardingScreen
-        onComplete={(store) => {
-          setOwnerStores([store]);
-          setOwnerStore(store);
-          setActiveSection("dashboard");
-          setShowEntry(false);
-        }}
+      <OwnerStoreScreen
+        ownerStore={ownerStore}
+        ownerStores={ownerStores}
+        onSelectStore={switchStore}
+        onCreateStore={createStore}
+        onNavigate={navigate}
       />
-    );
+    )
+  ) : (
+    <OnboardingScreen
+      onComplete={(store) => {
+        setOwnerStores([store]);
+        setOwnerStore(store);
+        setActiveSection("dashboard");
+        void saveActiveStoreSelection(db, { businessId: store.businessId, storeId: store.storeId });
+      }}
+    />
+  );
 
   return (
     <>

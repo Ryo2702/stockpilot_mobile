@@ -17,20 +17,22 @@ export type BottomNavKey =
   | "catalog"
   | "camera"
   | "inventory"
-  | "insights";
+  | "insights"
+  | "more";
 
-const navItems: Array<{ key: BottomNavKey; label: string; icon: LucideIcon }> =
-  [
-    { key: "dashboard", label: "Home", icon: House },
-    { key: "catalog", label: "Catalog", icon: Boxes },
-    { key: "camera", label: "Camera", icon: Camera },
-    { key: "insights", label: "Insights", icon: ChartNoAxesCombined },
-    { key: "inventory", label: "Inventory", icon: Package },
-  ];
+type BottomNavItemKey = Exclude<BottomNavKey, "more">;
+
+const navItems: Array<{ key: BottomNavItemKey; label: string; icon: LucideIcon }> = [
+  { key: "dashboard", label: "Home", icon: House },
+  { key: "inventory", label: "Inventory", icon: Package },
+  { key: "camera", label: "Camera", icon: Camera },
+  { key: "catalog", label: "Catalog", icon: Boxes },
+  { key: "insights", label: "Insights", icon: ChartNoAxesCombined },
+];
 
 type BottomNavigationProps = {
-  activeKey: BottomNavKey;
-  onChange?: (key: BottomNavKey) => void;
+  activeKey: BottomNavItemKey | null;
+  onChange?: (key: BottomNavItemKey) => void;
 };
 
 export function BottomNavigation({

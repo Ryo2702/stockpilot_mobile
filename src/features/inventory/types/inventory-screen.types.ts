@@ -5,6 +5,7 @@ import type { StoreInput } from "@/validation/store.validation";
 export type InventoryPage = "list" | "detail" | "movements" | "movementDetail" | "archived";
 export type InventoryDetailReturnPage = "list" | "archived";
 export type InventoryMovementListReturnPage = "list" | "detail" | "archived";
+export type InventoryActionRequest = { id: number; action: "import" | "export" };
 
 export type InventoryScreenProps = {
   ownerStore: OwnerStore;
@@ -13,4 +14,6 @@ export type InventoryScreenProps = {
   onCreateStore: (store: StoreInput) => Promise<OwnerStore>;
   onOpenCatalogProduct: (productId: string) => void;
   onNavigate: (key: BottomNavKey) => void;
+  actionRequest?: InventoryActionRequest | null;
+  onActionRequestHandled?: (id: number) => void;
 };

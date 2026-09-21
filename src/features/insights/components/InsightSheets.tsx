@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Download,
   FileText,
+  Menu,
   MoreVertical,
   X,
 } from "lucide-react-native";
@@ -260,10 +261,12 @@ export function InsightsMoreSheet({
   visible,
   onClose,
   onAction,
+  onMore,
 }: {
   visible: boolean;
   onClose: () => void;
   onAction: (action: "generate" | "export" | "history") => void;
+  onMore: () => void;
 }) {
   const styles = useThemeStyles(createStyles);
   const { colors } = useTheme();
@@ -282,6 +285,15 @@ export function InsightsMoreSheet({
             <ChevronRight size={18} color={colors.text.muted} />
           </Pressable>
         ))}
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => { onClose(); onMore(); }}
+          style={styles.actionRow}
+        >
+          <View style={styles.actionIcon}><Menu size={18} color={colors.primary[600]} /></View>
+          <Text style={styles.actionText}>More</Text>
+          <ChevronRight size={18} color={colors.text.muted} />
+        </Pressable>
       </View>
     </SheetFrame>
   );

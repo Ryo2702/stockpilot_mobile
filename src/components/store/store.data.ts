@@ -3,6 +3,7 @@ import type { ImageSourcePropType } from "react-native";
 import { getCurrencySymbol } from "@/domain/currency";
 
 import type { StoreForm } from "./store.types";
+import type { OwnerStoreDetails } from "@/services/owner-store.service";
 
 export const initialStoreForm: StoreForm = {
   name: "",
@@ -22,6 +23,29 @@ export const initialStoreForm: StoreForm = {
   postalCode: "",
   countryCode: "PH",
 };
+
+export function toStoreForm(store: OwnerStoreDetails): StoreForm {
+  return {
+    ...initialStoreForm,
+    name: store.name,
+    code: store.code ?? "",
+    storeType: store.storeType,
+    customStoreType: store.customStoreType ?? "",
+    currencyMode: store.currencyMode,
+    currencyCode: store.currencyCode ?? "",
+    customCurrencyName: store.customCurrencyName ?? "",
+    customCurrencySymbol: store.customCurrencySymbol ?? "",
+    currencyDecimalPlaces: store.currencyDecimalPlaces,
+    addressLine1: store.addressLine1 ?? "",
+    addressLine2: store.addressLine2 ?? "",
+    barangay: store.barangay ?? "",
+    city: store.city ?? "",
+    provinceState: store.provinceState ?? "",
+    postalCode: store.postalCode ?? "",
+    countryCode: store.countryCode ?? "",
+    status: store.status,
+  };
+}
 
 export const storeTypeOptions: Array<{
   value: NonNullable<StoreForm["storeType"]>;

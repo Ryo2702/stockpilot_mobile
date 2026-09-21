@@ -1,5 +1,5 @@
 import { Camera, Check, ChevronDown, ChevronLeft } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -31,29 +31,10 @@ import {
 } from "@/validation/product.validation";
 
 import type { CatalogCategoryOption } from "../data/catalog.data";
+import { productUnitOptions } from "../data/catalog.data";
 import CategorySelector from "../components/CategorySelector";
 
 type DropdownOption = { value: string; label: string };
-
-const UNIT_OPTIONS: DropdownOption[] = [
-  { value: "ea", label: "Each (ea)" },
-  { value: "pc", label: "Piece (pc)" },
-  { value: "kg", label: "Kilogram (kg)" },
-  { value: "g", label: "Gram (g)" },
-  { value: "lb", label: "Pound (lb)" },
-  { value: "oz", label: "Ounce (oz)" },
-  { value: "L", label: "Liter (L)" },
-  { value: "mL", label: "Milliliter (mL)" },
-  { value: "box", label: "Box" },
-  { value: "pack", label: "Pack" },
-  { value: "case", label: "Case" },
-  { value: "bottle", label: "Bottle" },
-  { value: "can", label: "Can" },
-  { value: "bag", label: "Bag" },
-  { value: "roll", label: "Roll" },
-  { value: "pair", label: "Pair" },
-  { value: "dozen", label: "Dozen" },
-];
 
 const CRITICAL_LEVEL_PRESETS = [0, 1, 2, 3, 5, 10, 15, 20, 25, 50, 75, 100];
 
@@ -75,13 +56,20 @@ type CatalogFormModalProps = {
   product: Product | null;
   currency: CurrencySettings;
   categories: CatalogCategoryOption[];
+  defaultUnit: string;
+  defaultReorderLevel: number;
   onClose: () => void;
   onScanBarcode: () => void;
   onSave: (input: CreateProductInput | UpdateProductInput) => Promise<void>;
   scannedBarcode?: string | null;
 };
 
-function createDraft(product: Product | null, categories: CatalogCategoryOption[]): ProductDraft {
+function createDraft(
+  product: Product | null,
+  categories: CatalogCategoryOption[],
+  defaultUnit: string,
+  defaultReorderLevel: number,
+): ProductDraft {
   const category = categories.find(({ value }) => value === product?.category)?.value;
 
   return {
@@ -89,10 +77,10 @@ function createDraft(product: Product | null, categories: CatalogCategoryOption[
     sku: product?.sku ?? "",
     barcode: product?.barcode ?? "",
     category: category ?? categories[0]?.value ?? "other",
-    unit: product?.unit ?? "ea",
+    unit: product?.unit ?? defaultUnit,
     currentPrice: String(product?.currentPrice ?? ""),
     initialQuantity: "0",
-    reorderLevel: String(product?.reorderLevel ?? 0),
+    reorderLevel: String(product?.reorderLevel ?? defaultReorderLevel),
     criticalLevel: String(product?.criticalLevel ?? 0),
     notes: product?.notes ?? "",
   };
@@ -103,6 +91,8 @@ export default function CatalogFormModal({
   product,
   currency,
   categories,
+  defaultUnit,
+  defaultReorderLevel,
   onClose,
   onScanBarcode,
   onSave,
@@ -110,16 +100,29 @@ export default function CatalogFormModal({
 }: CatalogFormModalProps) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
-  const [form, setForm] = useState(() => createDraft(product, categories));
+  const [form, setForm] = useState(() => createDraft(product, categories, defaultUnit, defaultReorderLevel));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const touchedDefaults = useRef({ unit: false, reorderLevel: false });
 
   useEffect(() => {
     if (visible) {
-      setForm(createDraft(product, categories));
+      touchedDefaults.current = { unit: false, reorderLevel: false };
+      setForm(createDraft(product, categories, defaultUnit, defaultReorderLevel));
       setErrors({});
     }
   }, [categories, product, visible]);
+
+  useEffect(() => {
+    if (!visible || product) return;
+    setForm((current) => ({
+      ...current,
+      unit: touchedDefaults.current.unit ? current.unit : defaultUnit,
+      reorderLevel: touchedDefaults.current.reorderLevel
+        ? current.reorderLevel
+        : String(defaultReorderLevel),
+    }));
+  }, [defaultReorderLevel, defaultUnit, product, visible]);
 
   useEffect(() => {
     if (!visible || !scannedBarcode) return;
@@ -133,6 +136,8 @@ export default function CatalogFormModal({
   }, [scannedBarcode, visible]);
 
   const updateField = <K extends keyof ProductDraft,>(field: K, value: ProductDraft[K]) => {
+    if (field === "unit") touchedDefaults.current.unit = true;
+    if (field === "reorderLevel") touchedDefaults.current.reorderLevel = true;
     setForm((current) => ({ ...current, [field]: value }));
     setErrors((current) => {
       if (!current[field] && !current.form) return current;
@@ -173,9 +178,9 @@ export default function CatalogFormModal({
     }
   };
 
-  const unitOptions = UNIT_OPTIONS.some(({ value }) => value === form.unit)
-    ? UNIT_OPTIONS
-    : [{ value: form.unit, label: `${form.unit} (current)` }, ...UNIT_OPTIONS];
+  const unitOptions = productUnitOptions.some(({ value }) => value === form.unit)
+    ? productUnitOptions
+    : [{ value: form.unit, label: `${form.unit} (current)` }, ...productUnitOptions];
   const reorderLevel = Number(form.reorderLevel);
   const maxCriticalLevel = Number.isSafeInteger(reorderLevel) && reorderLevel >= 0
     ? reorderLevel

@@ -1,21 +1,19 @@
 import { EllipsisVertical } from "lucide-react-native";
-import { Pressable } from "react-native";
 
 import StoreSelector from "@/components/store/StoreSelector";
+import type { BottomNavKey } from "@/components/ui/BottomNavigation";
+import { IconButton } from "@/components/ui/IconButton";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import type { OwnerStore } from "@/services/owner-store.service";
-import { useTheme, useThemeStyles } from "@/theme/ThemeProvider";
 import type { StoreInput } from "@/validation/store.validation";
-
-import { createOwnerStoreStyles } from "./owner-store.styles";
 
 type OwnerStoreHeaderProps = {
   ownerStore: OwnerStore;
   ownerStores: OwnerStore[];
   onSelectStore?: (store: OwnerStore) => Promise<void>;
   onCreateStore?: (store: StoreInput) => Promise<OwnerStore>;
-  onOpenMenu: () => void;
+  onNavigate?: (key: BottomNavKey) => void;
 };
 
 export default function OwnerStoreHeader({
@@ -23,10 +21,8 @@ export default function OwnerStoreHeader({
   ownerStores,
   onSelectStore,
   onCreateStore,
-  onOpenMenu,
+  onNavigate,
 }: OwnerStoreHeaderProps) {
-  const { colors } = useTheme();
-  const styles = useThemeStyles(createOwnerStoreStyles);
   const ownerFirstName = ownerStore.ownerName.trim().split(/\s+/)[0] || "there";
 
   return (
@@ -44,17 +40,13 @@ export default function OwnerStoreHeader({
       actions={
         <>
           <ThemeToggle />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Open StockPilot menu"
-            onPress={onOpenMenu}
-            style={({ pressed }) => [
-              styles.overflowButton,
-              pressed && styles.pressed,
-            ]}
-          >
-            <EllipsisVertical color={colors.text.secondary} size={21} />
-          </Pressable>
+          <IconButton
+            icon={EllipsisVertical}
+            label="Open More menu"
+            size={24}
+            onPress={() => onNavigate?.("more")}
+            style={{ width: 44, height: 44 }}
+          />
         </>
       }
     />

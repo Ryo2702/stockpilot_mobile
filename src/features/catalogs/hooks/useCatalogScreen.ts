@@ -6,6 +6,7 @@ import type { CurrencySettings } from "@/domain/currency";
 import type { Product, ProductSort, ProductStockFilter, ProductStockMovement } from "@/domain/product";
 import { CatalogError } from "@/features/catalogs/errors/catalog.errors";
 import { getOwnerStoreDetails, type OwnerStore } from "@/services/owner-store.service";
+import { getInventoryProductDefaults } from "@/services/inventory.service";
 import {
   archiveProduct,
   createProduct,
@@ -45,6 +46,7 @@ export default function useCatalogScreen({
 }: UseCatalogScreenOptions) {
   const db = useSQLiteContext();
   const [currency, setCurrency] = useState<CurrencySettings>(defaultCurrency);
+  const [productDefaults, setProductDefaults] = useState({ defaultUnit: "ea", defaultReorderLevel: 10 });
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -107,6 +109,21 @@ export default function useCatalogScreen({
         if (active) setCurrency(defaultCurrency);
       });
 
+    return () => {
+      active = false;
+    };
+  }, [db, ownerStore.businessId, ownerStore.storeId]);
+
+  useEffect(() => {
+    let active = true;
+    setProductDefaults({ defaultUnit: "ea", defaultReorderLevel: 10 });
+    getInventoryProductDefaults(db, ownerStore)
+      .then((defaults) => {
+        if (active) setProductDefaults(defaults);
+      })
+      .catch(() => {
+        if (active) setProductDefaults({ defaultUnit: "ea", defaultReorderLevel: 10 });
+      });
     return () => {
       active = false;
     };
@@ -339,6 +356,7 @@ export default function useCatalogScreen({
 
   return {
     currency,
+    productDefaults,
     products,
     search,
     category,

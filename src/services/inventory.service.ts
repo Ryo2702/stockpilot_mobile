@@ -185,10 +185,41 @@ export async function saveInventoryPreference(
   store: OwnerStore,
   value: InventorySort,
 ) {
-  const parsed = inventoryPreferencesSchema.safeParse({ defaultSort: value });
+  const current = await getInventoryPreferences(db, store);
+  const parsed = inventoryPreferencesSchema.safeParse({ ...current, defaultSort: value });
   if (!parsed.success) {
     throw new InvalidInventoryPreferenceError();
   }
+  const saved = await setInventoryPreferences(db, store, parsed.data, new Date().toISOString());
+  if (!saved) throw new InventoryStoreNotFoundError();
+}
+
+export async function getInventoryProductDefaults(db: InventoryExecutor, store: OwnerStore) {
+  const preferences = await getInventoryPreferences(db, store);
+  const defaultReorderLevel = preferences?.defaultReorderLevel;
+  return {
+    defaultReorderLevel: typeof defaultReorderLevel === "number" &&
+      Number.isSafeInteger(defaultReorderLevel) && defaultReorderLevel >= 0
+      ? defaultReorderLevel
+      : 10,
+    defaultUnit: typeof preferences?.defaultUnit === "string" && preferences.defaultUnit.trim()
+      ? preferences.defaultUnit
+      : "ea",
+  };
+}
+
+export async function saveInventoryProductDefaults(
+  db: InventoryDatabase,
+  store: OwnerStore,
+  defaults: { defaultReorderLevel: number; defaultUnit: string },
+) {
+  const current = await getInventoryPreferences(db, store);
+  const parsed = inventoryPreferencesSchema.safeParse({
+    ...current,
+    defaultSort: isInventorySort(current?.defaultSort) ? current.defaultSort : "name_asc",
+    ...defaults,
+  });
+  if (!parsed.success) throw new InvalidInventoryPreferenceError();
   const saved = await setInventoryPreferences(db, store, parsed.data, new Date().toISOString());
   if (!saved) throw new InventoryStoreNotFoundError();
 }

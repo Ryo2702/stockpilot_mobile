@@ -10,7 +10,7 @@ export default function ThemeToggle() {
     <IconButton
       icon={darkMode ? Sun : Moon}
       label={`Switch to ${darkMode ? "light" : "dark"} appearance`}
-      onPress={() => setColorScheme(darkMode ? "light" : "dark")}
+      onPress={() => void setColorScheme(darkMode ? "light" : "dark").catch(() => undefined)}
     />
   );
 }

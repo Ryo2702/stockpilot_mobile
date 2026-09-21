@@ -1,31 +1,63 @@
-import { createContext, useContext, useMemo, useState, type PropsWithChildren } from "react";
-import { Appearance, View } from "react-native";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
+import { Appearance, View, useColorScheme } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { useSQLiteContext } from "expo-sqlite";
 
-import { themeColors, type ColorScheme, type ThemeColors } from "./tokens";
+import { getThemePreference, saveThemePreference } from "@/services/settings.service";
+
+import { themeColors, type ColorScheme, type ThemeColors, type ThemePreference } from "./tokens";
 
 type ThemeContextValue = {
   scheme: ColorScheme;
+  preference: ThemePreference;
   colors: ThemeColors;
-  setColorScheme: (scheme: ColorScheme) => void;
+  setColorScheme: (scheme: ThemePreference) => Promise<void>;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: PropsWithChildren) {
-  const [scheme, setScheme] = useState<ColorScheme>("light");
+  const db = useSQLiteContext();
+  const systemScheme = useColorScheme();
+  const [preference, setPreference] = useState<ThemePreference>("system");
+
+  useEffect(() => {
+    let active = true;
+    getThemePreference(db)
+      .then((stored) => {
+        if (active) {
+          setPreference(stored);
+          Appearance.setColorScheme(stored === "system" ? "unspecified" : stored);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [db]);
+
+  const scheme = preference === "system" ? (systemScheme === "dark" ? "dark" : "light") : preference;
+  const setColorScheme = useCallback(async (nextPreference: ThemePreference) => {
+    const previousPreference = preference;
+    setPreference(nextPreference);
+    Appearance.setColorScheme(nextPreference === "system" ? "unspecified" : nextPreference);
+    try {
+      await saveThemePreference(db, nextPreference);
+    } catch (error) {
+      setPreference(previousPreference);
+      Appearance.setColorScheme(previousPreference === "system" ? "unspecified" : previousPreference);
+      throw error;
+    }
+  }, [db, preference]);
+
   const value = useMemo<ThemeContextValue>(
     () => ({
       scheme,
+      preference,
       colors: themeColors[scheme],
-      setColorScheme: (nextScheme) => {
-        setScheme(nextScheme);
-        if (typeof Appearance.setColorScheme === "function") {
-          Appearance.setColorScheme(nextScheme);
-        }
-      },
+      setColorScheme,
     }),
-    [scheme],
+    [preference, scheme, setColorScheme],
   );
 
   return (

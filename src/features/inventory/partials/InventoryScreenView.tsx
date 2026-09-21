@@ -1,6 +1,6 @@
 import { ChevronLeft, MoreVertical } from "lucide-react-native";
 import { Directory } from "expo-file-system";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Platform, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -60,6 +60,8 @@ export default function InventoryScreenView({
   onCreateStore,
   onOpenCatalogProduct,
   onNavigate,
+  actionRequest,
+  onActionRequestHandled,
   categories,
   inventory,
 }: InventoryScreenViewProps) {
@@ -69,6 +71,7 @@ export default function InventoryScreenView({
   const [moreVisible, setMoreVisible] = useState(false);
   const [preferencesVisible, setPreferencesVisible] = useState(false);
   const [scannerVisible, setScannerVisible] = useState(false);
+  const handledActionRequest = useRef<number | null>(null);
 
   const subpage = inventory.page !== "list";
   const title = {
@@ -116,6 +119,14 @@ export default function InventoryScreenView({
   };
   const startInventoryImport = () => void inventory.pickInventoryImport();
 
+  useEffect(() => {
+    if (!actionRequest || handledActionRequest.current === actionRequest.id) return;
+    handledActionRequest.current = actionRequest.id;
+    onActionRequestHandled?.(actionRequest.id);
+    if (actionRequest.action === "import") startInventoryImport();
+    else void exportInventory();
+  }, [actionRequest, inventory, onActionRequestHandled]);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <View style={styles.screen}>
@@ -130,7 +141,7 @@ export default function InventoryScreenView({
             leading={subpage ? <IconButton icon={ChevronLeft} label={`Back from ${title}`} onPress={goBack} /> : undefined}
             actions={(
               <View style={styles.actions}>
-                <IconButton icon={MoreVertical} label="Inventory actions" onPress={() => setMoreVisible(true)} />
+                <IconButton icon={MoreVertical} label="Inventory actions" size={22} onPress={() => setMoreVisible(true)} style={{ width: 44, height: 44 }} />
               </View>
             )}
             context={(
@@ -203,6 +214,7 @@ export default function InventoryScreenView({
         onExport={() => void exportInventory()}
         onArchived={() => inventory.openArchived()}
         onPreferences={() => setPreferencesVisible(true)}
+        onMore={() => onNavigate("more")}
       />
       <InventoryPreferencesSheet
         visible={preferencesVisible}

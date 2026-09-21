@@ -68,6 +68,7 @@ type StringPalette<T> = {
 
 export type ThemeColors = StringPalette<typeof colors>;
 export type ColorScheme = "light" | "dark";
+export type ThemePreference = ColorScheme | "system";
 
 export const darkColors: ThemeColors = {
   primary: {

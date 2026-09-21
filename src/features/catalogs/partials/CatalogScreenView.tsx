@@ -1,4 +1,4 @@
-import { Archive, Plus, RotateCcw } from "lucide-react-native";
+import { Archive, Ellipsis, Plus, RotateCcw } from "lucide-react-native";
 import {
   ActivityIndicator,
   ScrollView,
@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import StoreSelector from "@/components/store/StoreSelector";
 import { BottomNavigation, type BottomNavKey } from "@/components/ui/BottomNavigation";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
@@ -115,7 +116,10 @@ export default function CatalogScreenView({
           <View style={styles.catalogHeader}>
             <View style={styles.headerTop}>
               <Text accessibilityRole="header" style={styles.headerTitle}>Catalog</Text>
-              <Button title="Add Item" icon={Plus} onPress={openCreate} />
+              <View style={styles.headerActions}>
+                <IconButton icon={Ellipsis} label="Open More menu" size={22} onPress={() => onNavigate("more")} style={{ width: 44, height: 44 }} />
+                <Button title="Add Item" icon={Plus} onPress={openCreate} />
+              </View>
             </View>
             <View style={styles.headerContext}>
               <View style={styles.storeSelector}>
@@ -218,6 +222,8 @@ export default function CatalogScreenView({
         product={editingProduct}
         currency={currency}
         categories={categories}
+        defaultUnit={catalog.productDefaults.defaultUnit}
+        defaultReorderLevel={catalog.productDefaults.defaultReorderLevel}
         scannedBarcode={formBarcode}
         onClose={closeForm}
         onScanBarcode={openFormScanner}
@@ -290,6 +296,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     minWidth: 0,
     flexShrink: 1,
     color: colors.text.primary,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[1],
   },
   headerContext: {
     flexDirection: "row",

@@ -879,7 +879,7 @@ export default function InsightsScreenView({
             actions={(
               <View style={styles.headerActions}>
                 <ThemeToggle />
-                <IconButton icon={MoreVertical} label="Insights actions" onPress={() => setMoreVisible(true)} />
+                <IconButton icon={MoreVertical} label="Insights actions" size={22} onPress={() => setMoreVisible(true)} style={{ width: 44, height: 44 }} />
               </View>
             )}
             context={(
@@ -963,7 +963,12 @@ export default function InsightsScreenView({
           setPeriodVisible(false);
         }}
       />
-      <InsightsMoreSheet visible={moreVisible} onClose={() => setMoreVisible(false)} onAction={handleMoreAction} />
+      <InsightsMoreSheet
+        visible={moreVisible}
+        onClose={() => setMoreVisible(false)}
+        onAction={handleMoreAction}
+        onMore={() => onNavigate("more")}
+      />
       <ProductInsightSheet
         product={selectedProduct}
         onClose={() => setSelectedProduct(null)}

@@ -63,6 +63,8 @@ export type InventoryMovementSummary = {
 
 export type InventoryPreferences = {
   defaultSort: InventorySort;
+  defaultReorderLevel?: number;
+  defaultUnit?: string;
 };
 
 export type InventoryListQuery = {

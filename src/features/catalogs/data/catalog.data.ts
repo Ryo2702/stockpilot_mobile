@@ -40,6 +40,26 @@ export const catalogCategoryOptions = catalogCategoryValues.map(
   (category) => categoryOptions[category],
 );
 
+export const productUnitOptions = [
+  { value: "ea", label: "Each (ea)" },
+  { value: "pc", label: "Piece (pc)" },
+  { value: "kg", label: "Kilogram (kg)" },
+  { value: "g", label: "Gram (g)" },
+  { value: "lb", label: "Pound (lb)" },
+  { value: "oz", label: "Ounce (oz)" },
+  { value: "L", label: "Liter (L)" },
+  { value: "mL", label: "Milliliter (mL)" },
+  { value: "box", label: "Box" },
+  { value: "pack", label: "Pack" },
+  { value: "case", label: "Case" },
+  { value: "bottle", label: "Bottle" },
+  { value: "can", label: "Can" },
+  { value: "bag", label: "Bag" },
+  { value: "roll", label: "Roll" },
+  { value: "pair", label: "Pair" },
+  { value: "dozen", label: "Dozen" },
+];
+
 export function getCatalogCategoryOption(category: CatalogCategory) {
   return categoryOptions[category];
 }

@@ -8,6 +8,7 @@ export type StoreSelectorProps = {
   onCreateStore?: (store: StoreInput) => Promise<OwnerStore>;
   showAddStoreButton?: boolean;
   compact?: boolean;
+  openOnMount?: boolean;
   disabled?: boolean;
 };
 

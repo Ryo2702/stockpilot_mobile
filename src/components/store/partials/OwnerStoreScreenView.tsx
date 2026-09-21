@@ -7,9 +7,7 @@ import { useThemeStyles } from "@/theme/ThemeProvider";
 
 import type { OwnerStoreScreenProps } from "../OwnerStoreScreen";
 import useOwnerStoreScreen from "../hooks/useOwnerStoreScreen";
-import StoreEditModal from "./StoreEditModal";
 import OwnerStoreHeader from "./OwnerStoreHeader";
-import OwnerStoreMenu from "./OwnerStoreMenu";
 import { createOwnerStoreStyles } from "./owner-store.styles";
 
 type OwnerStoreScreenViewProps = OwnerStoreScreenProps &
@@ -20,22 +18,8 @@ export default function OwnerStoreScreenView({
   ownerStores,
   onSelectStore,
   onCreateStore,
-  onDeleteStore,
   onNavigate,
-  onExit,
   overview,
-  menuOpen,
-  openMenu,
-  closeMenu,
-  storeDetails,
-  editOpen,
-  openEdit,
-  closeEdit,
-  storeForm,
-  storeErrors,
-  saving,
-  updateStoreField,
-  saveStore,
 }: OwnerStoreScreenViewProps) {
   const stores = ownerStores?.length ? ownerStores : [ownerStore];
   const styles = useThemeStyles(createOwnerStoreStyles);
@@ -53,29 +37,12 @@ export default function OwnerStoreScreenView({
             ownerStores={stores}
             onSelectStore={onSelectStore}
             onCreateStore={onCreateStore}
-            onOpenMenu={openMenu}
+            onNavigate={onNavigate}
           />
           <OwnerStoreOverview overview={overview} onNavigate={onNavigate} />
         </ScrollView>
         <BottomNavigation activeKey="dashboard" onChange={onNavigate} />
       </View>
-      <OwnerStoreMenu
-        visible={menuOpen}
-        storeName={ownerStore.storeName}
-        onClose={closeMenu}
-        onEditStore={storeDetails ? openEdit : undefined}
-        onDeleteStore={onDeleteStore}
-        onExit={onExit}
-      />
-      <StoreEditModal
-        visible={editOpen}
-        storeForm={storeForm}
-        storeErrors={storeErrors}
-        saving={saving}
-        onStoreFieldChange={updateStoreField}
-        onClose={closeEdit}
-        onSave={() => void saveStore()}
-      />
     </SafeAreaView>
   );
 }

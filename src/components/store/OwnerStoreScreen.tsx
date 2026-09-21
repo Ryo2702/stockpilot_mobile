@@ -1,6 +1,5 @@
 import type {
   OwnerStore,
-  OwnerStoreDetails,
   OwnerStoreOverview,
 } from "@/services/owner-store.service";
 import type { BottomNavKey } from "@/components/ui/BottomNavigation";
@@ -14,14 +13,11 @@ export type OwnerStoreScreenProps = {
   ownerStores?: OwnerStore[];
   onSelectStore?: (store: OwnerStore) => Promise<void>;
   onCreateStore?: (store: StoreInput) => Promise<OwnerStore>;
-  onUpdateStore?: (store: StoreInput) => Promise<OwnerStoreDetails>;
-  onDeleteStore?: () => Promise<void>;
   onNavigate?: (key: BottomNavKey) => void;
-  onExit: () => void;
 };
 
 export default function OwnerStoreScreen(props: OwnerStoreScreenProps) {
-  const screen = useOwnerStoreScreen(props.ownerStore, props.onUpdateStore);
+  const screen = useOwnerStoreScreen(props.ownerStore);
 
   return <OwnerStoreScreenView {...props} {...screen} />;
 }

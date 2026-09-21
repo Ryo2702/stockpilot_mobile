@@ -1,4 +1,4 @@
-import { Archive, Check, ChevronDown, Download, History, Settings, Upload, X } from "lucide-react-native";
+import { Archive, Check, ChevronDown, Download, History, Menu, Settings, Upload, X } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -329,6 +329,7 @@ export function InventoryMoreSheet({
   onExport,
   onArchived,
   onPreferences,
+  onMore,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -337,6 +338,7 @@ export function InventoryMoreSheet({
   onExport: () => void;
   onArchived: () => void;
   onPreferences: () => void;
+  onMore: () => void;
 }) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
@@ -346,6 +348,7 @@ export function InventoryMoreSheet({
     { label: "Export Inventory", Icon: Download, onPress: onExport },
     { label: "Archived Products", Icon: Archive, onPress: onArchived },
     { label: "Inventory Preferences", Icon: Settings, onPress: onPreferences },
+    { label: "More", Icon: Menu, onPress: onMore },
   ];
   return (
     <BottomSheet visible={visible} title="Inventory Actions" onClose={onClose}>

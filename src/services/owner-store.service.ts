@@ -15,6 +15,7 @@ import {
   listOwnerStores,
   listRecentStoreActivities,
   updateStore as updateStoreRecord,
+  updateBusinessName,
   type OwnerStoreRecord,
   type RecentStoreActivityRecord,
   type StoreDetailsRow,
@@ -84,6 +85,17 @@ export async function getOwnerStore(db: OwnerStoreDatabase) {
 
 export async function getOwnerStores(db: OwnerStoreDatabase) {
   return listOwnerStores(db);
+}
+
+export async function updateOwnerName(
+  db: OwnerStoreDatabase,
+  businessId: string,
+  value: string,
+) {
+  const ownerName = ownerNameSchema.parse(value);
+  const changes = await updateBusinessName(db, businessId, ownerName, new Date().toISOString());
+  if (!changes) throw new OwnerStoreNotFoundError();
+  return ownerName;
 }
 
 export async function getOwnerStoreDetails(
