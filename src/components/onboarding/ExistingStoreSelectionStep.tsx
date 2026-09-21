@@ -15,6 +15,7 @@ import {
 } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   ActivityIndicator as NativeActivityIndicator,
   Platform,
   Pressable,
@@ -28,7 +29,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import useStoreSelector from "@/components/store/store-selector/hooks/useStoreSelector";
 import StoreSelectorModal from "@/components/store/store-selector/partials/StoreSelectorModal";
 import { Button } from "@/components/ui/Button";
-import { importInventoryCsv } from "@/services/inventory-import.service";
+import {
+  analyzeOnboardingInventoryImport,
+  assertInventoryImportFileSize,
+  getInventoryImportErrorMessage,
+  importInventoryCsv,
+  InventoryImportError,
+} from "@/services/inventory-import.service";
 import type { OwnerStore } from "@/services/owner-store.service";
 import { radii, spacing, typography, useTheme, useThemeStyles } from "@/theme";
 import type { ThemeColors } from "@/theme/tokens";
@@ -158,6 +165,47 @@ export default function ExistingStoreSelectionStep({
     }
   };
 
+  const commitCsvImport = async (
+    destination: OwnerStore,
+    csv: string,
+    fileName: string,
+    rowCount: number,
+  ) => {
+    setMessage("");
+    setImporting(true);
+    setImportProgress({ phase: "importing", processed: 0, total: rowCount, percent: 10 });
+    try {
+      const importResult = await importInventoryCsv(
+        db,
+        destination,
+        csv,
+        fileName,
+        (progress) => setImportProgress(progress),
+      );
+      addAdditionalStores(importResult.createdStores);
+      setImportProgress({ phase: "complete", processed: importResult.importedCount, total: rowCount, percent: 100 });
+      const addedStores = importResult.createdStores.length;
+      const successMessage =
+        `Imported ${importResult.importedCount.toLocaleString()} items. Matching SKUs have updated quantities.` +
+        (addedStores ? ` Added ${addedStores} new store${addedStores === 1 ? "" : "s"}.` : "");
+      setMessage(successMessage);
+
+      const storeToSelect = importResult.createdStores[0] ?? importResult.destinationStore;
+      if (!sameStore(storeToSelect, selectedStore)) {
+        try {
+          await selectStore(storeToSelect);
+        } catch {
+          setMessage(successMessage + " Select " + storeToSelect.storeName + " to continue.");
+        }
+      }
+    } catch (error) {
+      setImportProgress(null);
+      setMessage(getInventoryImportErrorMessage(error, "Couldn't import this CSV file."));
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const importCsv = async () => {
     setMessage("");
     setImportProgress(null);
@@ -171,52 +219,31 @@ export default function ExistingStoreSelectionStep({
       if (selection.canceled) return;
 
       const asset = selection.assets[0];
-      if (!asset.name.toLowerCase().endsWith(".csv")) {
-        throw new Error("Choose a .csv inventory file.");
-      }
+      if (!asset.name.toLowerCase().endsWith(".csv")) throw new InventoryImportError("Choose a .csv inventory file.");
+      const fileSize = asset.size ?? (Platform.OS === "web" ? asset.file?.size : new ExpoFile(asset.uri).size);
+      assertInventoryImportFileSize(fileSize);
       setImportProgress({ phase: "reading", processed: 0, total: 0, percent: 0 });
-      const csv =
-        Platform.OS === "web"
-          ? await (asset.file?.text() ?? Promise.reject(new Error("Couldn't read the selected file.")))
-          : await new ExpoFile(asset.uri).text();
-      const importResult = await importInventoryCsv(
-        db,
-        selectedStore,
-        csv,
-        asset.name,
-        (progress) => setImportProgress(progress),
-      );
-      addAdditionalStores(importResult.createdStores);
-      setImportProgress({
-        phase: "complete",
-        processed: importResult.importedCount,
-        total: importResult.importedCount,
-        percent: 100,
-      });
-      const createdStoreNotice =
-        importResult.createdStores.length === 1
-          ? " Added " + importResult.createdStores[0].storeName + " to the selector."
-          : importResult.createdStores.length > 1
-            ? " Added " + importResult.createdStores.length + " new stores to the selector."
-            : "";
-      const successMessage =
-        "Imported " +
-        importResult.importedCount.toLocaleString() +
-        " items. Matching SKUs have updated quantities." +
-        createdStoreNotice;
-      setMessage(successMessage);
-
-      const storeToSelect = importResult.createdStores[0] ?? importResult.destinationStore;
-      if (!sameStore(storeToSelect, selectedStore)) {
-        try {
-          await selectStore(storeToSelect);
-        } catch {
-          setMessage(successMessage + " Select " + storeToSelect.storeName + " to continue.");
-        }
+      const csv = Platform.OS === "web"
+        ? await (asset.file?.text() ?? Promise.reject(new Error("Couldn't read the selected file.")))
+        : await new ExpoFile(asset.uri).text();
+      const preview = await analyzeOnboardingInventoryImport(db, selectedStore, csv);
+      setImportProgress(null);
+      const newStores = preview.newStoreNames.length
+        ? `\nNew stores: ${preview.newStoreNames.slice(0, 3).join(", ")}${preview.newStoreNames.length > 3 ? ", …" : ""}.`
+        : "";
+      const summary = `${preview.rowCount.toLocaleString()} item rows will be imported into ${selectedStore.storeName}. Matching SKUs update stock; new products and stores may be added.${newStores}`;
+      const confirmImport = () => void commitCsvImport(selectedStore, csv, asset.name, preview.rowCount);
+      if (Platform.OS === "web") {
+        if (globalThis.confirm(summary)) confirmImport();
+      } else {
+        Alert.alert("Review inventory import", summary, [
+          { text: "Cancel", style: "cancel" },
+          { text: "Import", onPress: confirmImport },
+        ]);
       }
     } catch (error) {
       setImportProgress(null);
-      setMessage(error instanceof Error ? error.message : "Couldn't import this CSV file.");
+      setMessage(getInventoryImportErrorMessage(error, "Couldn't import this CSV file."));
     } finally {
       setImporting(false);
     }

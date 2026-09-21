@@ -226,7 +226,7 @@ export async function saveInventoryProductDefaults(
 
 function csvCell(value: string | number | null) {
   let text = String(value ?? "");
-  if (/^[=+\-@]/.test(text)) text = `'${text}`;
+  if (typeof value === "string" && /^[\s\u0000-\u001f\u007f-\u009f]*[=+\-@]/.test(text)) text = `'${text}`;
   return `"${text.replaceAll('"', '""')}"`;
 }
 

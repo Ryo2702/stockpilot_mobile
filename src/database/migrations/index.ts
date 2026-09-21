@@ -7,6 +7,7 @@ import { productMetadataMigration } from "./006_product_metadata";
 import { productCurrentPriceMigration } from "./007_product_current_price";
 import { inventoryMovementsMigration } from "./008_inventory_movements";
 import { storeTypesMigration } from "./009_store_types";
+import { storeOwnershipMigration } from "./010_store_ownership";
 
 export const migrations = [
   initialMigration,
@@ -18,4 +19,5 @@ export const migrations = [
   productCurrentPriceMigration,
   inventoryMovementsMigration,
   storeTypesMigration,
+  storeOwnershipMigration,
 ];

@@ -12,7 +12,15 @@
     },
     "android": {
       "icon": "./assets/app-icon.png",
-      "predictiveBackGestureEnabled": false
+      "allowBackup": false,
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": [
+        "android.permission.INTERNET",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.VIBRATE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "output": "single",
@@ -21,15 +29,21 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/withCleartextTrafficDisabled",
       [
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/stockpilot/headMascot-transparent.png",
           "imageWidth": 76
         }
       ],
-      "expo-sqlite",
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ],
       "expo-secure-store",
       [
         "expo-camera",

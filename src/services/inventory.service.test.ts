@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 import { describe, expect, it, jest } from "@jest/globals";
+import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 
 import { InsufficientStockError } from "@/domain/inventory.errors";
 import type { OwnerStore } from "@/services/owner-store.service";
@@ -84,5 +85,52 @@ describe("applyStockChange", () => {
     })).rejects.toBeInstanceOf(InsufficientStockError);
 
     expect(runAsync).not.toHaveBeenCalled();
+  });
+
+  it("rolls inventory back when movement creation fails", async () => {
+    const native = new DatabaseSync(":memory:");
+    native.exec(`
+      CREATE TABLE stores (id TEXT PRIMARY KEY, business_id TEXT, status TEXT);
+      CREATE TABLE products (id TEXT PRIMARY KEY, business_id TEXT, store_id TEXT, is_active INTEGER);
+      CREATE TABLE inventory (product_id TEXT PRIMARY KEY, business_id TEXT, store_id TEXT, quantity INTEGER, updated_at TEXT);
+      CREATE TABLE stock_movements (id TEXT, business_id TEXT, store_id TEXT, product_id TEXT,
+        movement_type TEXT CHECK (0), delta INTEGER, quantity_before INTEGER, quantity_after INTEGER,
+        reason TEXT, reference TEXT, note TEXT, created_at TEXT);
+      INSERT INTO stores VALUES ('store-1', 'business-1', 'active');
+      INSERT INTO products VALUES ('product-1', 'business-1', 'store-1', 1);
+      INSERT INTO inventory VALUES ('product-1', 'business-1', 'store-1', 3, 'now');
+    `);
+
+    const database = {
+      getFirstAsync: async <T>(sql: string, ...values: SQLInputValue[]) =>
+        (native.prepare(sql).get(...values) as T | undefined) ?? null,
+      runAsync: async (sql: string, ...values: SQLInputValue[]) => {
+        const result = native.prepare(sql).run(...values);
+        return { changes: Number(result.changes), lastInsertRowId: Number(result.lastInsertRowid) };
+      },
+      withExclusiveTransactionAsync: async (task: (tx: unknown) => Promise<void>) => {
+        native.exec("BEGIN");
+        try {
+          await task(database);
+          native.exec("COMMIT");
+        } catch (error) {
+          native.exec("ROLLBACK");
+          throw error;
+        }
+      },
+      withTransactionAsync: async (task: () => Promise<void>) => task(),
+    } as unknown as SQLiteDatabase;
+
+    try {
+      await expect(applyStockChange(database, store, "product-1", {
+        type: "stock_in",
+        quantity: 2,
+        reason: "purchase",
+      })).rejects.toThrow();
+      expect(native.prepare("SELECT quantity FROM inventory WHERE product_id = 'product-1'").get()).toEqual({ quantity: 3 });
+      expect(native.prepare("SELECT COUNT(*) AS count FROM stock_movements").get()).toEqual({ count: 0 });
+    } finally {
+      native.close();
+    }
   });
 });

@@ -34,6 +34,7 @@ import {
   ActivityIndicator,
   Image,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -63,10 +64,15 @@ import {
 } from "@/services/owner-store.service";
 import {
   canShareBackup,
+  assertBackupPassphrase,
+  BackupPassphraseError,
   createBackup,
+  getBackupFormat,
   getStorageUsage,
   inspectBackup,
   listLocalBackups,
+  MIN_BACKUP_PASSPHRASE_LENGTH,
+  MIN_RESTORE_PASSPHRASE_LENGTH,
   readBackupFile,
   restoreBackup,
   saveBackupToDevice,
@@ -126,7 +132,10 @@ type RestoreCandidate = {
   bytes: Uint8Array;
   summary: BackupSummary;
   createdAt: number | null;
+  encrypted: boolean;
 };
+
+type PendingRestore = Pick<RestoreCandidate, "name" | "bytes" | "createdAt">;
 
 const themeLabels: Record<ThemePreference, string> = {
   light: "Light",
@@ -308,6 +317,7 @@ function Field({
   keyboardType,
   maxLength,
   autoCapitalize = "sentences",
+  secureTextEntry,
 }: {
   label: string;
   value: string;
@@ -318,6 +328,7 @@ function Field({
   keyboardType?: "default" | "number-pad" | "decimal-pad" | "numbers-and-punctuation";
   maxLength?: number;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
+  secureTextEntry?: boolean;
 }) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createSettingsStyles);
@@ -333,6 +344,7 @@ function Field({
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={colors.text.muted}
+        secureTextEntry={secureTextEntry}
         style={[styles.input, error ? styles.inputError : null]}
         value={value}
       />
@@ -381,6 +393,13 @@ export default function SettingsScreen({
   const backupBusy = backupStatus !== null;
   const [shareAvailable, setShareAvailable] = useState(false);
   const [restoreCandidate, setRestoreCandidate] = useState<RestoreCandidate | null>(null);
+  const [pendingRestore, setPendingRestore] = useState<PendingRestore | null>(null);
+  const [restorePassphrase, setRestorePassphrase] = useState("");
+  const [passphraseDialogVisible, setPassphraseDialogVisible] = useState(false);
+  const [passphraseMode, setPassphraseMode] = useState<"create" | "restore">("create");
+  const [backupPassphrase, setBackupPassphrase] = useState("");
+  const [backupPassphraseConfirm, setBackupPassphraseConfirm] = useState("");
+  const [passphraseError, setPassphraseError] = useState("");
   const [restoreDialogVisible, setRestoreDialogVisible] = useState(false);
   const [restoreBusy, setRestoreBusy] = useState(false);
   const [restoreError, setRestoreError] = useState("");
@@ -599,12 +618,12 @@ export default function SettingsScreen({
     }
   };
 
-  const startBackup = async () => {
+  const startBackup = async (passphrase?: string) => {
     setBackupStatus("preparing");
     setBackupError("");
     setRestoreMessage("");
     try {
-      const created = await createBackup(db);
+      const created = await createBackup(db, passphrase);
       setBackupResult(created);
       setLastBackup(created);
       setBackupFiles((files) => [created, ...files.filter((file) => file.name !== created.name)]);
@@ -643,16 +662,30 @@ export default function SettingsScreen({
     }
   };
 
-  const prepareRestore = async (name: string, bytes: Uint8Array, createdAt: number | null) => {
+  const prepareRestore = async (
+    name: string,
+    bytes: Uint8Array,
+    createdAt: number | null,
+    passphrase?: string,
+    passwordPrompt = false,
+  ) => {
     setBackupStatus("checking");
     setBackupError("");
     setRestoreError("");
     try {
-      const summary = await inspectBackup(db, bytes);
-      setRestoreCandidate({ name, bytes, summary, createdAt });
+      const summary = await inspectBackup(db, bytes, passphrase);
+      const encrypted = getBackupFormat(bytes) === "encrypted";
+      setRestoreCandidate({ name, bytes, summary, createdAt, encrypted });
+      setRestorePassphrase(passphrase ?? "");
       setRestoreDialogVisible(true);
+      return true;
     } catch {
-      setBackupError("Backup couldn't be restored. The selected file may be invalid or unsupported.");
+      if (passwordPrompt) {
+        setPassphraseError("Passphrase is incorrect or this backup is invalid.");
+      } else {
+        setBackupError("Backup couldn't be restored. The selected file may be invalid or unsupported.");
+      }
+      return false;
     } finally {
       setBackupStatus(null);
     }
@@ -668,7 +701,18 @@ export default function SettingsScreen({
       if (result.canceled) return;
       const asset = result.assets[0];
       const bytes = await readBackupFile(asset.uri, asset.file);
-      await prepareRestore(asset.name, bytes, backupDateFromName(asset.name));
+      const backupFormat = getBackupFormat(bytes);
+      if (backupFormat === "encrypted" && Platform.OS === "web") {
+        setBackupError("Passphrase-protected backups can only be restored in the StockPilot mobile app.");
+      } else if (backupFormat === "encrypted") {
+        setPendingRestore({ name: asset.name, bytes, createdAt: backupDateFromName(asset.name) });
+        setPassphraseMode("restore");
+        setBackupPassphrase("");
+        setPassphraseError("");
+        setPassphraseDialogVisible(true);
+      } else {
+        await prepareRestore(asset.name, bytes, backupDateFromName(asset.name));
+      }
     } catch {
       setBackupError("Backup couldn't be restored. The selected file may be invalid or unsupported.");
     }
@@ -678,7 +722,16 @@ export default function SettingsScreen({
     if (!backup.uri && !backup.bytes) return;
     try {
       const bytes = backup.bytes ?? await readBackupFile(backup.uri as string);
-      await prepareRestore(backup.name, bytes, backup.createdAt || backupDateFromName(backup.name));
+      const createdAt = backup.createdAt || backupDateFromName(backup.name);
+      if (getBackupFormat(bytes) === "encrypted") {
+        setPendingRestore({ name: backup.name, bytes, createdAt });
+        setPassphraseMode("restore");
+        setBackupPassphrase("");
+        setPassphraseError("");
+        setPassphraseDialogVisible(true);
+      } else {
+        await prepareRestore(backup.name, bytes, createdAt);
+      }
     } catch {
       setBackupError("Backup couldn't be opened. Choose another backup file.");
     }
@@ -689,10 +742,11 @@ export default function SettingsScreen({
     setRestoreBusy(true);
     setRestoreError("");
     try {
-      await restoreBackup(db, restoreCandidate.bytes);
+      await restoreBackup(db, restoreCandidate.bytes, restorePassphrase || undefined);
       setRestoreDialogVisible(false);
       setRestoreMessage("Backup restored.");
       setRestoreCandidate(null);
+      setRestorePassphrase("");
       void onRestoreComplete().catch(() => undefined);
       void getThemePreference(db).then((restoredPreference) => setColorScheme(restoredPreference)).catch(() => undefined);
       await refreshStorage();
@@ -704,6 +758,52 @@ export default function SettingsScreen({
     } finally {
       setRestoreBusy(false);
     }
+  };
+
+  const submitPassphrase = async () => {
+    setPassphraseError("");
+    try {
+      assertBackupPassphrase(backupPassphrase, passphraseMode === "create" ? MIN_BACKUP_PASSPHRASE_LENGTH : MIN_RESTORE_PASSPHRASE_LENGTH);
+      if (passphraseMode === "create") {
+        if (backupPassphrase !== backupPassphraseConfirm) {
+          setPassphraseError("Passphrases don't match.");
+          return;
+        }
+        setPassphraseDialogVisible(false);
+        setBackupPassphrase("");
+        setBackupPassphraseConfirm("");
+        await startBackup(backupPassphrase);
+      } else if (pendingRestore) {
+        const restored = await prepareRestore(
+          pendingRestore.name,
+          pendingRestore.bytes,
+          pendingRestore.createdAt,
+          backupPassphrase,
+          true,
+        );
+        if (restored) {
+          setPassphraseDialogVisible(false);
+          setPendingRestore(null);
+          setBackupPassphrase("");
+        }
+      }
+    } catch (error) {
+      setPassphraseError(error instanceof BackupPassphraseError
+        ? `Use ${passphraseMode === "create" ? MIN_BACKUP_PASSPHRASE_LENGTH : MIN_RESTORE_PASSPHRASE_LENGTH}–128 characters, without control characters.`
+        : "Passphrase couldn't be used.");
+    }
+  };
+
+  const requestCreateBackup = () => {
+    if (Platform.OS === "web") {
+      void startBackup();
+      return;
+    }
+    setPassphraseMode("create");
+    setBackupPassphrase("");
+    setBackupPassphraseConfirm("");
+    setPassphraseError("");
+    setPassphraseDialogVisible(true);
   };
 
   const confirmDeleteStore = async () => {
@@ -1082,6 +1182,11 @@ export default function SettingsScreen({
     </View>
   ) : (
     <>
+      {Platform.OS === "web" ? (
+        <View style={styles.infoNote}>
+          <Text style={styles.infoText}>Browser backups are unencrypted. Create passphrase-protected backups in the StockPilot mobile app.</Text>
+        </View>
+      ) : null}
       <SettingsGroup label="Last Backup">
         <SettingsRow
           icon={Clock3}
@@ -1102,7 +1207,7 @@ export default function SettingsScreen({
           ))}
         </SettingsGroup>
       ) : null}
-      <Button title="Create Backup" loading={backupBusy} onPress={() => void startBackup()} />
+      <Button title="Create Backup" loading={backupBusy} onPress={requestCreateBackup} />
       <SettingsGroup label="Restore Backup">
         <SettingsRow icon={RefreshCw} title="Choose Backup File" description="Restore inventory from a StockPilot backup file." onPress={() => void chooseBackupFile()} />
       </SettingsGroup>
@@ -1248,6 +1353,7 @@ export default function SettingsScreen({
           if (!restoreBusy) {
             setRestoreDialogVisible(false);
             setRestoreCandidate(null);
+            setRestorePassphrase("");
           }
         }}
       >
@@ -1255,6 +1361,9 @@ export default function SettingsScreen({
           <View style={styles.dialog}>
             <Text style={styles.dialogTitle}>Restore Backup?</Text>
             <Text style={styles.dialogCopy}>This backup may replace your current StockPilot data.</Text>
+            {restoreCandidate && !restoreCandidate.encrypted ? (
+              <Text style={styles.error}>This older backup is unencrypted. Anyone with access to the file may read its data.</Text>
+            ) : null}
             {restoreCandidate ? (
               <View style={styles.form}>
                 <Text style={styles.filename}>{restoreCandidate.name}</Text>
@@ -1273,6 +1382,7 @@ export default function SettingsScreen({
                 onPress={() => {
                   setRestoreDialogVisible(false);
                   setRestoreCandidate(null);
+                  setRestorePassphrase("");
                 }}
                 style={styles.dialogButton}
               />
@@ -1283,6 +1393,77 @@ export default function SettingsScreen({
                 onPress={() => void confirmRestore()}
                 style={styles.dialogButton}
               />
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={passphraseDialogVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setPassphraseDialogVisible(false);
+          setPendingRestore(null);
+          setBackupPassphrase("");
+          setBackupPassphraseConfirm("");
+          setPassphraseError("");
+        }}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.dialog}>
+            <Text style={styles.dialogTitle}>{passphraseMode === "create" ? "Protect Backup" : "Unlock Backup"}</Text>
+            <Text style={styles.dialogCopy}>
+              {passphraseMode === "create"
+                ? `Use a unique, hard-to-guess passphrase with at least ${MIN_BACKUP_PASSPHRASE_LENGTH} characters. StockPilot cannot recover it, so keep it somewhere safe.`
+                : "Enter the passphrase used when this backup was created."}
+            </Text>
+            <View style={styles.form}>
+              <Field
+                label="Backup Passphrase"
+                value={backupPassphrase}
+                onChangeText={(value) => {
+                  setBackupPassphrase(value);
+                  setPassphraseError("");
+                }}
+                maxLength={128}
+                autoCapitalize="none"
+                secureTextEntry
+              />
+              {passphraseMode === "create" ? (
+                <Field
+                  label="Confirm Passphrase"
+                  value={backupPassphraseConfirm}
+                  onChangeText={(value) => {
+                    setBackupPassphraseConfirm(value);
+                    setPassphraseError("");
+                  }}
+                  maxLength={128}
+                  autoCapitalize="none"
+                  secureTextEntry
+                />
+              ) : null}
+              {passphraseError ? <Text accessibilityRole="alert" style={styles.error}>{passphraseError}</Text> : null}
+              <View style={styles.dialogActions}>
+                <Button
+                  title="Cancel"
+                  variant="secondary"
+                  onPress={() => {
+                    setPassphraseDialogVisible(false);
+                    setPendingRestore(null);
+                    setBackupPassphrase("");
+                    setBackupPassphraseConfirm("");
+                    setPassphraseError("");
+                  }}
+                  style={styles.dialogButton}
+                />
+                <Button
+                  title={passphraseMode === "create" ? "Create Backup" : "Continue"}
+                  loading={backupBusy}
+                  disabled={backupBusy}
+                  onPress={() => void submitPassphrase()}
+                  style={styles.dialogButton}
+                />
+              </View>
             </View>
           </View>
         </View>

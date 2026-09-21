@@ -39,6 +39,7 @@ export default function HomeScreen() {
   const barcodeRequestSequence = useRef(0);
   const [ownerStore, setOwnerStore] = useState<OwnerStore | null>(null);
   const [ownerStores, setOwnerStores] = useState<OwnerStore[]>([]);
+  const [showStoreSelection, setShowStoreSelection] = useState(false);
   const [activeSection, setActiveSection] = useState<HomeSection>("dashboard");
   const [inventoryActionRequest, setInventoryActionRequest] = useState<InventoryActionRequest | null>(null);
   const [cameraRequest, setCameraRequest] = useState(0);
@@ -242,7 +243,7 @@ export default function HomeScreen() {
     return <TrialExpiredScreen expirationLabel={trialExpirationLabel} />;
   }
 
-  const screen = ownerStore ? (
+  const screen = ownerStore && !showStoreSelection ? (
     activeSection === "more" ? (
       <MoreScreen
         ownerStore={ownerStore}
@@ -256,6 +257,7 @@ export default function HomeScreen() {
         onOpenInventoryAction={openInventoryAction}
         onRestoreComplete={refreshStores}
         onNavigate={navigate}
+        onExitToStoreSelection={() => setShowStoreSelection(true)}
       />
     ) : activeSection === "inventory" ? (
       <InventoryScreen
@@ -307,10 +309,14 @@ export default function HomeScreen() {
     )
   ) : (
     <OnboardingScreen
+      existingStores={ownerStore ? ownerStores : undefined}
+      selectedStore={ownerStore ?? undefined}
+      onCreateStore={ownerStore ? createStore : undefined}
       onComplete={(store) => {
-        setOwnerStores([store]);
+        void getOwnerStores(db).then(setOwnerStores).catch(() => undefined);
         setOwnerStore(store);
         setActiveSection("dashboard");
+        setShowStoreSelection(false);
         void saveActiveStoreSelection(db, { businessId: store.businessId, storeId: store.storeId });
       }}
     />

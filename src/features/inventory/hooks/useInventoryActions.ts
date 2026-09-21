@@ -16,8 +16,11 @@ import {
   type getInventoryDetail,
 } from "@/services/inventory.service";
 import {
+  assertInventoryImportFileSize,
   analyzeInventoryImport,
+  getInventoryImportErrorMessage,
   importInventoryCsv,
+  InventoryImportError,
   type InventoryImportAnalysis,
   type InventoryImportProgress,
 } from "@/services/inventory-import.service";
@@ -112,7 +115,7 @@ export default function useInventoryActions({
       if (importRequest.current === requestId) setPendingImport({ csv, fileName, analysis });
     } catch (error) {
       if (importRequest.current === requestId) {
-        setImportError(error instanceof Error ? error.message : "Couldn't analyze this CSV file.");
+        setImportError(getInventoryImportErrorMessage(error, "Couldn't analyze this CSV file."));
       }
     } finally {
       if (importRequest.current === requestId) {
@@ -136,14 +139,16 @@ export default function useInventoryActions({
       if (selection.canceled) return;
       if (importRequest.current !== requestId) return;
       const asset = selection.assets[0];
-      if (!asset.name.toLowerCase().endsWith(".csv")) throw new Error("Choose a .csv inventory file.");
+      if (!asset.name.toLowerCase().endsWith(".csv")) throw new InventoryImportError("Choose a .csv inventory file.");
+      const fileSize = asset.size ?? (Platform.OS === "web" ? asset.file?.size : new ExpoFile(asset.uri).size);
+      assertInventoryImportFileSize(fileSize);
       const csv = Platform.OS === "web"
         ? await (asset.file?.text() ?? Promise.reject(new Error("Couldn't read the selected file.")))
         : await new ExpoFile(asset.uri).text();
       setPendingImport({ csv, fileName: asset.name, analysis: null });
       await analyzeImportFile(csv, asset.name);
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : "Couldn't read the selected CSV file.");
+      onMessage(getInventoryImportErrorMessage(error, "Couldn't read the selected CSV file."));
     }
   };
 
@@ -175,7 +180,7 @@ export default function useInventoryActions({
       }
     } catch (error) {
       if (importRequest.current === requestId) {
-        setImportError(error instanceof Error ? error.message : "Couldn't import this CSV file.");
+        setImportError(getInventoryImportErrorMessage(error, "Couldn't import this CSV file."));
         setImportProgress(null);
       }
     } finally {

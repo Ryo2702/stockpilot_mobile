@@ -16,6 +16,7 @@ export const inventoryMovementsMigration: Migration = {
   },
   async up(db) {
     const columns = await getColumns(db);
+    if (!columns.size) return;
     if (!columns.has("movement_type")) {
       await db.execAsync(`
         ALTER TABLE stock_movements ADD COLUMN movement_type TEXT NOT NULL DEFAULT 'adjustment'

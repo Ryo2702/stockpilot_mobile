@@ -837,8 +837,8 @@ export default function InsightsScreenView({
         await directory.createFile(fileName, "text/csv").write(csv);
       }
       showMessage(`CSV report saved for ${ownerStore.storeName}.`);
-    } catch (error) {
-      showMessage(error instanceof Error ? `Report couldn't be exported. ${error.message}` : "Report couldn't be exported. Try again.");
+    } catch {
+      showMessage("Report couldn't be exported. Try again.");
     }
   };
 
@@ -848,8 +848,8 @@ export default function InsightsScreenView({
       const report = await insights.generateReport(type);
       setSelectedReport(report);
       showMessage("Report saved to this store's local history.");
-    } catch (error) {
-      showMessage(error instanceof Error ? error.message : "Report couldn't be generated. Try again.");
+    } catch {
+      showMessage("Report couldn't be generated. Try again.");
     } finally {
       setGeneratingReport(false);
     }

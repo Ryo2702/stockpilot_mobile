@@ -1,0 +1,57 @@
+# StockPilot Android Security Architecture
+
+**Assessment date:** 2026-09-21  
+**Target:** Expo SDK 57 / Android release  
+**Release decision:** Not approved for production yet. Source hardening is in place, but a production-identity APK/AAB, merged release manifest, and Android runtime evidence are still missing. Portable encrypted backup behavior is implemented in source but remains unverified in a native SQLCipher build.
+
+## Data and trust boundaries
+
+StockPilot remains offline-first. SQLite is the source of truth for businesses, stores, products, inventory, movements, settings, and insights. Screens call services; validation stays at input/domain boundaries; repositories own SQL. Imported files, camera payloads, document-provider URIs, and deep-link parameters are untrusted.
+
+## Data at rest and SQLCipher
+
+`app.json` enables the Expo SQLite SQLCipher config plugin. On native startup, `src/database/security/database-key.ts` obtains 32 bytes from Expo Crypto's asynchronous secure random API, stores only the 64-character hex representation in Expo SecureStore, and validates it when read. `encrypted-database.ts` applies SQLCipher raw-key syntax immediately after opening the native database and fails closed if SQLCipher is unavailable or the key is missing/invalid. The key is not exported to screens or logs. Web continues to use the existing web SQLite path; this protection targets native builds.
+
+The existing `stockpilot.db` is retained while copied into an encrypted staging database using SQLCipher `sqlcipher_export`. The copy is checked for integrity, table counts, inventory totals, foreign-key violations, and ownership mismatches before moving into place. Existing encrypted and legacy files are compared after migrations; mismatch or migration failure leaves the legacy file in place and prevents normal startup. A nonempty corrupt encrypted target also fails closed when a legacy file remains; there is no automatic in-app repair because the target could contain newer data. Both files must be preserved for manual recovery. The former automatic destructive migration reset was removed. Node tests cover markerless/partial migration preservation and the store ownership triggers; SQLCipher itself requires a custom native build and is not verified in this checkout.
+
+Portable native `.spbackup` files use SQLCipher `ATTACH ... KEY ?` and `sqlcipher_export()`. They rely on SQLCipher's default passphrase KDF/settings; the app does not implement cryptography or store the user's passphrase. A short format marker is prepended outside the encrypted database and removed before SQLite opens it. Restore asks for the passphrase, checks SQLCipher and page integrity, then validates SQLite integrity, schema/version/columns, foreign keys, ownership, and quantities before a transaction. New native backups require at least 20 characters; restores accept 12-character passphrases for backups made by earlier beta builds. Length is only a floor and does not guarantee entropy: users should choose a unique, unpredictable phrase and keep it separately. Legacy serialized SQLite backups remain importable with a plaintext warning so existing files are recoverable; they are not rewritten or deleted automatically. Browser backups still use SQLite serialization and are outside the Android release security target.
+
+Do not treat the implementation as proven until a native build verifies encrypted backup bytes, wrong-passphrase rejection, and correct-passphrase restore on a second install. Expo's SDK 57 [`serializeAsync()`](https://docs.expo.dev/versions/v57.0.0/sdk/sqlite/) must not be used for confidential encrypted-database backups because [SQLite serialization exposes plaintext pages](https://discuss.zetetic.net/t/in-memory-encryption-not-working/3865). SQLCipher documents the supported [passphrase keying, ATTACH, export, and page-integrity APIs](https://www.zetetic.net/sqlcipher/sqlcipher-api/).
+
+## Android backup, network, and permissions
+
+`android.allowBackup` is false. Expo SecureStore also supplies backup-rule XML in the generated Android source project. A local config plugin writes `android:usesCleartextTraffic="false"` to the main app manifest. Debug manifests intentionally override this for Metro. The final merged release manifest and a device backup/restore attempt have not been inspected.
+
+The native app has no app-level HTTP or API calls in the scanned `src/` tree. The generated main manifest contains removal markers for `INTERNET` and explicitly sets `usesCleartextTraffic=false`; debug manifests intentionally override the latter for Metro and are not production evidence. The generated main manifest retains `CAMERA` only; legacy external storage, overlay, vibration, and Internet permissions are configured for removal. Confirm all of these against the merged release manifest before approval.
+
+Camera permission is required for product scanning. Audio capture is disabled in the Expo Camera config. System document/folder pickers are used for CSV and backup access; the app does not request broad storage permission. `INTERNET` is removed because no app network feature is implemented. Expo Router's custom `stockpilot` scheme remains externally invokable for navigation; no direct URL-to-mutation handler was found in source. The launcher activity is expected to be exported; no final merged component list is available.
+
+## SQL, stock rules, and store isolation
+
+Repository values use Expo SQLite bind parameters. The added static regression check scans SQL template literals and fails on interpolations outside reviewed fixed fragments; it includes a malicious-value fixture. Internal interpolated identifiers are limited to schema/table allowlists, fixed SQL fragments, or schema-derived column lists.
+
+Inventory quantity retains its database nonnegative `CHECK`. `applyStockChange` validates domain input, checks active business/store/product scope, and writes quantity plus movement inside one native exclusive transaction. A SQLite-backed regression test injects a movement insert failure and verifies that inventory rolls back. Migration 10 rejects inconsistent existing ownership data before installing triggers that enforce business/store/product relationships on product, inventory, movement, and insight writes; store reassignment is rejected while dependent data exists.
+
+## Import, barcode, and QR input
+
+CSV import limits are 5 MiB, 10,000 data rows, 32 columns, and 4,096 characters per field. It rejects unsupported/duplicate columns, excess row values, invalid product data, negative/non-integer quantities, and repeated SKUs/barcodes in a store. Import writes remain transactional. The onboarding flow now validates and displays a summary confirmation before creating stores or changing quantities; it also checks the three-active-store limit. Inventory and insight CSV exports prefix string cells with an apostrophe when `=`, `+`, `-`, or `@` follows leading whitespace/control characters; numeric cells remain numeric.
+
+CSV validation errors use a typed error before they are shown to users. Unknown file, SQLite, and report failures show fixed messages so provider paths and native exception details stay hidden. Imported text in validation messages is stripped of control and bidirectional override characters and capped at 240 characters.
+
+Scanned strings pass through a shared validator before lookup or product-form updates. It limits payloads to 128 characters and rejects empty/control-character and URI-like payloads. Scanning only resolves/prefills; it does not launch URLs, execute SQL, or mutate stock without the existing service flow. Device-camera behavior still needs an Android release test.
+
+Portable backup import checks a 50 MiB byte cap before read, SQLCipher page integrity for protected files, SQLite integrity, foreign keys, schema/version/columns, ownership, and nonnegative stock. Restore copies bounded 250-row batches inside the existing transaction. Native backup output is protected by a user-held passphrase; legacy files are identified as plaintext and warned before restore. Native backup flow still needs SQLCipher runtime verification before release approval.
+
+## Logs, secrets, and dependencies
+
+The source scan found no `console.*`, `process.env`, `EXPO_PUBLIC_*`, credential-pattern matches, or checked-in `.env*`/private-key files under the scanned repository paths. No centralized logger is added because no app console logging exists. Compiled-bundle scanning is pending an APK/AAB.
+
+Unused `expo-image` and `react-native-purchases` dependencies were removed. Expo Doctor's SDK 57 patch mismatches were aligned using `npx expo install`. `npm audit` reports 15 moderate transitive findings through `expo-router` → `query-string` → `decode-uri-component` and `expo-sharing` → `@expo/config-plugins` → `xcode` → `uuid`. The suggested forced fixes select Expo packages outside SDK 57 compatibility; no forced upgrade was applied. Recheck advisories after compatible upstream SDK releases.
+
+## Build controls and evidence limits
+
+Expo prebuild generated Android source successfully after replacing an obsolete, missing splash asset reference with the existing StockPilot mascot asset. Generated source shows SQLCipher enabled and the expected backup/permission-removal configuration. It uses `com.anonymous.stockpilot` because this checkout has no production `android.package`, EAS profile, or signing configuration. This generated project is not the production release; release flags, merged manifest, APK/AAB contents, exported providers, and release permissions remain unverified.
+
+New residual findings use current OWASP mappings: [MASWE-0014: Improper Cryptographic Key Derivation](https://mas.owasp.org/MASWE/MASVS-CRYPTO/MASWE-0014/) covers low-entropy passphrases; [MASTG-BEST-0021](https://mas.owasp.org/MASTG/best-practices/MASTG-BEST-0021/) covers safe error and exception handling. MASWE-0014 currently defines no atomic MASTG test.
+
+Expo SDK 57 references used for implementation: [SQLite](https://docs.expo.dev/versions/v57.0.0/sdk/sqlite/), [SecureStore](https://docs.expo.dev/versions/v57.0.0/sdk/securestore/), [Crypto](https://docs.expo.dev/versions/v57.0.0/sdk/crypto/), [app config](https://docs.expo.dev/versions/v57.0.0/config/app/). Android behavior references: [application manifest](https://developer.android.com/guide/topics/manifest/application-element), [network security config](https://developer.android.com/privacy-and-security/security-config). OWASP references: [MASVS](https://mas.owasp.org/MASVS/), [unencrypted local data MASWE-0001](https://mas.owasp.org/MASWE/MASVS-STORAGE/MASWE-0001/), [unencrypted data outside app storage MASWE-0002](https://mas.owasp.org/MASWE/MASVS-STORAGE/MASWE-0002/), [backup MASWE-0006](https://mas.owasp.org/MASWE/MASVS-STORAGE/MASWE-0006/), [untrusted input MASWE-0050](https://mas.owasp.org/MASWE/MASVS-CODE/MASWE-0050/), and [deep links MASWE-0029](https://mas.owasp.org/MASWE/MASVS-PLATFORM/MASWE-0029/). Relevant current MASTG 2.x checks include [MASTG-TEST-0204](https://mas.owasp.org/MASTG/tests/android/MASVS-CRYPTO/MASTG-TEST-0204/), [0207](https://mas.owasp.org/MASTG/tests/android/MASVS-STORAGE/MASTG-TEST-0207/), [0216](https://mas.owasp.org/MASTG/tests/android/MASVS-STORAGE/MASTG-TEST-0216/), [0262](https://mas.owasp.org/MASTG/tests/android/MASVS-STORAGE/MASTG-TEST-0262/), and [0394](https://mas.owasp.org/MASTG/tests/android/MASVS-PLATFORM/MASTG-TEST-0394/).

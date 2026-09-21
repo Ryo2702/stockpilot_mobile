@@ -23,6 +23,7 @@ type MoreScreenProps = {
   onOpenInventoryAction: (action: "import" | "export") => void;
   onRestoreComplete: () => Promise<void>;
   onNavigate: (key: BottomNavKey) => void;
+  onExitToStoreSelection: () => void;
 };
 
 export default function MoreScreen(props: MoreScreenProps) {
@@ -91,8 +92,8 @@ export default function MoreScreen(props: MoreScreenProps) {
             <SettingsRow
               icon={House}
               title="Exit"
-              description="Return to Home"
-              onPress={() => props.onNavigate("dashboard")}
+              description="Return to store selection"
+              onPress={props.onExitToStoreSelection}
             />
           </SettingsGroup>
         </ScrollView>

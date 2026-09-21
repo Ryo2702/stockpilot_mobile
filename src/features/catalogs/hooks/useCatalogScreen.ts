@@ -18,6 +18,7 @@ import {
   updateProduct,
 } from "@/services/catalog";
 import type { CreateProductInput, UpdateProductInput } from "@/validation/product.validation";
+import { parseScannedCode } from "@/validation/barcode.validation";
 
 import type { CatalogCategoryOption } from "../data/catalog.data";
 
@@ -231,12 +232,15 @@ export default function useCatalogScreen({
 
   const handleBarcodeScanned = useCallback(async (barcode: string, target = scannerTarget) => {
     setScannerVisible(false);
-    if (target === "form") {
-      setFormBarcode(barcode);
+    const code = parseScannedCode(barcode);
+    if (!code) {
+      setActionError("This QR or barcode value isn't supported.");
       return;
     }
-    const code = barcode.trim();
-    if (!code) return;
+    if (target === "form") {
+      setFormBarcode(code);
+      return;
+    }
     setActionError("");
     setCategory(null);
     setStockStatus("all");

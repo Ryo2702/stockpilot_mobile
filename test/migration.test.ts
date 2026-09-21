@@ -60,6 +60,7 @@ describe("database migration", () => {
         { version: 7 },
         { version: 8 },
         { version: 9 },
+        { version: 10 },
       ]);
       expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'products'")).toEqual({ name: "products" });
       expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'catalogs'")).toBeUndefined();
@@ -110,6 +111,7 @@ describe("database migration", () => {
         { version: 7 },
         { version: 8 },
         { version: 9 },
+        { version: 10 },
       ]);
     } finally {
       database.close();
@@ -194,7 +196,7 @@ describe("database migration", () => {
       expect(database.first<{ product_id: string }>("SELECT product_id FROM stock_movements")).toEqual({
         product_id: "product-1",
       });
-      expect(database.all<{ version: number }>("SELECT version FROM schema_migrations ORDER BY version")).toHaveLength(9);
+      expect(database.all<{ version: number }>("SELECT version FROM schema_migrations ORDER BY version")).toHaveLength(10);
       expect(database.all("PRAGMA foreign_key_check")).toHaveLength(0);
     } finally {
       database.close();
@@ -266,6 +268,117 @@ describe("database migration", () => {
       expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE name = 'store_settings'")).toEqual({
         name: "store_settings",
       });
+    } finally {
+      database.close();
+    }
+  });
+
+  test("rejects product, inventory, movement, and snapshot rows with mismatched stores", async () => {
+    const database = createTestDatabase();
+
+    try {
+      await migrate(database.db);
+      await database.db.execAsync(`
+        INSERT INTO businesses (id, name, created_at, updated_at) VALUES
+          ('business-a', 'Business A', 'now', 'now'),
+          ('business-b', 'Business B', 'now', 'now');
+        INSERT INTO stores (id, business_id, name, created_at, updated_at) VALUES
+          ('store-a', 'business-a', 'Store A', 'now', 'now'),
+          ('store-b', 'business-b', 'Store B', 'now', 'now');
+        INSERT INTO products (id, business_id, store_id, name, created_at, updated_at)
+          VALUES ('product-a', 'business-a', 'store-a', 'Product A', 'now', 'now');
+      `);
+
+      await expect(database.db.execAsync(`
+        INSERT INTO products (id, business_id, store_id, name, created_at, updated_at)
+          VALUES ('bad-product', 'business-a', 'store-b', 'Bad Product', 'now', 'now');
+      `)).rejects.toThrow(/mismatch/);
+      await expect(database.db.execAsync(`
+        INSERT INTO inventory (product_id, business_id, store_id, quantity, updated_at)
+          VALUES ('product-a', 'business-a', 'store-b', 1, 'now');
+      `)).rejects.toThrow(/mismatch/);
+      await expect(database.db.execAsync(`
+        INSERT INTO stock_movements (
+          id, business_id, store_id, product_id, delta, quantity_before, quantity_after, reason, created_at
+        ) VALUES ('bad-movement', 'business-a', 'store-b', 'product-a', 1, 0, 1, 'test', 'now');
+      `)).rejects.toThrow(/mismatch/);
+      await expect(database.db.execAsync(`
+        INSERT INTO insight_snapshots (
+          id, business_id, store_id, kind, payload_json, source_updated_at, created_at
+        ) VALUES ('bad-snapshot', 'business-a', 'store-b', 'test', '{}', 'now', 'now');
+      `)).rejects.toThrow(/mismatch/);
+      await expect(database.db.execAsync(
+        "UPDATE stores SET business_id = 'business-b' WHERE id = 'store-a'",
+      )).rejects.toThrow(/dependent business data/);
+      expect(database.first<{ count: number }>("SELECT COUNT(*) AS count FROM products")).toEqual({ count: 1 });
+      expect(database.first<{ count: number }>("SELECT COUNT(*) AS count FROM inventory")).toEqual({ count: 0 });
+      expect(database.first<{ count: number }>("SELECT COUNT(*) AS count FROM stock_movements")).toEqual({ count: 0 });
+      expect(database.first<{ count: number }>("SELECT COUNT(*) AS count FROM insight_snapshots")).toEqual({ count: 0 });
+      expect(database.first<{ business_id: string }>("SELECT business_id FROM stores WHERE id = 'store-a'")).toEqual({
+        business_id: "business-a",
+      });
+    } finally {
+      database.close();
+    }
+  });
+
+  test("rejects moving a product while inventory or movement history belongs to its current store", async () => {
+    const database = createTestDatabase();
+
+    try {
+      await migrate(database.db);
+      await database.db.execAsync(`
+        INSERT INTO businesses (id, name, created_at, updated_at) VALUES
+          ('business-a', 'Business A', 'now', 'now'),
+          ('business-b', 'Business B', 'now', 'now');
+        INSERT INTO stores (id, business_id, name, created_at, updated_at) VALUES
+          ('store-a', 'business-a', 'Store A', 'now', 'now'),
+          ('store-b', 'business-b', 'Store B', 'now', 'now');
+        INSERT INTO products (id, business_id, store_id, name, created_at, updated_at)
+          VALUES ('product-a', 'business-a', 'store-a', 'Product A', 'now', 'now');
+        INSERT INTO inventory (product_id, business_id, store_id, quantity, updated_at)
+          VALUES ('product-a', 'business-a', 'store-a', 4, 'now');
+        INSERT INTO stock_movements (
+          id, business_id, store_id, product_id, delta, quantity_before, quantity_after, reason, created_at
+        ) VALUES ('movement-a', 'business-a', 'store-a', 'product-a', 4, 0, 4, 'test', 'now');
+      `);
+
+      await expect(database.db.runAsync(
+        "UPDATE products SET business_id = ?, store_id = ? WHERE id = ?",
+        "business-b",
+        "store-b",
+        "product-a",
+      )).rejects.toThrow(/dependent inventory data/);
+      expect(database.first<{ business_id: string; store_id: string }>(
+        "SELECT business_id, store_id FROM products WHERE id = 'product-a'",
+      )).toEqual({ business_id: "business-a", store_id: "store-a" });
+      expect(database.first<{ quantity: number }>(
+        "SELECT quantity FROM inventory WHERE product_id = 'product-a'",
+      )).toEqual({ quantity: 4 });
+      expect(database.first<{ count: number }>(
+        "SELECT COUNT(*) AS count FROM stock_movements WHERE product_id = 'product-a'",
+      )).toEqual({ count: 1 });
+
+      await database.db.runAsync("DELETE FROM stock_movements WHERE product_id = ?", "product-a");
+      await expect(database.db.runAsync(
+        "UPDATE products SET business_id = ?, store_id = ? WHERE id = ?",
+        "business-b",
+        "store-b",
+        "product-a",
+      )).rejects.toThrow(/dependent inventory data/);
+
+      await database.db.runAsync("DELETE FROM inventory WHERE product_id = ?", "product-a");
+      await database.db.runAsync(`
+        INSERT INTO stock_movements (
+          id, business_id, store_id, product_id, delta, quantity_before, quantity_after, reason, created_at
+        ) VALUES ('movement-a', 'business-a', 'store-a', 'product-a', 4, 0, 4, 'test', 'now');
+      `);
+      await expect(database.db.runAsync(
+        "UPDATE products SET business_id = ?, store_id = ? WHERE id = ?",
+        "business-b",
+        "store-b",
+        "product-a",
+      )).rejects.toThrow(/dependent inventory data/);
     } finally {
       database.close();
     }

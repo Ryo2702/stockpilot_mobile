@@ -5,7 +5,7 @@ import { catalogCategoryValues, type CatalogCategory } from "@/domain/catalog";
 import { createProductSchema } from "@/validation/product.validation";
 
 import { storeSchema } from "../validation/store.validation";
-import { insertStoreForBusiness, type OwnerStore } from "./owner-store.service";
+import { insertStoreForBusiness, MAX_STORES_PER_BUSINESS, type OwnerStore } from "./owner-store.service";
 
 type ImportExecutor = Pick<
   SQLiteDatabase,
@@ -74,6 +74,49 @@ type InventoryImportOptions = {
 };
 
 const PROGRESS_BATCH_SIZE = 250;
+export const MAX_INVENTORY_IMPORT_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_INVENTORY_IMPORT_ROWS = 10_000;
+const MAX_INVENTORY_IMPORT_COLUMNS = 32;
+const MAX_INVENTORY_IMPORT_FIELD_LENGTH = 4_096;
+
+export class InventoryImportError extends Error {
+  constructor(message: string) {
+    super(message.replace(/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g, " ").slice(0, 240));
+    this.name = "InventoryImportError";
+  }
+}
+
+export function getInventoryImportErrorMessage(error: unknown, fallback: string) {
+  return error instanceof InventoryImportError ? error.message : fallback;
+}
+
+export function assertInventoryImportFileSize(size: number | null | undefined) {
+  if (typeof size !== "number" || !Number.isSafeInteger(size) || size < 0) {
+    throw new InventoryImportError("The selected CSV file size couldn't be verified.");
+  }
+  if (size > MAX_INVENTORY_IMPORT_FILE_BYTES) {
+    throw new InventoryImportError("CSV files must be 5 MB or smaller.");
+  }
+}
+
+function assertInventoryImportTextSize(csv: string) {
+  let bytes = 0;
+  for (let index = 0; index < csv.length; index += 1) {
+    const code = csv.charCodeAt(index);
+    if (code <= 0x7f) bytes += 1;
+    else if (code <= 0x7ff) bytes += 2;
+    else if (code >= 0xd800 && code <= 0xdbff && index + 1 < csv.length) {
+      const next = csv.charCodeAt(index + 1);
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        bytes += 4;
+        index += 1;
+      } else bytes += 3;
+    } else bytes += 3;
+    if (bytes > MAX_INVENTORY_IMPORT_FILE_BYTES) {
+      throw new InventoryImportError("CSV files must be 5 MB or smaller.");
+    }
+  }
+}
 
 function makeProgress(
   phase: InventoryImportProgress["phase"],
@@ -103,12 +146,34 @@ function parseCsvRecords(csv: string) {
   let field = "";
   let quoted = false;
 
+  const append = (value: string) => {
+    if (field.length + value.length > MAX_INVENTORY_IMPORT_FIELD_LENGTH) {
+      throw new InventoryImportError(`CSV fields must be ${MAX_INVENTORY_IMPORT_FIELD_LENGTH} characters or fewer.`);
+    }
+    field += value;
+  };
+  const pushField = () => {
+    if (record.length >= MAX_INVENTORY_IMPORT_COLUMNS) {
+      throw new InventoryImportError(`CSV files can have no more than ${MAX_INVENTORY_IMPORT_COLUMNS} columns.`);
+    }
+    record.push(field);
+    field = "";
+  };
+  const pushRecord = () => {
+    pushField();
+    records.push(record);
+    if (records.length > MAX_INVENTORY_IMPORT_ROWS + 1) {
+      throw new InventoryImportError(`CSV files can have no more than ${MAX_INVENTORY_IMPORT_ROWS.toLocaleString()} rows.`);
+    }
+    record = [];
+  };
+
   for (let index = 0; index < csv.length; index += 1) {
     const char = csv[index];
 
     if (quoted) {
       if (char === '"' && csv[index + 1] === '"') {
-        field += '"';
+        append('"');
         index += 1;
       } else if (char === '"') {
         quoted = false;
@@ -118,22 +183,19 @@ function parseCsvRecords(csv: string) {
     } else if (char === '"' && field.length === 0) {
       quoted = true;
     } else if (char === ",") {
-      record.push(field);
-      field = "";
+      pushField();
     } else if (char === "\n") {
-      record.push(field.replace(/\r$/, ""));
-      records.push(record);
-      record = [];
-      field = "";
+      if (field.endsWith("\r")) field = field.slice(0, -1);
+      pushRecord();
     } else {
-      field += char;
+      append(char);
     }
   }
 
-  if (quoted) throw new Error("The CSV has an unclosed quoted value.");
+  if (quoted) throw new InventoryImportError("The CSV has an unclosed quoted value.");
   if (field.length || record.length) {
-    record.push(field.replace(/\r$/, ""));
-    records.push(record);
+    if (field.endsWith("\r")) field = field.slice(0, -1);
+    pushRecord();
   }
 
   return records.filter((row) => row.some((value) => value.trim()));
@@ -141,14 +203,14 @@ function parseCsvRecords(csv: string) {
 
 function parseCount(value: string | undefined, label: string, rowNumber: number) {
   if (value === undefined || value.trim() === "") {
-    if (label === "quantity") throw new Error(`Row ${rowNumber}: quantity is required.`);
+    if (label === "quantity") throw new InventoryImportError(`Row ${rowNumber}: quantity is required.`);
     return 0;
   }
 
   const rawCount = value.trim();
   const count = Number(rawCount);
   if (!/^\d+$/.test(rawCount) || !Number.isSafeInteger(count)) {
-    throw new Error(`Row ${rowNumber}: ${label} must be a whole number of 0 or more.`);
+    throw new InventoryImportError(`Row ${rowNumber}: ${label} must be a whole number of 0 or more.`);
   }
   return count;
 }
@@ -157,7 +219,7 @@ function parsePrice(value: string | undefined, rowNumber: number) {
   if (value === undefined || value.trim() === "") return null;
   const price = Number(value.trim());
   if (!Number.isFinite(price) || price < 0) {
-    throw new Error(`Row ${rowNumber}: current_price must be a valid amount of 0 or more.`);
+    throw new InventoryImportError(`Row ${rowNumber}: current_price must be a valid amount of 0 or more.`);
   }
   return price;
 }
@@ -167,15 +229,23 @@ async function parseInventoryCsv(
   defaultStoreName: string,
   onProgress?: (progress: InventoryImportProgress) => void,
 ): Promise<InventoryRow[]> {
+  assertInventoryImportTextSize(csv);
   const [headerRow, ...dataRows] = parseCsvRecords(csv.replace(/^\uFEFF/, ""));
-  if (!headerRow) throw new Error("The CSV file is empty.");
+  if (!headerRow) throw new InventoryImportError("The CSV file is empty.");
 
   const headers = headerRow.map((header) => header.trim().toLowerCase());
-  if (new Set(headers).size !== headers.length) throw new Error("The CSV contains duplicate column names.");
+  if (new Set(headers).size !== headers.length) throw new InventoryImportError("The CSV contains duplicate column names.");
+  const allowedHeaders = new Set([
+    "name", "quantity", "store_name", "sku", "barcode", "category", "unit",
+    "notes", "current_price", "price", "reorder_level", "critical_level",
+  ]);
+  if (headers.some((header) => !allowedHeaders.has(header))) {
+    throw new InventoryImportError("The CSV contains an unsupported column.");
+  }
 
   const column = (name: string) => headers.indexOf(name);
   if (column("name") === -1 || column("quantity") === -1) {
-    throw new Error("CSV must include the name and quantity columns.");
+    throw new InventoryImportError("CSV must include the name and quantity columns.");
   }
 
   const values = (row: string[], name: string) => {
@@ -183,6 +253,7 @@ async function parseInventoryCsv(
     return index === -1 ? undefined : row[index];
   };
   const seenSkus = new Map<string, Set<string>>();
+  const seenBarcodes = new Map<string, Set<string>>();
   const normalizedStoreNames = new Map<string, string>();
   const rows: InventoryRow[] = [];
   onProgress?.(makeProgress("validating", 0, dataRows.length));
@@ -191,8 +262,9 @@ async function parseInventoryCsv(
   for (let index = 0; index < dataRows.length; index += 1) {
     const row = dataRows[index];
     const rowNumber = index + 2;
+    if (row.length > headers.length) throw new InventoryImportError(`Row ${rowNumber}: the CSV has more values than columns.`);
     const name = values(row, "name")?.trim() ?? "";
-    if (!name) throw new Error(`Row ${rowNumber}: name is required.`);
+    if (!name) throw new InventoryImportError(`Row ${rowNumber}: name is required.`);
 
     const rawStoreName = values(row, "store_name")?.trim();
     let storeName: string | null = null;
@@ -202,7 +274,7 @@ async function parseInventoryCsv(
       if (!storeName) {
         const parsedStore = storeSchema.safeParse({ name: rawStoreName });
         if (!parsedStore.success) {
-          throw new Error(`Row ${rowNumber}: ${parsedStore.error.issues[0]?.message ?? "Invalid store name."}`);
+          throw new InventoryImportError(`Row ${rowNumber}: ${parsedStore.error.issues[0]?.message ?? "Invalid store name."}`);
         }
         storeName = parsedStore.data.name;
         normalizedStoreNames.set(key, storeName);
@@ -215,16 +287,25 @@ async function parseInventoryCsv(
     const category = rawCategory
       ? catalogCategoryValues.find((value) => value === rawCategory) ?? null
       : null;
-    if (rawCategory && !category) throw new Error(`Row ${rowNumber}: ${rawCategory} isn't a supported category.`);
+    if (rawCategory && !category) throw new InventoryImportError(`Row ${rowNumber}: ${rawCategory} isn't a supported category.`);
     const unit = values(row, "unit")?.trim() || null;
     if (sku) {
       const skuStoreKey = storeNameKey(storeName ?? defaultStoreName);
       const storeSkus = seenSkus.get(skuStoreKey) ?? new Set<string>();
       if (storeSkus.has(sku)) {
-        throw new Error(`Row ${rowNumber}: SKU ${sku} appears more than once in ${storeName ?? defaultStoreName}.`);
+        throw new InventoryImportError(`Row ${rowNumber}: SKU ${sku} appears more than once in ${storeName ?? defaultStoreName}.`);
       }
       storeSkus.add(sku);
       seenSkus.set(skuStoreKey, storeSkus);
+    }
+    if (barcode) {
+      const barcodeStoreKey = storeNameKey(storeName ?? defaultStoreName);
+      const storeBarcodes = seenBarcodes.get(barcodeStoreKey) ?? new Set<string>();
+      if (storeBarcodes.has(barcode)) {
+        throw new InventoryImportError(`Row ${rowNumber}: barcode ${barcode} appears more than once in ${storeName ?? defaultStoreName}.`);
+      }
+      storeBarcodes.add(barcode);
+      seenBarcodes.set(barcodeStoreKey, storeBarcodes);
     }
 
     const quantity = parseCount(values(row, "quantity"), "quantity", rowNumber);
@@ -233,7 +314,22 @@ async function parseInventoryCsv(
     const currentPrice = parsePrice(values(row, "current_price") ?? values(row, "price"), rowNumber);
     const notes = values(row, "notes")?.trim() || null;
     if (criticalLevel > reorderLevel) {
-      throw new Error(`Row ${rowNumber}: critical_level cannot exceed reorder_level.`);
+      throw new InventoryImportError(`Row ${rowNumber}: critical_level cannot exceed reorder_level.`);
+    }
+    const product = createProductSchema.safeParse({
+      name,
+      sku: sku ?? undefined,
+      barcode: barcode ?? undefined,
+      category: category ?? "other",
+      unit: unit ?? "ea",
+      currentPrice,
+      reorderLevel,
+      criticalLevel,
+      notes: notes ?? undefined,
+      initialQuantity: quantity,
+    });
+    if (!product.success) {
+      throw new InventoryImportError(`Row ${rowNumber}: ${product.error.issues[0]?.message ?? "Check the item details."}`);
     }
 
     rows.push({
@@ -259,6 +355,45 @@ async function parseInventoryCsv(
   }
 
   return rows;
+}
+
+export type OnboardingInventoryImportPreview = {
+  rowCount: number;
+  newStoreNames: string[];
+};
+
+export async function analyzeOnboardingInventoryImport(
+  db: ImportExecutor,
+  store: OwnerStore,
+  csv: string,
+): Promise<OnboardingInventoryImportPreview> {
+  const rows = await parseInventoryCsv(csv, store.storeName);
+  if (!rows.length) throw new InventoryImportError("The CSV has no inventory rows.");
+
+  const activeStore = await db.getFirstAsync<{ id: string }>(
+    "SELECT id FROM stores WHERE id = ? AND business_id = ? AND status = 'active' LIMIT 1",
+    store.storeId,
+    store.businessId,
+  );
+  if (!activeStore) throw new InventoryImportError(`${store.storeName} is no longer an active store.`);
+
+  const existingStoreNames = new Set(
+    (await db.getAllAsync<{ name: string }>(
+      "SELECT name FROM stores WHERE business_id = ? AND status = 'active'",
+      store.businessId,
+    )).map(({ name }) => storeNameKey(name)),
+  );
+  const newStoreNames = [...new Map(
+    rows.filter(({ storeName }) => storeName).map(({ storeName }) => [storeNameKey(storeName!), storeName!]),
+  )]
+    .filter(([key]) => !existingStoreNames.has(key))
+    .map(([, name]) => name);
+  const activeStoreCount = existingStoreNames.size;
+  if (activeStoreCount + newStoreNames.length > MAX_STORES_PER_BUSINESS) {
+    throw new InventoryImportError(`This import would exceed the ${MAX_STORES_PER_BUSINESS}-store limit.`);
+  }
+
+  return { rowCount: rows.length, newStoreNames };
 }
 
 type ActiveImportProduct = {
@@ -303,7 +438,7 @@ function oneProductMatch(
 ) {
   if (!key) return null;
   const matches = index.get(key) ?? [];
-  if (matches.length > 1) throw new Error(`Row ${rowNumber}: ${label} matches more than one product in the destination store.`);
+  if (matches.length > 1) throw new InventoryImportError(`Row ${rowNumber}: ${label} matches more than one product in the destination store.`);
   return matches[0] ?? null;
 }
 
@@ -315,14 +450,14 @@ async function buildActiveImportPlan(
   const sourceStores = new Set(
     rows.map(({ storeName }) => storeName ? storeNameKey(storeName) : null).filter(Boolean),
   );
-  if (sourceStores.size > 1) throw new Error("This file includes multiple source stores. Export one store at a time.");
+  if (sourceStores.size > 1) throw new InventoryImportError("This file includes multiple source stores. Export one store at a time.");
 
   const activeStore = await db.getFirstAsync<{ id: string }>(
     "SELECT id FROM stores WHERE id = ? AND business_id = ? AND status = 'active' LIMIT 1",
     store.storeId,
     store.businessId,
   );
-  if (!activeStore) throw new Error(`${store.storeName} is no longer an active store.`);
+  if (!activeStore) throw new InventoryImportError(`${store.storeName} is no longer an active store.`);
 
   const products = await db.getAllAsync<ActiveImportProduct>(
     `SELECT products.id, products.name, products.sku, products.barcode,
@@ -354,10 +489,10 @@ async function buildActiveImportPlan(
     const skuKey = row.sku ? normalizedValue(row.sku) : null;
     const barcodeKey = row.barcode ? normalizedValue(row.barcode) : null;
     const nameKey = normalizedValue(row.name);
-    if (skuKey && seenSkus.has(skuKey)) throw new Error(`Row ${row.rowNumber}: SKU ${row.sku} appears more than once in this file.`);
-    if (barcodeKey && seenBarcodes.has(barcodeKey)) throw new Error(`Row ${row.rowNumber}: barcode ${row.barcode} appears more than once in this file.`);
+    if (skuKey && seenSkus.has(skuKey)) throw new InventoryImportError(`Row ${row.rowNumber}: SKU ${row.sku} appears more than once in this file.`);
+    if (barcodeKey && seenBarcodes.has(barcodeKey)) throw new InventoryImportError(`Row ${row.rowNumber}: barcode ${row.barcode} appears more than once in this file.`);
     if (!skuKey && !barcodeKey && seenNamesWithoutId.has(nameKey)) {
-      throw new Error(`Row ${row.rowNumber}: ${row.name} appears more than once without a SKU or barcode.`);
+      throw new InventoryImportError(`Row ${row.rowNumber}: ${row.name} appears more than once without a SKU or barcode.`);
     }
     if (skuKey) seenSkus.add(skuKey);
     if (barcodeKey) seenBarcodes.add(barcodeKey);
@@ -366,40 +501,40 @@ async function buildActiveImportPlan(
     const skuMatch = oneProductMatch(bySku, skuKey, `SKU ${row.sku}`, row.rowNumber);
     const barcodeMatch = oneProductMatch(byBarcode, barcodeKey, `barcode ${row.barcode}`, row.rowNumber);
     if (skuMatch && barcodeMatch && skuMatch.id !== barcodeMatch.id) {
-      throw new Error(`Row ${row.rowNumber}: the SKU and barcode match different products in ${store.storeName}.`);
+      throw new InventoryImportError(`Row ${row.rowNumber}: the SKU and barcode match different products in ${store.storeName}.`);
     }
 
     let existing = skuMatch ?? barcodeMatch;
     if (!existing && !row.sku && !row.barcode) {
       const nameMatches = byName.get(nameKey) ?? [];
       if (nameMatches.length > 1) {
-        throw new Error(`Row ${row.rowNumber}: ${row.name} matches more than one product. Add its SKU or barcode to the CSV.`);
+        throw new InventoryImportError(`Row ${row.rowNumber}: ${row.name} matches more than one product. Add its SKU or barcode to the CSV.`);
       }
       existing = nameMatches[0] ?? null;
     }
 
     if (existing && row.sku && existing.sku && normalizedValue(row.sku) !== normalizedValue(existing.sku)) {
-      throw new Error(`Row ${row.rowNumber}: the SKU conflicts with the product matched by barcode in ${store.storeName}.`);
+      throw new InventoryImportError(`Row ${row.rowNumber}: the SKU conflicts with the product matched by barcode in ${store.storeName}.`);
     }
     if (existing && row.barcode && existing.barcode && normalizedValue(row.barcode) !== normalizedValue(existing.barcode)) {
-      throw new Error(`Row ${row.rowNumber}: the barcode conflicts with the product matched by SKU in ${store.storeName}.`);
+      throw new InventoryImportError(`Row ${row.rowNumber}: the barcode conflicts with the product matched by SKU in ${store.storeName}.`);
     }
     if (existing?.isActive === 0) {
-      throw new Error(`Row ${row.rowNumber}: ${row.name} is archived in ${store.storeName}. Restore it in Catalog before importing stock.`);
+      throw new InventoryImportError(`Row ${row.rowNumber}: ${row.name} is archived in ${store.storeName}. Restore it in Catalog before importing stock.`);
     }
     if (existing && matchedProductIds.has(existing.id)) {
-      throw new Error(`Row ${row.rowNumber}: more than one row matches ${existing.name} in ${store.storeName}.`);
+      throw new InventoryImportError(`Row ${row.rowNumber}: more than one row matches ${existing.name} in ${store.storeName}.`);
     }
     if (existing) matchedProductIds.add(existing.id);
     if (existing?.unit && row.unit && normalizedValue(existing.unit) !== normalizedValue(row.unit)) {
-      throw new Error(`Row ${row.rowNumber}: ${row.name} uses ${row.unit} in the file but ${existing.unit} in ${store.storeName}.`);
+      throw new InventoryImportError(`Row ${row.rowNumber}: ${row.name} uses ${row.unit} in the file but ${existing.unit} in ${store.storeName}.`);
     }
 
     let newProduct: ActiveImportPlanRow["newProduct"] = null;
     if (!existing) {
       const category = row.category ?? "other";
       if (!catalogCategoryValues.includes(category)) {
-        throw new Error(`Row ${row.rowNumber}: category ${category} isn't supported.`);
+        throw new InventoryImportError(`Row ${row.rowNumber}: category ${category} isn't supported.`);
       }
       const parsed = createProductSchema.safeParse({
         name: row.name,
@@ -414,7 +549,7 @@ async function buildActiveImportPlan(
         initialQuantity: row.quantity,
       });
       if (!parsed.success) {
-        throw new Error(`Row ${row.rowNumber}: ${parsed.error.issues[0]?.message ?? "Check the item details."}`);
+        throw new InventoryImportError(`Row ${row.rowNumber}: ${parsed.error.issues[0]?.message ?? "Check the item details."}`);
       }
       newProduct = parsed.data;
     }
@@ -490,7 +625,7 @@ export async function analyzeInventoryImport(
       percent: progress.total ? (progress.processed / progress.total) * 90 : 0,
     });
   });
-  if (!rows.length) throw new Error("The CSV has no inventory rows.");
+  if (!rows.length) throw new InventoryImportError("The CSV has no inventory rows.");
   const plan = await buildActiveImportPlan(db, store, rows);
   onProgress?.({ phase: "validating", processed: rows.length, total: rows.length, percent: 100 });
   return toImportAnalysis(store, fileName, plan);
@@ -520,7 +655,7 @@ async function importIntoActiveStore(
   expectedAnalysis?: InventoryImportAnalysis,
 ): Promise<InventoryImportResult> {
   const rows = await parseInventoryCsv(csv, store.storeName, onProgress);
-  if (!rows.length) throw new Error("The CSV has no inventory rows.");
+  if (!rows.length) throw new InventoryImportError("The CSV has no inventory rows.");
   const plan = await buildActiveImportPlan(db, store, rows);
   const fingerprint = activePlanFingerprint(plan);
   if (expectedAnalysis && (
@@ -528,7 +663,7 @@ async function importIntoActiveStore(
     expectedAnalysis.fileName !== fileName ||
     expectedAnalysis.fingerprint !== fingerprint
   )) {
-    throw new Error("Inventory changed after review. Analyze the file again before importing.");
+    throw new InventoryImportError("Inventory changed after review. Analyze the file again before importing.");
   }
 
   onProgress?.(makeProgress("importing", 0, plan.length));
@@ -536,7 +671,7 @@ async function importIntoActiveStore(
   const result = await withImportTransaction(db, async (tx) => {
     const currentPlan = await buildActiveImportPlan(tx, store, rows);
     if (activePlanFingerprint(currentPlan) !== fingerprint) {
-      throw new Error("Inventory changed after review. Analyze the file again before importing.");
+      throw new InventoryImportError("Inventory changed after review. Analyze the file again before importing.");
     }
 
     let createdProductCount = 0;
@@ -642,7 +777,7 @@ export async function importInventoryCsv(
   onProgress?.(makeProgress("validating", 0, 0));
   await yieldToUi();
   const rows = await parseInventoryCsv(csv, store.storeName, onProgress);
-  if (!rows.length) throw new Error("The CSV has no inventory rows.");
+  if (!rows.length) throw new InventoryImportError("The CSV has no inventory rows.");
   const now = new Date().toISOString();
   const storesByName = new Map<string, OwnerStore>();
   const importedStoreNames = new Map<string, string>();
@@ -686,7 +821,7 @@ export async function importInventoryCsv(
       const targetStore = row.storeName
         ? storesByName.get(storeNameKey(row.storeName))
         : store;
-      if (!targetStore) throw new Error(`Row ${index + 2}: store could not be resolved.`);
+      if (!targetStore) throw new InventoryImportError(`Row ${index + 2}: store could not be resolved.`);
       let existing = row.sku
         ? await db.getFirstAsync<{ id: string }>(
             `SELECT id FROM products

@@ -3,7 +3,14 @@ import type { SQLiteDatabase } from "expo-sqlite";
 
 import type { OwnerStore } from "@/services/owner-store.service";
 
-import { analyzeInventoryImport, importInventoryCsv } from "./inventory-import.service";
+import {
+  analyzeInventoryImport,
+  assertInventoryImportFileSize,
+  getInventoryImportErrorMessage,
+  importInventoryCsv,
+  InventoryImportError,
+  MAX_INVENTORY_IMPORT_FILE_BYTES,
+} from "./inventory-import.service";
 
 const destination = {
   businessId: "business-1",
@@ -32,6 +39,13 @@ function createDatabase(products: Array<Record<string, unknown>> = []) {
 }
 
 describe("inventory CSV transfer", () => {
+  it("shows validated import errors but hides technical exception details", () => {
+    expect(getInventoryImportErrorMessage(new InventoryImportError("Row 2: quantity is invalid."), "Import failed.")).toBe("Row 2: quantity is invalid.");
+    expect(getInventoryImportErrorMessage(new Error("SQLITE_CANTOPEN /private/app/data.db"), "Import failed.")).toBe("Import failed.");
+    expect(new InventoryImportError(`Row 2:\n${"x".repeat(300)}`).message).toHaveLength(240);
+    expect(new InventoryImportError("bad\u202einput").message).toBe("bad input");
+  });
+
   it("previews and adds missing exported products to the selected store", async () => {
     const { database, runAsync } = createDatabase();
     const analysis = await analyzeInventoryImport(database, destination, exportedCsv, "main-store.csv");
@@ -136,5 +150,30 @@ describe("inventory CSV transfer", () => {
 
     await expect(analyzeInventoryImport(database, destination, csv, "main-store.csv"))
       .rejects.toThrow("current_price must be a valid amount of 0 or more");
+  });
+
+  it("rejects files whose size cannot be verified or exceeds the import limit", () => {
+    expect(() => assertInventoryImportFileSize(undefined)).toThrow("couldn't be verified");
+    expect(() => assertInventoryImportFileSize(MAX_INVENTORY_IMPORT_FILE_BYTES + 1)).toThrow("5 MB or smaller");
+    expect(() => assertInventoryImportFileSize(MAX_INVENTORY_IMPORT_FILE_BYTES)).not.toThrow();
+  });
+
+  it("rejects oversized, too many-row, too many-column, and oversized-field CSV data", async () => {
+    const { database } = createDatabase();
+    const header = "name,quantity";
+    const tooManyRows = [header, ...Array.from({ length: 10_001 }, (_, index) => `Item ${index},1`)].join("\n");
+
+    await expect(analyzeInventoryImport(
+      database,
+      destination,
+      "x".repeat(MAX_INVENTORY_IMPORT_FILE_BYTES + 1),
+      "large.csv",
+    )).rejects.toThrow("5 MB or smaller");
+    await expect(analyzeInventoryImport(database, destination, tooManyRows, "rows.csv"))
+      .rejects.toThrow("no more than 10,000 rows");
+    await expect(analyzeInventoryImport(database, destination, "name,quantity,extra\nItem,1,x", "columns.csv"))
+      .rejects.toThrow("unsupported column");
+    await expect(analyzeInventoryImport(database, destination, `${header}\n${"a".repeat(4_097)},1`, "field.csv"))
+      .rejects.toThrow("4096 characters or fewer");
   });
 });

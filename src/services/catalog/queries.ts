@@ -3,6 +3,7 @@ import type {
   ProductSort,
   ProductStockMovement,
 } from "@/domain/product";
+import { parseScannedCode } from "@/validation/barcode.validation";
 import { ProductNotFoundError } from "@/features/catalogs/errors/catalog.errors";
 import type { OwnerStore } from "../owner-store.service";
 import type { CatalogExecutor, ProductQuery } from "./types";
@@ -97,6 +98,8 @@ export async function listProducts(
 }
 
 export function findProductsByCode(db: CatalogExecutor, store: OwnerStore, code: string) {
+  const parsedCode = parseScannedCode(code);
+  if (!parsedCode) return Promise.resolve([]);
   return db.getAllAsync<{ id: string; isActive: number }>(
     `SELECT id, is_active AS isActive FROM products
      WHERE business_id = ? AND store_id = ?
@@ -105,8 +108,8 @@ export function findProductsByCode(db: CatalogExecutor, store: OwnerStore, code:
      LIMIT 2`,
     store.businessId,
     store.storeId,
-    code,
-    code,
+    parsedCode,
+    parsedCode,
   ).then((rows) => rows.map((row) => ({ ...row, isActive: Boolean(row.isActive) })));
 }
 

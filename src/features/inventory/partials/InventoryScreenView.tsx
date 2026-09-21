@@ -106,8 +106,8 @@ export default function InventoryScreenView({
         directory.createFile(fileName, "text/csv").write(csv);
       }
       inventory.showMessage(`Inventory exported for ${ownerStore.storeName}.`);
-    } catch (error) {
-      inventory.showMessage(error instanceof Error ? `Inventory couldn't be exported. ${error.message}` : "Inventory couldn't be exported. Try again.");
+    } catch {
+      inventory.showMessage("Inventory couldn't be exported. Try again.");
     }
   };
 

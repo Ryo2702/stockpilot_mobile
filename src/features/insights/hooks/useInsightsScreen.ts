@@ -38,9 +38,9 @@ export default function useInsightsScreen(ownerStore: OwnerStore) {
         setData(insights);
         setReports(history);
       })
-      .catch((reason: unknown) => {
+      .catch(() => {
         if (!active) return;
-        setError(reason instanceof Error ? reason.message : "The local insights data could not be read.");
+        setError("The local insights data could not be read.");
       })
       .finally(() => {
         if (active) setLoading(false);

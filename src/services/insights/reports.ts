@@ -130,7 +130,7 @@ export async function getInsightReportHistory(db: InsightsDatabase, store: Store
 
 function csvCell(value: string | number | null | undefined) {
   let text = String(value ?? "");
-  if (typeof value === "string" && /^[=+\-@]/.test(text)) text = `'${text}`;
+  if (typeof value === "string" && /^[\s\u0000-\u001f\u007f-\u009f]*[=+\-@]/.test(text)) text = `'${text}`;
   return `"${text.replaceAll('"', '""')}"`;
 }
 
