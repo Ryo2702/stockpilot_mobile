@@ -16,6 +16,7 @@ import { getCatalogCategoryOption } from "@/features/catalogs/data/catalog.data"
 import type { InventoryScreenController } from "../hooks/useInventoryScreen";
 import { formatInventoryReason, getInventorySortLabel, inventoryStatusOptions, movementFilterOptions, movementPeriodOptions } from "../data/inventory.data";
 import InventoryItemRow from "../components/InventoryItemRow";
+import PrintBarcodeButton from "@/features/catalogs/components/PrintBarcodeButton";
 
 type InventoryController = InventoryScreenController;
 
@@ -325,8 +326,10 @@ export function InventoryDetailContent({
       <View style={styles.detailIdentity}>
         <Text style={styles.detailName}>{item.name}</Text>
         <Text style={styles.detailMeta}>{item.sku ? `SKU: ${item.sku}` : "No SKU"}</Text>
+        <Text style={styles.detailMeta}>Barcode: {item.barcode ?? "—"}</Text>
         <Text style={styles.detailMeta}>{category.label}</Text>
       </View>
+      <PrintBarcodeButton name={item.name} barcode={item.barcode ?? item.sku} />
       <Card style={styles.stockCard}>
         <Text style={styles.stockHeading}>Current Stock</Text>
         <Text style={styles.stockValue}>{item.quantity.toLocaleString()} <Text style={styles.stockUnits}>{item.unit}</Text></Text>

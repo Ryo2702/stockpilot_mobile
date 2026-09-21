@@ -126,7 +126,13 @@ export default function CatalogFormModal({
 
   useEffect(() => {
     if (!visible || !scannedBarcode) return;
-    setForm((current) => ({ ...current, barcode: scannedBarcode }));
+    setForm((current) => ({
+      ...current,
+      barcode: scannedBarcode,
+      sku: !product && scannedBarcode.length <= 64 && (!current.sku || current.sku === current.barcode)
+        ? scannedBarcode
+        : current.sku,
+    }));
     setErrors((current) => {
       if (!current.barcode) return current;
       const next = { ...current };

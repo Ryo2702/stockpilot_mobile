@@ -13,6 +13,7 @@ export type InventoryScreenProps = {
   onSelectStore: (store: OwnerStore) => Promise<void>;
   onCreateStore: (store: StoreInput) => Promise<OwnerStore>;
   onOpenCatalogProduct: (productId: string) => void;
+  onScanBarcode: (barcode: string) => void;
   onNavigate: (key: BottomNavKey) => void;
   actionRequest?: InventoryActionRequest | null;
   onActionRequestHandled?: (id: number) => void;

@@ -11,10 +11,15 @@ import {
   updateOwnerStore as updateOwnerStoreRecord,
   type OwnerStore,
 } from "@/services/owner-store.service";
-import { getActiveStoreSelection, saveActiveStoreSelection } from "@/services/settings.service";
+import {
+  getActiveStoreSelection,
+  getOrCreateTrialExpiration,
+  saveActiveStoreSelection,
+  TRIAL_DURATION_DAYS,
+} from "@/services/settings.service";
 import type { StoreInput } from "@/validation/store.validation";
 
-import { LoadErrorScreen, LoadingScreen } from "./HomeStatusScreens";
+import { LoadErrorScreen, LoadingScreen, TrialExpiredScreen } from "./HomeStatusScreens";
 
 const OnboardingScreen = lazy(() => import("@/components/onboarding/OnboardingScreen"));
 const OwnerStoreScreen = lazy(() => import("@/components/store/OwnerStoreScreen"));
@@ -25,29 +30,35 @@ const MoreScreen = lazy(() => import("@/features/settings/MoreScreen"));
 
 type HomeSection = Exclude<BottomNavKey, "camera">;
 type InventoryActionRequest = { id: number; action: "import" | "export" };
+const millisecondsPerDay = 24 * 60 * 60 * 1000;
 
 export default function HomeScreen() {
   const db = useSQLiteContext();
   const switchingRef = useRef(false);
   const inventoryActionSequence = useRef(0);
+  const barcodeRequestSequence = useRef(0);
   const [ownerStore, setOwnerStore] = useState<OwnerStore | null>(null);
   const [ownerStores, setOwnerStores] = useState<OwnerStore[]>([]);
   const [activeSection, setActiveSection] = useState<HomeSection>("dashboard");
   const [inventoryActionRequest, setInventoryActionRequest] = useState<InventoryActionRequest | null>(null);
   const [cameraRequest, setCameraRequest] = useState(0);
   const [catalogProductRequest, setCatalogProductRequest] = useState<string | null>(null);
+  const [catalogBarcodeRequest, setCatalogBarcodeRequest] = useState<{ id: number; code: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSwitching, setIsSwitching] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [trialExpiresAt, setTrialExpiresAt] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const trialExpired = trialExpiresAt !== null && now >= trialExpiresAt;
 
   useEffect(() => {
     let active = true;
     setLoading(true);
     setError(false);
 
-    getOwnerStores(db)
-      .then(async (stores) => {
+    Promise.all([getOwnerStores(db), getOrCreateTrialExpiration(db)])
+      .then(async ([stores, expiration]) => {
         const selection = await getActiveStoreSelection(db).catch(() => null);
         const selectedStore = stores.find(
           (store) => store.businessId === selection?.businessId && store.storeId === selection.storeId,
@@ -55,6 +66,8 @@ export default function HomeScreen() {
         if (active) {
           setOwnerStores(stores);
           setOwnerStore(selectedStore);
+          setTrialExpiresAt(expiration);
+          setNow(Date.now());
         }
       })
       .catch(() => {
@@ -68,6 +81,18 @@ export default function HomeScreen() {
       active = false;
     };
   }, [attempt, db]);
+
+  useEffect(() => {
+    if (trialExpired) return;
+    const timer = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, [trialExpired]);
+
+  useEffect(() => {
+    if (trialExpiresAt === null) return;
+    const timer = setTimeout(() => setNow(Date.now()), Math.max(0, trialExpiresAt - Date.now()));
+    return () => clearTimeout(timer);
+  }, [trialExpiresAt]);
 
   const switchStore = async (target: OwnerStore) => {
     const isSwitch =
@@ -191,9 +216,31 @@ export default function HomeScreen() {
     setActiveSection("catalog");
   };
   const handleCatalogProductRequest = useCallback(() => setCatalogProductRequest(null), []);
+  const handleInventoryBarcode = (code: string) => {
+    barcodeRequestSequence.current += 1;
+    setCatalogBarcodeRequest({ id: barcodeRequestSequence.current, code });
+    setActiveSection("catalog");
+  };
+  const acknowledgeCatalogBarcodeRequest = useCallback((id: number) => {
+    setCatalogBarcodeRequest((current) => current?.id === id ? null : current);
+  }, []);
 
   if (loading) return <LoadingScreen />;
   if (error) return <LoadErrorScreen onRetry={() => setAttempt((value) => value + 1)} />;
+
+  const trialDaysRemaining = trialExpiresAt === null
+    ? TRIAL_DURATION_DAYS
+    : Math.max(0, Math.ceil((trialExpiresAt - now) / millisecondsPerDay));
+  const trialExpirationLabel = trialExpiresAt === null
+    ? ""
+    : new Date(trialExpiresAt).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  if (trialExpired) {
+    return <TrialExpiredScreen expirationLabel={trialExpirationLabel} />;
+  }
 
   const screen = ownerStore ? (
     activeSection === "more" ? (
@@ -218,6 +265,7 @@ export default function HomeScreen() {
         onSelectStore={switchStore}
         onCreateStore={createStore}
         onOpenCatalogProduct={openCatalogProduct}
+        onScanBarcode={handleInventoryBarcode}
         onNavigate={navigate}
         actionRequest={inventoryActionRequest}
         onActionRequestHandled={markInventoryActionHandled}
@@ -239,6 +287,8 @@ export default function HomeScreen() {
         onCreateStore={createStore}
         onImportInventory={() => openInventoryAction("import")}
         productRequest={catalogProductRequest}
+        barcodeRequest={catalogBarcodeRequest}
+        onBarcodeRequestHandled={acknowledgeCatalogBarcodeRequest}
         onProductRequestHandled={handleCatalogProductRequest}
         onNavigate={navigate}
         cameraRequest={cameraRequest}
@@ -248,6 +298,8 @@ export default function HomeScreen() {
       <OwnerStoreScreen
         ownerStore={ownerStore}
         ownerStores={ownerStores}
+        trialDaysRemaining={trialDaysRemaining}
+        trialExpirationLabel={trialExpirationLabel}
         onSelectStore={switchStore}
         onCreateStore={createStore}
         onNavigate={navigate}

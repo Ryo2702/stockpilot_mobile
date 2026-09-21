@@ -59,6 +59,7 @@ export default function InventoryScreenView({
   onSelectStore,
   onCreateStore,
   onOpenCatalogProduct,
+  onScanBarcode,
   onNavigate,
   actionRequest,
   onActionRequestHandled,
@@ -251,8 +252,7 @@ export default function InventoryScreenView({
         onClose={() => setScannerVisible(false)}
         onScanned={(barcode) => {
           setScannerVisible(false);
-          inventory.goToList();
-          inventory.setSearch(barcode);
+          onScanBarcode(barcode);
         }}
       />
     </SafeAreaView>

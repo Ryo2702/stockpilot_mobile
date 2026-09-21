@@ -20,6 +20,7 @@ import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
 
+import PrintBarcodeButton from "../components/PrintBarcodeButton";
 import { getCatalogCategoryOption } from "../data/catalog.data";
 
 const noHistoryMascot = require("../../../../assets/images/stockpilot/empty state png/footprint.png");
@@ -71,6 +72,7 @@ export default function ProductDetailsModal({
             <Text style={styles.identifier}>SKU: {product.sku ?? "—"}</Text>
             <Text style={styles.identifier}>Barcode: {product.barcode ?? "—"}</Text>
           </View>
+          <PrintBarcodeButton name={product.name} barcode={product.barcode ?? product.sku} />
 
           <View style={styles.stockCard}>
             <Text style={styles.sectionLabel}>Current Stock</Text>

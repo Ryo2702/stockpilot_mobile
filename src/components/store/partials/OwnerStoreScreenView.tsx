@@ -1,4 +1,4 @@
-import { ScrollView, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BottomNavigation } from "@/components/ui/BottomNavigation";
@@ -16,6 +16,8 @@ type OwnerStoreScreenViewProps = OwnerStoreScreenProps &
 export default function OwnerStoreScreenView({
   ownerStore,
   ownerStores,
+  trialDaysRemaining,
+  trialExpirationLabel,
   onSelectStore,
   onCreateStore,
   onNavigate,
@@ -39,6 +41,12 @@ export default function OwnerStoreScreenView({
             onCreateStore={onCreateStore}
             onNavigate={onNavigate}
           />
+          <View style={styles.trialCard}>
+            <Text style={styles.trialTitle}>
+              {trialDaysRemaining} {trialDaysRemaining === 1 ? "day" : "days"} left in your trial
+            </Text>
+            <Text style={styles.trialDate}>Trial expires {trialExpirationLabel}</Text>
+          </View>
           <OwnerStoreOverview overview={overview} onNavigate={onNavigate} />
         </ScrollView>
         <BottomNavigation activeKey="dashboard" onChange={onNavigate} />

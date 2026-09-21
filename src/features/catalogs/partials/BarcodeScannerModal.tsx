@@ -1,4 +1,4 @@
-import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
+import { CameraView, useCameraPermissions, type BarcodeScanningResult, type BarcodeType } from "expo-camera";
 import { ChevronLeft } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Modal, StyleSheet, Text, useWindowDimensions, View } from "react-native";
@@ -15,6 +15,11 @@ type BarcodeScannerModalProps = {
   onClose: () => void;
   onScanned: (value: string) => void;
 };
+
+const barcodeTypes: BarcodeType[] = [
+  "qr", "ean13", "ean8", "upc_a", "upc_e", "code128", "code39", "code93",
+  "itf14", "codabar", "pdf417", "aztec", "datamatrix",
+];
 
 export default function BarcodeScannerModal({ visible, onClose, onScanned }: BarcodeScannerModalProps) {
   const { colors } = useTheme();
@@ -44,7 +49,7 @@ export default function BarcodeScannerModal({ visible, onClose, onScanned }: Bar
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         <View style={styles.header}>
           <IconButton icon={ChevronLeft} label="Close barcode scanner" onPress={onClose} />
-          <Text style={styles.title}>Scan Barcode</Text>
+          <Text style={styles.title}>Scan Barcode or QR</Text>
         </View>
         <View style={[styles.content, { paddingVertical: Math.min(spacing[4], height * 0.025) }]}>
           {!visible ? null : !permission ? (
@@ -64,6 +69,7 @@ export default function BarcodeScannerModal({ visible, onClose, onScanned }: Bar
                 <CameraView
                   style={styles.camera}
                   facing="back"
+                  barcodeScannerSettings={{ barcodeTypes }}
                   onBarcodeScanned={handleScanned}
                   onMountError={() => setCameraError(true)}
                 />

@@ -32,7 +32,8 @@ export default function InventoryItemRow({ item, archived = false, onPress }: In
       <View style={styles.product}>
         <Text numberOfLines={1} style={styles.name}>{item.name}</Text>
         <Text numberOfLines={1} style={styles.meta}>
-          {item.sku ? `SKU: ${item.sku}` : item.barcode ? `Barcode: ${item.barcode}` : "No SKU or barcode"}
+          {item.sku ? `SKU: ${item.sku}` : "No SKU"}
+          {item.barcode ? ` · Barcode: ${item.barcode}` : ""}
           {` · ${category.label}`}
         </Text>
         <View style={styles.statusRow}>

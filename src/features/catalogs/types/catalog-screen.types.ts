@@ -10,6 +10,8 @@ export type CatalogScreenProps = {
   onImportInventory: () => void;
   productRequest?: string | null;
   onProductRequestHandled?: () => void;
+  barcodeRequest?: { id: number; code: string } | null;
+  onBarcodeRequestHandled?: (id: number) => void;
   onNavigate: (key: BottomNavKey) => void;
   onCameraRequestHandled?: () => void;
   cameraRequest?: number;

@@ -39,6 +39,19 @@ export function LoadErrorScreen({ onRetry }: { onRetry: () => void }) {
   );
 }
 
+export function TrialExpiredScreen({ expirationLabel }: { expirationLabel: string }) {
+  const styles = useThemeStyles(createStyles);
+
+  return (
+    <SafeAreaView style={styles.centered}>
+      <Text style={styles.errorTitle}>Your StockPilot trial has ended.</Text>
+      <Text style={styles.errorText}>
+        Your trial ended {expirationLabel}. All modules are locked.
+      </Text>
+    </SafeAreaView>
+  );
+}
+
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   centered: {
     flex: 1,

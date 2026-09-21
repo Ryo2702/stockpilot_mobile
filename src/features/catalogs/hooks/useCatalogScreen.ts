@@ -1,5 +1,5 @@
 import { useSQLiteContext } from "expo-sqlite";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { CatalogCategory } from "@/domain/catalog";
 import type { CurrencySettings } from "@/domain/currency";
@@ -10,6 +10,7 @@ import { getInventoryProductDefaults } from "@/services/inventory.service";
 import {
   archiveProduct,
   createProduct,
+  findProductsByCode,
   getProduct,
   getProductStockMovements,
   listProducts,
@@ -34,6 +35,8 @@ type UseCatalogScreenOptions = {
   onCameraRequestHandled?: () => void;
   productRequest: string | null;
   onProductRequestHandled?: () => void;
+  barcodeRequest?: { id: number; code: string } | null;
+  onBarcodeRequestHandled?: (id: number) => void;
 };
 
 export default function useCatalogScreen({
@@ -43,6 +46,8 @@ export default function useCatalogScreen({
   onCameraRequestHandled,
   productRequest,
   onProductRequestHandled,
+  barcodeRequest,
+  onBarcodeRequestHandled,
 }: UseCatalogScreenOptions) {
   const db = useSQLiteContext();
   const [currency, setCurrency] = useState<CurrencySettings>(defaultCurrency);
@@ -65,7 +70,6 @@ export default function useCatalogScreen({
   const [scannerVisible, setScannerVisible] = useState(false);
   const [scannerTarget, setScannerTarget] = useState<"search" | "form">("search");
   const [formBarcode, setFormBarcode] = useState<string | null>(null);
-  const [pendingBarcode, setPendingBarcode] = useState<string | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
   const [movements, setMovements] = useState<ProductStockMovement[]>([]);
@@ -74,6 +78,7 @@ export default function useCatalogScreen({
   const [archiving, setArchiving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [undoArchivedProduct, setUndoArchivedProduct] = useState<Product | null>(null);
+  const handledBarcodeRequest = useRef<number | null>(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(search.trim()), 300);
@@ -179,13 +184,11 @@ export default function useCatalogScreen({
 
   const changeSearch = (value: string) => {
     setSearch(value);
-    if (value.trim() !== pendingBarcode) setPendingBarcode(null);
   };
 
   const openCreate = () => {
     setEditingProduct(null);
-    setFormBarcode(pendingBarcode);
-    setPendingBarcode(null);
+    setFormBarcode(null);
     setFormVisible(true);
   };
 
@@ -210,33 +213,6 @@ export default function useCatalogScreen({
     setScannerVisible(true);
   };
 
-  const handleBarcodeScanned = (barcode: string) => {
-    setScannerVisible(false);
-    if (scannerTarget === "form") {
-      setFormBarcode(barcode);
-    } else {
-      setCategory(null);
-      setStockStatus("all");
-      setShowArchived(false);
-      setPendingBarcode(barcode);
-      setSearch(barcode);
-    }
-  };
-
-  const saveProduct = async (input: CreateProductInput | UpdateProductInput) => {
-    if (editingProduct) {
-      await updateProduct(db, ownerStore, editingProduct.id, input as UpdateProductInput);
-      setSuccessMessage("Item updated");
-    } else {
-      await createProduct(db, ownerStore, input as CreateProductInput);
-      setSuccessMessage("Item added");
-    }
-    setUndoArchivedProduct(null);
-    setFormBarcode(null);
-    setFormVisible(false);
-    setReloadKey((current) => current + 1);
-  };
-
   const openProductDetails = useCallback(async (product: Product) => {
     setActionError("");
     setDetailProduct(product);
@@ -252,6 +228,68 @@ export default function useCatalogScreen({
       setLoadingHistory(false);
     }
   }, [db, ownerStore.businessId, ownerStore.storeId]);
+
+  const handleBarcodeScanned = useCallback(async (barcode: string, target = scannerTarget) => {
+    setScannerVisible(false);
+    if (target === "form") {
+      setFormBarcode(barcode);
+      return;
+    }
+    const code = barcode.trim();
+    if (!code) return;
+    setActionError("");
+    setCategory(null);
+    setStockStatus("all");
+
+    try {
+      const matches = await findProductsByCode(db, ownerStore, code);
+      const activeMatches = matches.filter((product) => product.isActive);
+      if (matches.length === 1 && activeMatches.length === 1) {
+        setShowArchived(false);
+        setSearch("");
+        await openProductDetails(await getProduct(db, ownerStore, matches[0].id));
+        return;
+      }
+      if (matches.length === 0) {
+        setShowArchived(false);
+        setSearch("");
+        setEditingProduct(null);
+        setFormBarcode(code);
+        setFormVisible(true);
+        return;
+      }
+
+      setShowArchived(activeMatches.length === 0);
+      setSearch(code);
+    } catch (error) {
+      setActionError(error instanceof CatalogError ? error.message : "Couldn't look up this barcode.");
+    }
+  }, [db, openProductDetails, ownerStore, scannerTarget]);
+
+  useEffect(() => {
+    if (!barcodeRequest) {
+      handledBarcodeRequest.current = null;
+      return;
+    }
+    if (handledBarcodeRequest.current === barcodeRequest.id) return;
+    handledBarcodeRequest.current = barcodeRequest.id;
+    onBarcodeRequestHandled?.(barcodeRequest.id);
+    void handleBarcodeScanned(barcodeRequest.code, "search");
+  }, [barcodeRequest, handleBarcodeScanned, onBarcodeRequestHandled]);
+
+  const saveProduct = async (input: CreateProductInput | UpdateProductInput) => {
+    if (editingProduct) {
+      await updateProduct(db, ownerStore, editingProduct.id, input as UpdateProductInput);
+      setSuccessMessage("Item updated");
+    } else {
+      await createProduct(db, ownerStore, input as CreateProductInput);
+      setSuccessMessage("Item added");
+    }
+    setUndoArchivedProduct(null);
+    setFormBarcode(null);
+    setFormVisible(false);
+    setReloadKey((current) => current + 1);
+  };
 
   useEffect(() => {
     if (!productRequest) return;

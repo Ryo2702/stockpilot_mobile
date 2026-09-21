@@ -11,6 +11,8 @@ export default function CatalogScreen(props: CatalogScreenProps) {
     onCameraRequestHandled: props.onCameraRequestHandled,
     productRequest: props.productRequest ?? null,
     onProductRequestHandled: props.onProductRequestHandled,
+    barcodeRequest: props.barcodeRequest ?? null,
+    onBarcodeRequestHandled: props.onBarcodeRequestHandled,
   });
 
   return <CatalogScreenView {...props} categories={catalogCategoryOptions} catalog={catalog} />;

@@ -96,6 +96,20 @@ export async function listProducts(
   return rows.map(mapProduct);
 }
 
+export function findProductsByCode(db: CatalogExecutor, store: OwnerStore, code: string) {
+  return db.getAllAsync<{ id: string; isActive: number }>(
+    `SELECT id, is_active AS isActive FROM products
+     WHERE business_id = ? AND store_id = ?
+       AND (barcode = ? COLLATE NOCASE OR sku = ? COLLATE NOCASE)
+     ORDER BY is_active DESC, created_at DESC
+     LIMIT 2`,
+    store.businessId,
+    store.storeId,
+    code,
+    code,
+  ).then((rows) => rows.map((row) => ({ ...row, isActive: Boolean(row.isActive) })));
+}
+
 export async function getProduct(db: CatalogExecutor, store: OwnerStore, productId: string) {
   const product = await db.getFirstAsync<Product>(
     `SELECT
