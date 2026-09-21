@@ -20,7 +20,11 @@
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.VIBRATE",
         "android.permission.WRITE_EXTERNAL_STORAGE"
-      ]
+      ],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "package": "com.charles272002.stockpilot"
     },
     "web": {
       "output": "single",
@@ -59,6 +63,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1b5f0142-f655-4b3e-a982-73d60966b2c0"
+      }
     }
   }
 }
