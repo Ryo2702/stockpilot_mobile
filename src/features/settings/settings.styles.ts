@@ -139,5 +139,5 @@ export const createSettingsStyles = (colors: ThemeColors) => StyleSheet.create({
   dialogActions: { flexDirection: "row", gap: spacing[2], marginTop: spacing[1] },
   dialogButton: { minWidth: 0, flex: 1 },
   brandMark: { width: 62, height: 62, alignItems: "center", justifyContent: "center", borderRadius: radii.lg, backgroundColor: colors.primary[50] },
-  tagline: { ...typography.bodySmall, color: colors.text.secondary, textAlign: "center" },
+  tagline: { ...typography.label, color: colors.primary[700], textAlign: "center" },
 });

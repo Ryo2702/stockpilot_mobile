@@ -32,6 +32,7 @@ import { useSQLiteContext } from "expo-sqlite";
 import { Children, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
+  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -1174,9 +1175,10 @@ export default function SettingsScreen({
   const aboutContent = (
     <>
       <View style={styles.statusCard}>
-        <View style={styles.brandMark}><Package color={colors.primary[600]} size={30} /></View>
+        <Image accessible={false} source={require("../../../assets/app-icon.png")} resizeMode="cover" style={styles.brandMark} />
         <Text style={styles.statusTitle}>StockPilot</Text>
         <Text style={styles.tagline}>Smarter Inventory. Less Worry.</Text>
+        <Text style={styles.statusCopy}>StockPilot helps small businesses track products, monitor stock levels, and keep everyday inventory work in one place.</Text>
       </View>
       <SettingsGroup label="Application">
         <SettingsRow icon={FileText} title="Version" value={version} />
