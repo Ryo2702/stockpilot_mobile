@@ -1280,7 +1280,7 @@ export default function SettingsScreen({
   const aboutContent = (
     <>
       <View style={styles.statusCard}>
-        <Image accessible={false} source={require("../../../assets/app-icon.png")} resizeMode="cover" style={styles.brandMark} />
+        <Image accessible={false} source={require("../../../assets/beta-app-icon.png")} resizeMode="cover" style={styles.brandMark} />
         <Text style={styles.statusTitle}>StockPilot</Text>
         <Text style={styles.tagline}>Smarter Inventory. Less Worry.</Text>
         <Text style={styles.statusCopy}>StockPilot helps small businesses track products, monitor stock levels, and keep everyday inventory work in one place.</Text>

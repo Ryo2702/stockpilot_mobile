@@ -4,14 +4,14 @@
     "slug": "stockpilot",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/app-icon.png",
+    "icon": "./assets/beta-app-icon.png",
     "scheme": "stockpilot",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/app-icon.png"
+      "icon": "./assets/beta-app-icon.png"
     },
     "android": {
-      "icon": "./assets/app-icon.png",
+      "icon": "./assets/beta-app-icon.png",
       "allowBackup": false,
       "predictiveBackGestureEnabled": false,
       "blockedPermissions": [
