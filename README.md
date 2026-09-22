@@ -1,56 +1,48 @@
-# Welcome to your Expo app 👋
+# StockPilot
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+StockPilot is an offline-first inventory app built with Expo SDK 57 and React Native. Inventory, catalogs, stores, and stock movements are stored locally with SQLite.
 
-## Get started
+## Requirements
 
-1. Install dependencies
+- Node.js `22.23.1` (see `.node-version`)
+- npm
+- Android Studio for Android development, or Xcode for iOS development
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Setup
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Use the Expo CLI prompts to open the app on a development build, emulator, simulator, or web.
 
-### Other setup steps
+Platform-specific commands:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npm run android
+npm run ios
+npm run web
+```
 
-## Learn more
+## Checks
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npm test
+npm run lint
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Project structure
 
-## Join the community
+- `src/app` — Expo Router entry points
+- `src/features` — feature UI
+- `src/services` — business workflows and writes
+- `src/database` — SQLite schema, repositories, and migrations
+- `src/domain` — domain rules and types
+- `src/validation` — input validation
 
-Join our community of developers creating universal apps.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for runtime boundaries and [BUSINESS_RULES.md](BUSINESS_RULES.md) for domain invariants.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Database
+
+SQLite is the source of truth. Schema changes belong in an ordered migration under `src/database/migrations`; do not edit existing migrations after they have been used.
