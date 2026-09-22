@@ -1,5 +1,4 @@
 import type { SQLiteDatabase } from "expo-sqlite";
-import { Platform } from "react-native";
 
 import {
   InventoryItemNotFoundError,
@@ -39,8 +38,7 @@ import {
 } from "@/validation/inventory.validation";
 
 type InventoryExecutor = Pick<SQLiteDatabase, "getAllAsync" | "getFirstAsync" | "runAsync">;
-type InventoryDatabase = InventoryExecutor &
-  Pick<SQLiteDatabase, "withTransactionAsync" | "withExclusiveTransactionAsync">;
+type InventoryDatabase = InventoryExecutor & Pick<SQLiteDatabase, "withTransactionAsync">;
 
 function createMovementId() {
   return globalThis.crypto?.randomUUID?.() ?? `movement-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -48,15 +46,9 @@ function createMovementId() {
 
 async function withInventoryTransaction<T>(db: InventoryDatabase, task: (tx: InventoryExecutor) => Promise<T>) {
   let result: T | undefined;
-  if (Platform.OS !== "web" && db.withExclusiveTransactionAsync) {
-    await db.withExclusiveTransactionAsync(async (tx) => {
-      result = await task(tx);
-    });
-  } else {
-    await db.withTransactionAsync(async () => {
-      result = await task(db);
-    });
-  }
+  await db.withTransactionAsync(async () => {
+    result = await task(db);
+  });
   if (result === undefined) throw new Error("Stock update did not complete.");
   return result;
 }

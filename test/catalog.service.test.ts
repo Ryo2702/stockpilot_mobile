@@ -45,7 +45,6 @@ function createDatabase() {
   const db = {
     ...executor,
     withTransactionAsync: (task: () => Promise<void>) => transact(() => task()),
-    withExclusiveTransactionAsync: (task: (tx: typeof executor) => Promise<void>) => transact(task),
   };
   return { database, db };
 }

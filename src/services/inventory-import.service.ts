@@ -1,5 +1,4 @@
 import type { SQLiteDatabase } from "expo-sqlite";
-import { Platform } from "react-native";
 
 import { catalogCategoryValues, type CatalogCategory } from "@/domain/catalog";
 import { createProductSchema } from "@/validation/product.validation";
@@ -11,7 +10,7 @@ type ImportExecutor = Pick<
   SQLiteDatabase,
   "getAllAsync" | "getFirstAsync" | "runAsync"
 >;
-type ImportDatabase = ImportExecutor & Pick<SQLiteDatabase, "withTransactionAsync" | "withExclusiveTransactionAsync">;
+type ImportDatabase = ImportExecutor & Pick<SQLiteDatabase, "withTransactionAsync">;
 
 type InventoryRow = {
   rowNumber: number;
@@ -633,15 +632,9 @@ export async function analyzeInventoryImport(
 
 async function withImportTransaction<T>(db: ImportDatabase, task: (tx: ImportExecutor) => Promise<T>) {
   let result: T | undefined;
-  if (Platform.OS !== "web" && db.withExclusiveTransactionAsync) {
-    await db.withExclusiveTransactionAsync(async (tx) => {
-      result = await task(tx);
-    });
-  } else {
-    await db.withTransactionAsync(async () => {
-      result = await task(db);
-    });
-  }
+  await db.withTransactionAsync(async () => {
+    result = await task(db);
+  });
   if (result === undefined) throw new Error("Inventory import did not complete.");
   return result;
 }

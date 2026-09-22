@@ -33,7 +33,6 @@ function createDatabase(products: Array<Record<string, unknown>> = []) {
   const database = {
     ...executor,
     withTransactionAsync: jest.fn(async (task: () => Promise<void>) => task()),
-    withExclusiveTransactionAsync: jest.fn(async (task: (tx: unknown) => Promise<void>) => task(executor)),
   } as unknown as SQLiteDatabase;
   return { database, runAsync };
 }

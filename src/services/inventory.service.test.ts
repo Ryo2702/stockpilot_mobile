@@ -22,9 +22,6 @@ function createDatabase(quantity: number) {
     getFirstAsync,
     runAsync,
     withTransactionAsync: jest.fn(async (task: () => Promise<void>) => task()),
-    withExclusiveTransactionAsync: jest.fn(async (task: (tx: unknown) => Promise<void>) =>
-      task({ getFirstAsync, runAsync }),
-    ),
   } as unknown as SQLiteDatabase;
 
   return { database, getFirstAsync, runAsync };
@@ -108,17 +105,16 @@ describe("applyStockChange", () => {
         const result = native.prepare(sql).run(...values);
         return { changes: Number(result.changes), lastInsertRowId: Number(result.lastInsertRowid) };
       },
-      withExclusiveTransactionAsync: async (task: (tx: unknown) => Promise<void>) => {
+      withTransactionAsync: async (task: () => Promise<void>) => {
         native.exec("BEGIN");
         try {
-          await task(database);
+          await task();
           native.exec("COMMIT");
         } catch (error) {
           native.exec("ROLLBACK");
           throw error;
         }
       },
-      withTransactionAsync: async (task: () => Promise<void>) => task(),
     } as unknown as SQLiteDatabase;
 
     try {

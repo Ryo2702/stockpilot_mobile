@@ -1,5 +1,3 @@
-import { Platform } from "react-native";
-
 import type { Product } from "@/domain/product";
 import {
   DuplicateBarcodeError,
@@ -29,11 +27,8 @@ async function withProductTransaction(
   db: CatalogDatabase,
   task: (tx: CatalogExecutor) => Promise<void>,
 ) {
-  if (Platform.OS !== "web" && db.withExclusiveTransactionAsync) {
-    await db.withExclusiveTransactionAsync((tx) => task(tx));
-  } else {
-    await db.withTransactionAsync(() => task(db));
-  }
+  // ponytail: SQLCipher keys this connection; add a serialized writer if concurrent writes become a problem.
+  await db.withTransactionAsync(() => task(db));
 }
 
 async function assertStoreExists(db: CatalogExecutor, store: OwnerStore) {

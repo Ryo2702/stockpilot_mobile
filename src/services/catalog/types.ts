@@ -4,10 +4,7 @@ import type { CatalogCategory } from "@/domain/catalog";
 import type { ProductSort, ProductStockFilter } from "@/domain/product";
 
 export type CatalogExecutor = Pick<SQLiteDatabase, "getAllAsync" | "getFirstAsync" | "runAsync">;
-export type CatalogDatabase = CatalogExecutor & Pick<
-  SQLiteDatabase,
-  "withTransactionAsync" | "withExclusiveTransactionAsync"
->;
+export type CatalogDatabase = CatalogExecutor & Pick<SQLiteDatabase, "withTransactionAsync">;
 
 export type ProductQuery = {
   search?: string;
