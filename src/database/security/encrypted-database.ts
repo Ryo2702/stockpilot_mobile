@@ -28,7 +28,7 @@ type DatabaseSnapshot = {
 };
 
 function databaseFile(name: string) {
-  return new File(SQLite.defaultDatabaseDirectory, name);
+  return new File(`file://${SQLite.defaultDatabaseDirectory}`, name);
 }
 
 function keyPragma(key: string) {
