@@ -1,6 +1,7 @@
 import { useSQLiteContext } from "expo-sqlite";
 import { lazy, Suspense, useCallback, useRef, useState } from "react";
 
+import PinScreen from "@/components/auth/PinScreen";
 import StoreSwitchModal from "@/components/store/StoreSwitchModal";
 import type { BottomNavKey } from "@/components/ui/BottomNavigation";
 import useAsyncEffect from "@/hooks/useAsyncEffect";
@@ -13,7 +14,9 @@ import {
   type OwnerStore,
 } from "@/services/owner-store.service";
 import {
+  getAppPin,
   getActiveStoreSelection,
+  saveAppPin,
   saveActiveStoreSelection,
 } from "@/services/settings.service";
 import type { StoreInput } from "@/validation/store.validation";
@@ -29,6 +32,7 @@ const MoreScreen = lazy(() => import("@/features/settings/MoreScreen"));
 
 type HomeSection = Exclude<BottomNavKey, "camera">;
 type InventoryActionRequest = { id: number; action: "import" | "export" };
+type AuthState = "checking" | "setup" | "locked" | "unlocked";
 
 export default function HomeScreen() {
   const db = useSQLiteContext();
@@ -37,6 +41,9 @@ export default function HomeScreen() {
   const barcodeRequestSequence = useRef(0);
   const [ownerStore, setOwnerStore] = useState<OwnerStore | null>(null);
   const [ownerStores, setOwnerStores] = useState<OwnerStore[]>([]);
+  const [storedPin, setStoredPin] = useState<string | null>(null);
+  const [authState, setAuthState] = useState<AuthState>("checking");
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [activeSection, setActiveSection] = useState<HomeSection>("dashboard");
   const [inventoryActionRequest, setInventoryActionRequest] = useState<InventoryActionRequest | null>(null);
   const [cameraRequest, setCameraRequest] = useState(0);
@@ -51,8 +58,8 @@ export default function HomeScreen() {
     setLoading(true);
     setError(false);
 
-    getOwnerStores(db)
-      .then(async (stores) => {
+    Promise.all([getOwnerStores(db), getAppPin(db)])
+      .then(async ([stores, pin]) => {
         const selection = await getActiveStoreSelection(db).catch(() => null);
         const selectedStore = stores.find(
           (store) => store.businessId === selection?.businessId && store.storeId === selection.storeId,
@@ -60,6 +67,8 @@ export default function HomeScreen() {
         if (isActive()) {
           setOwnerStores(stores);
           setOwnerStore(selectedStore);
+          setStoredPin(pin);
+          setAuthState(stores.length ? (pin ? "locked" : "setup") : "unlocked");
         }
       })
       .catch(() => {
@@ -168,6 +177,17 @@ export default function HomeScreen() {
     setOwnerStore(selectedStore);
   };
 
+  const completeOnboarding = (store: OwnerStore) => {
+    setOwnerStores((stores) => stores.some(
+      (current) => current.businessId === store.businessId && current.storeId === store.storeId,
+    ) ? stores : [...stores, store]);
+    setOwnerStore(store);
+    setShowOnboarding(false);
+    setActiveSection("dashboard");
+    setAuthState(storedPin ? "locked" : "setup");
+    void saveActiveStoreSelection(db, { businessId: store.businessId, storeId: store.storeId });
+  };
+
   const openInventoryAction = (action: InventoryActionRequest["action"]) => {
     inventoryActionSequence.current += 1;
     setInventoryActionRequest({ id: inventoryActionSequence.current, action });
@@ -204,7 +224,36 @@ export default function HomeScreen() {
   if (loading) return <LoadingScreen />;
   if (error) return <LoadErrorScreen onRetry={() => setAttempt((value) => value + 1)} />;
 
-  const screen = ownerStore ? (
+  const screen = showOnboarding ? (
+    <OnboardingScreen
+      existingStores={ownerStores}
+      selectedStore={ownerStore ?? undefined}
+      onSelectStore={switchStore}
+      onCreateStore={createStore}
+      onComplete={completeOnboarding}
+    />
+  ) : authState === "setup" ? (
+    <PinScreen
+      mode="setup"
+      ownerName={ownerStore?.ownerName}
+      onSubmit={async (pin) => {
+        await saveAppPin(db, pin);
+        setStoredPin(pin);
+        setAuthState("unlocked");
+        return true;
+      }}
+    />
+  ) : authState === "locked" ? (
+    <PinScreen
+      mode="unlock"
+      ownerName={ownerStore?.ownerName}
+      onSubmit={async (pin) => {
+        const valid = pin === storedPin;
+        if (valid) setAuthState("unlocked");
+        return valid;
+      }}
+    />
+  ) : ownerStore ? (
     activeSection === "more" ? (
       <MoreScreen
         ownerStore={ownerStore}
@@ -218,6 +267,11 @@ export default function HomeScreen() {
         onOpenInventoryAction={openInventoryAction}
         onRestoreComplete={refreshStores}
         onNavigate={navigate}
+        onPinChanged={setStoredPin}
+        onExit={() => {
+          setShowOnboarding(true);
+          setActiveSection("dashboard");
+        }}
       />
     ) : activeSection === "inventory" ? (
       <InventoryScreen
@@ -267,12 +321,7 @@ export default function HomeScreen() {
     )
   ) : (
     <OnboardingScreen
-      onComplete={(store) => {
-        setOwnerStores([store]);
-        setOwnerStore(store);
-        setActiveSection("dashboard");
-        void saveActiveStoreSelection(db, { businessId: store.businessId, storeId: store.storeId });
-      }}
+      onComplete={completeOnboarding}
     />
   );
 

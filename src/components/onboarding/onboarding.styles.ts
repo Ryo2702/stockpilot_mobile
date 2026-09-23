@@ -300,6 +300,35 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
   actions: {
     gap: spacing[3],
   },
+  legalConsent: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing[2],
+    padding: spacing[3],
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    borderRadius: radii.md,
+    backgroundColor: colors.background.subtle,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.border.strong,
+    borderRadius: radii.xs,
+    backgroundColor: colors.background.surface,
+  },
+  checkboxSelected: {
+    borderColor: colors.primary[600],
+    backgroundColor: colors.primary[600],
+  },
+  legalText: {
+    ...typography.caption,
+    flex: 1,
+    color: colors.text.secondary,
+  },
   action: {
     width: "100%",
   },

@@ -1,10 +1,18 @@
 import { describe, expect, test } from "@jest/globals";
 
 import { stockAdjustmentSchema } from "../src/validation/inventory.validation";
+import { isValidPin } from "../src/validation/pin.validation";
 import { createProductSchema } from "../src/validation/product.validation";
 import { storeSchema } from "../src/validation/store.validation";
 
 describe("raw form input validation", () => {
+  test("accepts only 4 to 6 digit PINs", () => {
+    expect(isValidPin("1234")).toBe(true);
+    expect(isValidPin("123456")).toBe(true);
+    expect(isValidPin("123")).toBe(false);
+    expect(isValidPin("12a4")).toBe(false);
+  });
+
   test("parses numeric drafts only when submitted", () => {
     const product = createProductSchema.parse({
       name: "Rice",

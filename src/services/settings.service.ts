@@ -1,9 +1,14 @@
+import * as SecureStore from "expo-secure-store";
 import type { SQLiteDatabase } from "expo-sqlite";
+import { Platform } from "react-native";
+
+import { isValidPin } from "@/validation/pin.validation";
 
 type SettingsDatabase = Pick<SQLiteDatabase, "getFirstAsync" | "runAsync">;
 
 export type ThemePreference = "light" | "dark" | "system";
 export type ActiveStoreSelection = { businessId: string; storeId: string };
+const APP_PIN_KEY = "stockpilot.app.pin";
 
 async function readSetting(db: SettingsDatabase, key: string): Promise<unknown> {
   const row = await db.getFirstAsync<{ valueJson: string }>(
@@ -64,4 +69,23 @@ export async function saveActiveStoreSelection(
   } else {
     await db.runAsync("DELETE FROM settings WHERE key = ?", "active_store");
   }
+}
+
+export async function getAppPin(db: SettingsDatabase): Promise<string | null> {
+  const value = Platform.OS !== "web" && await SecureStore.isAvailableAsync()
+    ? await SecureStore.getItemAsync(APP_PIN_KEY)
+    : await readSetting(db, "app_pin");
+  return typeof value === "string" && isValidPin(value) ? value : null;
+}
+
+export async function saveAppPin(db: SettingsDatabase, pin: string) {
+  if (!isValidPin(pin)) throw new Error("PIN must be 4 to 6 digits.");
+
+  if (Platform.OS !== "web" && await SecureStore.isAvailableAsync()) {
+    await SecureStore.setItemAsync(APP_PIN_KEY, pin);
+    return;
+  }
+
+  // ponytail: web fallback keeps the PIN in local SQLite; use Web Crypto if web threat model requires stronger storage.
+  await writeSetting(db, "app_pin", pin);
 }

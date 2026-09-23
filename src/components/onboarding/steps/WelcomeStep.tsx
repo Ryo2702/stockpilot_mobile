@@ -1,7 +1,11 @@
 import { VideoView } from "expo-video";
-import { Text, View } from "react-native";
+import { Check } from "lucide-react-native";
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
+import { onboardingLegalNotice } from "@/data/legal.data";
+import { useTheme } from "@/theme/ThemeProvider";
 
 import { useOnboardingStyles } from "../onboarding.styles";
 import type { OnboardingStepProps } from "./types";
@@ -9,7 +13,9 @@ import type { OnboardingStepProps } from "./types";
 type WelcomeStepProps = Pick<OnboardingStepProps, "player" | "ownerName" | "onAdvance">;
 
 export default function WelcomeStep({ player, ownerName, onAdvance }: WelcomeStepProps) {
+  const { colors } = useTheme();
   const styles = useOnboardingStyles();
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   return (
     <>
@@ -29,8 +35,25 @@ export default function WelcomeStep({ player, ownerName, onAdvance }: WelcomeSte
       </View>
 
       <View style={styles.actions}>
-        <Button title="Get Started" size="lg" onPress={onAdvance} style={styles.action} />
-        <Button title="Maybe Later" size="lg" variant="secondary" onPress={onAdvance} style={styles.action} />
+        <Pressable
+          accessibilityRole="checkbox"
+          accessibilityLabel="Agree to the Terms and Conditions and Privacy Policy"
+          accessibilityState={{ checked: acceptedTerms }}
+          onPress={() => setAcceptedTerms((current) => !current)}
+          style={styles.legalConsent}
+        >
+          <View style={[styles.checkbox, acceptedTerms && styles.checkboxSelected]}>
+            {acceptedTerms ? <Check color={colors.text.onPrimary} size={15} strokeWidth={3} /> : null}
+          </View>
+          <Text style={styles.legalText}>{onboardingLegalNotice}</Text>
+        </Pressable>
+        <Button
+          title="Get Started"
+          size="lg"
+          disabled={!acceptedTerms}
+          onPress={onAdvance}
+          style={styles.action}
+        />
       </View>
     </>
   );

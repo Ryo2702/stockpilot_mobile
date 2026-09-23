@@ -19,6 +19,7 @@ import {
   Ruler,
   Save,
   Share2,
+  ShieldCheck,
   SlidersHorizontal,
   Store,
   Trash2,
@@ -54,6 +55,7 @@ import {
 import type { StoreErrors, StoreForm } from "@/components/store/store.types";
 import { BottomNavigation, type BottomNavKey } from "@/components/ui/BottomNavigation";
 import { Button } from "@/components/ui/Button";
+import { legalPages, type LegalPage } from "@/data/legal.data";
 import { getCurrencySymbol } from "@/domain/currency";
 import { productUnitOptions } from "@/data/catalog.data";
 import useAsyncEffect from "@/hooks/useAsyncEffect";
@@ -80,7 +82,8 @@ import {
   getInventoryProductDefaults,
   saveInventoryProductDefaults,
 } from "@/services/inventory";
-import { getThemePreference } from "@/services/settings.service";
+import { getAppPin, getThemePreference, saveAppPin } from "@/services/settings.service";
+import { isValidPin } from "@/validation/pin.validation";
 import { ownerNameSchema, storeSchema, type StoreInput, type StoreSchema } from "@/validation/store.validation";
 import { spacing } from "@/theme";
 import { useTheme, useThemeStyles } from "@/theme/ThemeProvider";
@@ -88,7 +91,7 @@ import type { ThemePreference } from "@/theme/tokens";
 
 import { createSettingsStyles } from "./settings.styles";
 
-export type SettingsPage = "home" | "backup" | "about";
+export type SettingsPage = "home" | "backup" | "about" | "security" | LegalPage;
 type Page =
   | SettingsPage
   | "owner-name"
@@ -104,7 +107,6 @@ type Page =
   | "appearance"
   | "storage"
   | "premium"
-  | "purchase-status"
   | "restore-purchase";
 
 type SettingsScreenProps = {
@@ -119,6 +121,7 @@ type SettingsScreenProps = {
   onOpenInventoryAction: (action: "import" | "export") => void;
   onRestoreComplete: () => Promise<void>;
   onNavigate: (key: BottomNavKey) => void;
+  onPinChanged: (pin: string) => void;
   initialPage: SettingsPage;
   onClose: () => void;
 };
@@ -309,6 +312,8 @@ function Field({
   help,
   keyboardType,
   autoCapitalize = "sentences",
+  secureTextEntry = false,
+  maxLength,
 }: {
   label: string;
   value: string;
@@ -318,6 +323,8 @@ function Field({
   help?: string;
   keyboardType?: "default" | "number-pad" | "decimal-pad" | "numbers-and-punctuation";
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
+  secureTextEntry?: boolean;
+  maxLength?: number;
 }) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createSettingsStyles);
@@ -329,9 +336,11 @@ function Field({
         autoCapitalize={autoCapitalize}
         autoCorrect={false}
         keyboardType={keyboardType}
+        maxLength={maxLength}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={colors.text.muted}
+        secureTextEntry={secureTextEntry}
         style={[styles.input, error ? styles.inputError : null]}
         value={value}
       />
@@ -353,6 +362,7 @@ export default function SettingsScreen({
   onOpenInventoryAction,
   onRestoreComplete,
   onNavigate,
+  onPinChanged,
   initialPage,
   onClose,
 }: SettingsScreenProps) {
@@ -388,6 +398,13 @@ export default function SettingsScreen({
   const [deleteStoreBusy, setDeleteStoreBusy] = useState(false);
   const [deleteStoreError, setDeleteStoreError] = useState("");
   const [currencySearch, setCurrencySearch] = useState("");
+  const [securityPin, setSecurityPin] = useState<string | null | undefined>(undefined);
+  const [securityLoadError, setSecurityLoadError] = useState(false);
+  const [currentPin, setCurrentPin] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [securityError, setSecurityError] = useState("");
+  const [securitySaving, setSecuritySaving] = useState(false);
 
   const currencyMatches = useMemo(() => {
     const query = currencySearch.trim().toLowerCase();
@@ -424,6 +441,19 @@ export default function SettingsScreen({
       })
       .catch(() => undefined);
   }, [db, ownerStore.businessId, ownerStore.storeId]);
+
+  useAsyncEffect((isActive) => {
+    getAppPin(db)
+      .then((pin) => {
+        if (isActive()) {
+          setSecurityPin(pin);
+          setSecurityLoadError(false);
+        }
+      })
+      .catch(() => {
+        if (isActive()) setSecurityLoadError(true);
+      });
+  }, [db]);
 
   useAsyncEffect((isActive) => {
     getStorageUsage(db)
@@ -575,6 +605,37 @@ export default function SettingsScreen({
     }
   };
 
+  const saveSecurityPin = async () => {
+    if (securityPin && currentPin !== securityPin) {
+      setSecurityError("Your current PIN is incorrect.");
+      return;
+    }
+    if (!isValidPin(newPin)) {
+      setSecurityError("Use a PIN with 4 to 6 digits.");
+      return;
+    }
+    if (newPin !== confirmPin) {
+      setSecurityError("PINs do not match.");
+      return;
+    }
+
+    setSecuritySaving(true);
+    setSecurityError("");
+    try {
+      await saveAppPin(db, newPin);
+      setSecurityPin(newPin);
+      onPinChanged(newPin);
+      setCurrentPin("");
+      setNewPin("");
+      setConfirmPin("");
+      setPage("home");
+    } catch {
+      setSecurityError("Your PIN couldn't be saved. Please try again.");
+    } finally {
+      setSecuritySaving(false);
+    }
+  };
+
   const refreshStorage = async () => {
     try {
       setStorage(await getStorageUsage(db));
@@ -714,10 +775,14 @@ export default function SettingsScreen({
     reorder: "Default Reorder Settings",
     unit: "Default Unit",
     appearance: "Appearance",
+    security: "Security",
+    terms: legalPages.terms.title,
+    privacy: legalPages.privacy.title,
+    faq: legalPages.faq.title,
+    rules: legalPages.rules.title,
     backup: "Backup & Restore",
     storage: "Storage Usage",
     premium: "StockPilot Premium",
-    "purchase-status": "Purchase Status",
     "restore-purchase": "Restore Purchase",
     about: "About StockPilot",
   };
@@ -785,6 +850,23 @@ export default function SettingsScreen({
       <SettingsGroup label="Appearance">
         <SettingsRow icon={Moon} title="Theme" value={themeLabels[preference]} onPress={() => setPage("appearance")} />
       </SettingsGroup>
+      <SettingsGroup label="Security">
+        <SettingsRow
+          icon={ShieldCheck}
+          title="Security"
+          value={securityPin === undefined ? "Loading…" : securityPin ? "PIN enabled" : "Set up PIN"}
+          onPress={() => {
+            setSecurityError("");
+            setPage("security");
+          }}
+        />
+      </SettingsGroup>
+      <SettingsGroup label="Legal & Help">
+        <SettingsRow icon={FileText} title={legalPages.terms.title} onPress={() => setPage("terms")} />
+        <SettingsRow icon={ShieldCheck} title={legalPages.privacy.title} onPress={() => setPage("privacy")} />
+        <SettingsRow icon={Info} title={legalPages.faq.title} onPress={() => setPage("faq")} />
+        <SettingsRow icon={CircleAlert} title={legalPages.rules.title} onPress={() => setPage("rules")} />
+      </SettingsGroup>
       <SettingsGroup label="Data & Storage">
         <SettingsRow icon={Database} title="Backup & Restore" description="Manage local backup files" onPress={() => setPage("backup")} />
         <SettingsRow icon={Upload} title="Import Inventory" description="Import inventory from CSV" onPress={() => onOpenInventoryAction("import")} />
@@ -796,7 +878,6 @@ export default function SettingsScreen({
       </View>
       <SettingsGroup label="Purchase">
         <SettingsRow icon={BadgeCheck} title="StockPilot Premium" description="Lifetime access · one-time purchase" onPress={() => setPage("premium")} />
-        <SettingsRow icon={ReceiptText} title="Purchase Status" value="Unavailable" onPress={() => setPage("purchase-status")} />
         <SettingsRow icon={RefreshCw} title="Restore Purchase" onPress={() => setPage("restore-purchase")} />
       </SettingsGroup>
       <SettingsGroup label="Application">
@@ -1044,6 +1125,81 @@ export default function SettingsScreen({
     </>
   );
 
+  const securityContent = securityPin === undefined ? (
+    <View style={styles.busyRow}>
+      {securityLoadError ? (
+        <Text accessibilityRole="alert" style={styles.error}>Security settings couldn't be loaded. Try again.</Text>
+      ) : (
+        <>
+          <ActivityIndicator color={colors.primary[600]} />
+          <Text style={styles.busyText}>Loading security settings…</Text>
+        </>
+      )}
+    </View>
+  ) : (
+    <View style={styles.form}>
+      <Text style={styles.infoText}>
+        Your PIN is required when reopening StockPilot or after using Exit.
+      </Text>
+      {securityPin ? (
+        <Field
+          label="Current PIN"
+          value={currentPin}
+          onChangeText={(value) => {
+            setCurrentPin(value.replace(/\D/g, "").slice(0, 6));
+            setSecurityError("");
+          }}
+          keyboardType="number-pad"
+          secureTextEntry
+          maxLength={6}
+        />
+      ) : null}
+      <Field
+        label={securityPin ? "New PIN" : "Create PIN"}
+        value={newPin}
+        onChangeText={(value) => {
+          setNewPin(value.replace(/\D/g, "").slice(0, 6));
+          setSecurityError("");
+        }}
+        keyboardType="number-pad"
+        secureTextEntry
+        maxLength={6}
+      />
+      <Field
+        label="Confirm PIN"
+        value={confirmPin}
+        onChangeText={(value) => {
+          setConfirmPin(value.replace(/\D/g, "").slice(0, 6));
+          setSecurityError("");
+        }}
+        keyboardType="number-pad"
+        secureTextEntry
+        maxLength={6}
+      />
+      {securityError ? <Text accessibilityRole="alert" style={styles.error}>{securityError}</Text> : null}
+      <Button
+        title={securityPin ? "Change PIN" : "Create PIN"}
+        loading={securitySaving}
+        onPress={() => void saveSecurityPin()}
+      />
+    </View>
+  );
+
+  const legalContent = (pageKey: LegalPage) => {
+    const content = legalPages[pageKey];
+    return (
+      <View style={styles.form}>
+        <Text style={styles.infoText}>{content.intro}</Text>
+        {content.sections.map((section) => (
+          <View key={section.heading} style={styles.infoNote}>
+            <Text style={styles.rowTitle}>{section.heading}</Text>
+            <Text style={styles.infoText}>{section.body}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   const backupContent = backupResult ? (
     <View style={styles.form}>
       <View style={styles.statusCard}>
@@ -1126,17 +1282,6 @@ export default function SettingsScreen({
     </View>
   );
 
-  const purchaseStatusContent = (
-    <>
-      <SettingsGroup label="StockPilot Premium">
-        <SettingsRow icon={ReceiptText} title="Status" value="Unavailable" />
-      </SettingsGroup>
-      <View style={styles.infoNote}>
-        <Text style={styles.infoText}>Purchase status couldn't be verified. Purchase verification isn't available in this build.</Text>
-      </View>
-    </>
-  );
-
   const restorePurchaseContent = (
     <View style={styles.form}>
       <View style={styles.statusCard}>
@@ -1192,10 +1337,14 @@ export default function SettingsScreen({
     reorder: reorderContent,
     unit: unitContent,
     appearance: appearanceContent,
+    security: securityContent,
+    terms: legalContent("terms"),
+    privacy: legalContent("privacy"),
+    faq: legalContent("faq"),
+    rules: legalContent("rules"),
     backup: backupContent,
     storage: storageContent,
     premium: premiumContent,
-    "purchase-status": purchaseStatusContent,
     "restore-purchase": restorePurchaseContent,
     about: aboutContent,
   };
