@@ -8,7 +8,7 @@ import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
 
-import type { CatalogCategoryOption } from "../data/catalog.data";
+import type { CatalogCategoryOption } from "@/data/catalog.data";
 
 const stockFilters: ProductStockFilter[] = ["all", "healthy", "low", "critical"];
 const sortOptions: Array<{ value: ProductSort; label: string }> = [

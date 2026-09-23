@@ -4,7 +4,7 @@ import { Text, View } from "react-native";
 import { Card } from "@/components/ui/Card";
 import type { BottomNavKey } from "@/components/ui/BottomNavigation";
 import type { OwnerStoreOverview as OwnerStoreOverviewData } from "@/services/owner-store.service";
-import { getStoreStockHealthState } from "@/services/stock-health.service";
+import { getStoreStockHealthState } from "@/domain/stock-health";
 import { radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";

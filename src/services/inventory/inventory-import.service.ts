@@ -3,9 +3,10 @@ import { Platform } from "react-native";
 
 import { catalogCategoryValues, type CatalogCategory } from "@/domain/catalog";
 import { createProductSchema } from "@/validation/product.validation";
+import createId from "@/utils/createId";
 
-import { storeSchema } from "../validation/store.validation";
-import { insertStoreForBusiness, type OwnerStore } from "./owner-store.service";
+import { insertStoreForBusiness, type OwnerStore } from "@/services/owner-store.service";
+import { storeSchema } from "@/validation/store.validation";
 
 type ImportExecutor = Pick<
   SQLiteDatabase,
@@ -621,10 +622,6 @@ async function importIntoActiveStore(
     updatedProductCount: result.updatedProductCount,
     unchangedProductCount: result.unchangedProductCount,
   };
-}
-
-function createId(prefix: string) {
-  return globalThis.crypto?.randomUUID?.() ?? `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 export async function importInventoryCsv(

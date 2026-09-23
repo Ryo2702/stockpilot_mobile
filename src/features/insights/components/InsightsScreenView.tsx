@@ -34,7 +34,7 @@ import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import { catalogCategoryOptions } from "@/features/catalogs/data/catalog.data";
+import { catalogCategoryOptions } from "@/data/catalog.data";
 import {
   getInsightReportTitle,
   insightReportOptions,
@@ -56,8 +56,8 @@ import {
   InsightsMoreSheet,
   ProductInsightSheet,
   ReportDetailSheet,
-} from "../components/InsightSheets";
-import type { InsightsScreenProps } from "../types/insights-screen.types";
+} from "./InsightSheets";
+import type { InsightsScreenProps } from "../types";
 
 type InsightsController = ReturnType<typeof useInsightsScreen>;
 type InsightsTab = "overview" | "trends" | "reports";

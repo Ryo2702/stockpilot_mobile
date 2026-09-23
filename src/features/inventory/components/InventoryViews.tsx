@@ -4,7 +4,9 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import PrintBarcodeButton from "@/components/ui/PrintBarcodeButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getCatalogCategoryOption } from "@/data/catalog.data";
 import type { InventoryItem, InventoryMovement } from "@/domain/inventory";
 import { getProductStockStatus } from "@/domain/product";
 import type { OwnerStore } from "@/services/owner-store.service";
@@ -12,11 +14,9 @@ import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
 
-import { getCatalogCategoryOption } from "@/features/catalogs/data/catalog.data";
 import type { InventoryScreenController } from "../hooks/useInventoryScreen";
 import { formatInventoryReason, getInventorySortLabel, inventoryStatusOptions, movementFilterOptions, movementPeriodOptions } from "../data/inventory.data";
-import InventoryItemRow from "../components/InventoryItemRow";
-import PrintBarcodeButton from "@/features/catalogs/components/PrintBarcodeButton";
+import InventoryItemRow from "./InventoryItemRow";
 
 type InventoryController = InventoryScreenController;
 

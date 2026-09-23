@@ -12,15 +12,13 @@ import {
 } from "@/domain/inventory.errors";
 import {
   applyStockChange,
-  exportInventoryCsv,
-  type getInventoryDetail,
-} from "@/services/inventory.service";
-import {
   analyzeInventoryImport,
+  exportInventoryCsv,
   importInventoryCsv,
   type InventoryImportAnalysis,
   type InventoryImportProgress,
-} from "@/services/inventory-import.service";
+  type getInventoryDetail,
+} from "@/services/inventory";
 import type { OwnerStore } from "@/services/owner-store.service";
 import type { StockAdjustmentInput } from "@/validation/inventory.validation";
 

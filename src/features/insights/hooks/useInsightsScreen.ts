@@ -1,6 +1,7 @@
 import { useSQLiteContext } from "expo-sqlite";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
+import useAsyncEffect from "@/hooks/useAsyncEffect";
 import type { OwnerStore } from "@/services/owner-store.service";
 import {
   getInsightReportHistory,
@@ -24,8 +25,7 @@ export default function useInsightsScreen(ownerStore: OwnerStore) {
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
 
-  useEffect(() => {
-    let active = true;
+  useAsyncEffect((isActive) => {
     setLoading(true);
     setError(null);
 
@@ -34,21 +34,17 @@ export default function useInsightsScreen(ownerStore: OwnerStore) {
       getInsightReportHistory(db, ownerStore),
     ])
       .then(([insights, history]) => {
-        if (!active) return;
+        if (!isActive()) return;
         setData(insights);
         setReports(history);
       })
       .catch((reason: unknown) => {
-        if (!active) return;
+        if (!isActive()) return;
         setError(reason instanceof Error ? reason.message : "The local insights data could not be read.");
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (isActive()) setLoading(false);
       });
-
-    return () => {
-      active = false;
-    };
   }, [attempt, customRange, db, ownerStore, period]);
 
   const choosePeriod = useCallback((next: InsightPeriod, range?: InsightCustomRange) => {

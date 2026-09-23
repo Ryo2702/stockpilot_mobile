@@ -3,8 +3,8 @@ import type {
   ProductSort,
   ProductStockMovement,
 } from "@/domain/product";
-import { ProductNotFoundError } from "@/features/catalogs/errors/catalog.errors";
-import type { OwnerStore } from "../owner-store.service";
+import { ProductNotFoundError } from "@/domain/catalog.errors";
+import type { StoreScope } from "@/domain/store";
 import type { CatalogExecutor, ProductQuery } from "./types";
 
 function mapProduct(row: Product) {
@@ -13,7 +13,7 @@ function mapProduct(row: Product) {
 
 export async function listProducts(
   db: CatalogExecutor,
-  store: OwnerStore,
+  store: StoreScope,
   query: ProductQuery = {},
 ) {
   const conditions = [
@@ -96,7 +96,7 @@ export async function listProducts(
   return rows.map(mapProduct);
 }
 
-export function findProductsByCode(db: CatalogExecutor, store: OwnerStore, code: string) {
+export function findProductsByCode(db: CatalogExecutor, store: StoreScope, code: string) {
   return db.getAllAsync<{ id: string; isActive: number }>(
     `SELECT id, is_active AS isActive FROM products
      WHERE business_id = ? AND store_id = ?
@@ -110,7 +110,7 @@ export function findProductsByCode(db: CatalogExecutor, store: OwnerStore, code:
   ).then((rows) => rows.map((row) => ({ ...row, isActive: Boolean(row.isActive) })));
 }
 
-export async function getProduct(db: CatalogExecutor, store: OwnerStore, productId: string) {
+export async function getProduct(db: CatalogExecutor, store: StoreScope, productId: string) {
   const product = await db.getFirstAsync<Product>(
     `SELECT
        products.id,
@@ -149,7 +149,7 @@ export async function getProduct(db: CatalogExecutor, store: OwnerStore, product
 
 export async function getProductStockMovements(
   db: CatalogExecutor,
-  store: OwnerStore,
+  store: StoreScope,
   productId: string,
   limit = 10,
 ) {

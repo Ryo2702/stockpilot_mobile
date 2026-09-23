@@ -4,16 +4,18 @@ import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import type { CatalogCategory } from "@/domain/catalog";
 import { InventoryError } from "@/domain/inventory.errors";
 import type { InventoryItem, InventorySort } from "@/domain/inventory";
+import useAsyncEffect from "@/hooks/useAsyncEffect";
+import useDebouncedValue from "@/hooks/useDebouncedValue";
 import {
   getInventoryDetail,
   getInventoryList,
   getInventoryOverview,
   getInventoryPreference,
   saveInventoryPreference,
-} from "@/services/inventory.service";
+} from "@/services/inventory";
 import type { OwnerStore } from "@/services/owner-store.service";
 
-import type { InventoryDetailReturnPage, InventoryPage } from "../types/inventory-screen.types";
+import type { InventoryDetailReturnPage, InventoryPage } from "../types";
 
 const PAGE_SIZE = 50;
 
@@ -35,7 +37,8 @@ export default function useInventoryList({
   onMessage,
 }: UseInventoryListOptions) {
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debouncedSearchValue, setDebouncedSearch] = useDebouncedValue(search, 220);
+  const debouncedSearch = debouncedSearchValue.trim();
   const [stockStatus, setStockStatus] = useState<"all" | "healthy" | "low" | "critical">("all");
   const [category, setCategory] = useState<CatalogCategory | null>(null);
   const [quantityFilter, setQuantityFilter] = useState<"any" | "in_stock" | "zero_stock">("any");
@@ -54,11 +57,6 @@ export default function useInventoryList({
   const [detail, setDetail] = useState<Awaited<ReturnType<typeof getInventoryDetail>> | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
-
-  useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedSearch(search.trim()), 220);
-    return () => clearTimeout(timeout);
-  }, [search]);
 
   useEffect(() => {
     setSearch("");
@@ -82,44 +80,35 @@ export default function useInventoryList({
     setLoadError("");
   }, [ownerStore.businessId, ownerStore.storeId]);
 
-  useEffect(() => {
-    let active = true;
+  useAsyncEffect((isActive) => {
     setSort("name_asc");
     getInventoryPreference(db, ownerStore)
       .then((value) => {
-        if (active) {
+        if (isActive()) {
           setDefaultSort(value);
           setSort(value);
         }
       })
       .catch(() => {
-        if (active) {
+        if (isActive()) {
           setDefaultSort("name_asc");
           setSort("name_asc");
         }
       });
-    return () => {
-      active = false;
-    };
   }, [db, ownerStore.businessId, ownerStore.storeId]);
 
-  useEffect(() => {
-    let active = true;
+  useAsyncEffect((isActive) => {
     getInventoryOverview(db, ownerStore)
       .then((value) => {
-        if (active) setCounts(value);
+        if (isActive()) setCounts(value);
       })
       .catch(() => {
-        if (active) setCounts(null);
+        if (isActive()) setCounts(null);
       });
-    return () => {
-      active = false;
-    };
   }, [db, ownerStore, reloadKey]);
 
-  useEffect(() => {
+  useAsyncEffect((isActive) => {
     if (page !== "list" && page !== "archived") return;
-    let active = true;
     setLoading(true);
     setLoadError("");
     getInventoryList(db, ownerStore, {
@@ -133,13 +122,13 @@ export default function useInventoryList({
       offset: 0,
     })
       .then((result) => {
-        if (!active) return;
+        if (!isActive()) return;
         setItems(result.items);
         setTotalCount(result.total);
         setHasMore(result.items.length < result.total);
       })
       .catch(() => {
-        if (active) {
+        if (isActive()) {
           setItems([]);
           setTotalCount(0);
           setHasMore(false);
@@ -147,24 +136,20 @@ export default function useInventoryList({
         }
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (isActive()) setLoading(false);
       });
-    return () => {
-      active = false;
-    };
   }, [category, debouncedSearch, db, ownerStore, page, quantityFilter, reloadKey, sort, stockStatus]);
 
-  useEffect(() => {
+  useAsyncEffect((isActive) => {
     if (page !== "detail" || !selectedItemId) return;
-    let active = true;
     setDetailLoading(true);
     setDetailError("");
     getInventoryDetail(db, ownerStore, selectedItemId, selectedItemArchived)
       .then((value) => {
-        if (active) setDetail(value);
+        if (isActive()) setDetail(value);
       })
       .catch((error) => {
-        if (active) {
+        if (isActive()) {
           setDetail(null);
           setDetailError(error instanceof InventoryError
             ? error.message
@@ -172,11 +157,8 @@ export default function useInventoryList({
         }
       })
       .finally(() => {
-        if (active) setDetailLoading(false);
+        if (isActive()) setDetailLoading(false);
       });
-    return () => {
-      active = false;
-    };
   }, [db, ownerStore, page, reloadKey, selectedItemArchived, selectedItemId]);
 
   const openItem = (item: InventoryItem, archived = false) => {

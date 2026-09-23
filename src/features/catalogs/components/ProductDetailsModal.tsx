@@ -13,15 +13,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
+import PrintBarcodeButton from "@/components/ui/PrintBarcodeButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getCatalogCategoryOption } from "@/data/catalog.data";
 import { formatCurrency, type CurrencySettings } from "@/domain/currency";
 import { getProductStockStatus, type Product, type ProductStockMovement } from "@/domain/product";
 import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
-
-import PrintBarcodeButton from "../components/PrintBarcodeButton";
-import { getCatalogCategoryOption } from "../data/catalog.data";
 
 const noHistoryMascot = require("../../../../assets/images/stockpilot/empty state png/footprint.png");
 

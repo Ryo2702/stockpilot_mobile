@@ -19,7 +19,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import type { CatalogCategory } from "@/domain/catalog";
 import { getCurrencySymbol, type CurrencySettings } from "@/domain/currency";
 import type { Product } from "@/domain/product";
-import { CatalogError } from "@/features/catalogs/errors/catalog.errors";
+import { CatalogError } from "@/domain/catalog.errors";
 import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
@@ -30,9 +30,9 @@ import {
   type UpdateProductInput,
 } from "@/validation/product.validation";
 
-import type { CatalogCategoryOption } from "../data/catalog.data";
-import { productUnitOptions } from "../data/catalog.data";
-import CategorySelector from "../components/CategorySelector";
+import type { CatalogCategoryOption } from "@/data/catalog.data";
+import { productUnitOptions } from "@/data/catalog.data";
+import CategorySelector from "./CategorySelector";
 
 type DropdownOption = { value: string; label: string };
 
@@ -289,7 +289,6 @@ export default function CatalogFormModal({
               value={form.initialQuantity}
               onChangeText={(value) => updateField("initialQuantity", value)}
               keyboardType="number-pad"
-              numericOnly
               error={errors.initialQuantity}
             />
           ) : null}
@@ -301,7 +300,6 @@ export default function CatalogFormModal({
               value={form.reorderLevel}
               onChangeText={(value) => updateField("reorderLevel", value)}
               keyboardType="number-pad"
-              numericOnly
               error={errors.reorderLevel}
               containerStyle={styles.levelField}
             />
@@ -351,14 +349,12 @@ function FormField({
   error,
   containerStyle,
   multiline,
-  numericOnly,
   prefix,
   ...inputProps
 }: TextInputProps & {
   label: string;
   error?: string;
   containerStyle?: StyleProp<ViewStyle>;
-  numericOnly?: boolean;
   prefix?: string;
 }) {
   const { colors } = useTheme();
@@ -366,10 +362,6 @@ function FormField({
   const input = (
     <TextInput
       {...inputProps}
-      inputMode={numericOnly ? "numeric" : inputProps.inputMode}
-      onChangeText={numericOnly
-        ? (value) => inputProps.onChangeText?.(value.replace(/\D/g, ""))
-        : inputProps.onChangeText}
       multiline={multiline}
       style={[styles.input, prefix ? styles.prefixedInputText : null, multiline && styles.multilineInput]}
       placeholderTextColor={colors.text.muted}

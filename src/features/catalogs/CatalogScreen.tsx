@@ -1,7 +1,7 @@
-import { catalogCategoryOptions } from "./data/catalog.data";
+import { catalogCategoryOptions } from "@/data/catalog.data";
 import useCatalogScreen from "./hooks/useCatalogScreen";
-import CatalogScreenView from "./partials/CatalogScreenView";
-import type { CatalogScreenProps } from "./types/catalog-screen.types";
+import CatalogScreenView from "./components/CatalogScreenView";
+import type { CatalogScreenProps } from "./types";
 
 export default function CatalogScreen(props: CatalogScreenProps) {
   const catalog = useCatalogScreen({

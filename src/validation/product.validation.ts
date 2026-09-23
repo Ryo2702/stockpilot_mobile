@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { catalogCategoryValues } from "@/domain/catalog";
+import { parseNumberInput } from "./number.validation";
 
 const optionalText = (max: number) =>
   z.preprocess(
@@ -19,18 +20,21 @@ const unitSchema = z.preprocess(
 );
 
 const nonNegativeInteger = z.preprocess(
-  (value) => (value === "" || value === undefined ? 0 : value),
-  z.coerce.number().int().min(0, "Enter 0 or more.").max(Number.MAX_SAFE_INTEGER),
+  (value) => parseNumberInput(value) ?? 0,
+  z.number().int().min(0, "Enter 0 or more.").max(Number.MAX_SAFE_INTEGER),
 );
 
 const requiredQuantity = z.preprocess(
-  (value) => (value === "" || value === undefined ? undefined : value),
-  z.coerce.number().int().min(0, "Quantity cannot be negative.").max(Number.MAX_SAFE_INTEGER),
+  parseNumberInput,
+  z.number().int().min(0, "Quantity cannot be negative.").max(Number.MAX_SAFE_INTEGER),
 );
 
 const currentPrice = z.preprocess(
-  (value) => (typeof value === "string" ? value.trim().replace(",", ".") || null : value),
-  z.coerce.number().finite().min(0, "Price cannot be negative.").max(Number.MAX_SAFE_INTEGER).nullable().optional(),
+  (value) => {
+    if (typeof value !== "string") return value;
+    return parseNumberInput(value) ?? null;
+  },
+  z.number().finite().min(0, "Price cannot be negative.").max(Number.MAX_SAFE_INTEGER).nullable().optional(),
 );
 
 const productFields = {

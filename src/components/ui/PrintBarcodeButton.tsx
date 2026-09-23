@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { spacing, typography, useThemeStyles } from "@/theme";
 import type { ThemeColors } from "@/theme/tokens";
 
-import { printProductBarcode } from "../utils/printProductBarcode";
+import { printProductBarcode } from "@/utils/printProductBarcode";
 
 type PrintBarcodeButtonProps = { name: string; barcode: string | null };
 

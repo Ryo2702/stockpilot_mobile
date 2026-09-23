@@ -8,7 +8,7 @@ import { radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
 
-import { getCatalogCategoryOption } from "@/features/catalogs/data/catalog.data";
+import { getCatalogCategoryOption } from "@/data/catalog.data";
 
 type InventoryItemRowProps = {
   item: InventoryItem;

@@ -8,7 +8,7 @@ import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
 import type { CatalogCategory } from "@/domain/catalog";
 
-import type { CatalogCategoryOption } from "../data/catalog.data";
+import type { CatalogCategoryOption } from "@/data/catalog.data";
 
 type CategorySelectorProps = {
   categories: CatalogCategoryOption[];

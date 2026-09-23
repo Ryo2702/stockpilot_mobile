@@ -1,6 +1,7 @@
 import { useSQLiteContext } from "expo-sqlite";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
+import useAsyncEffect from "@/hooks/useAsyncEffect";
 import {
   getOwnerStoreOverview,
   type OwnerStore,
@@ -11,20 +12,15 @@ export default function useOwnerStoreScreen(ownerStore: OwnerStore) {
   const db = useSQLiteContext();
   const [overview, setOverview] = useState<OwnerStoreOverview | null>(null);
 
-  useEffect(() => {
-    let active = true;
+  useAsyncEffect((isActive) => {
     setOverview(null);
     getOwnerStoreOverview(db, ownerStore.businessId, ownerStore.storeId)
       .then((nextOverview) => {
-        if (active) setOverview(nextOverview);
+        if (isActive()) setOverview(nextOverview);
       })
       .catch(() => {
-        if (active) setOverview(null);
+        if (isActive()) setOverview(null);
       });
-
-    return () => {
-      active = false;
-    };
   }, [db, ownerStore.businessId, ownerStore.storeId]);
 
   return { overview };

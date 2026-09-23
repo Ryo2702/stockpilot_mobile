@@ -1,9 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type PropsWithChildren } from "react";
 import { Appearance, View, useColorScheme } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useSQLiteContext } from "expo-sqlite";
 
 import { getThemePreference, saveThemePreference } from "@/services/settings.service";
+import useAsyncEffect from "@/hooks/useAsyncEffect";
 
 import { themeColors, type ColorScheme, type ThemeColors, type ThemePreference } from "./tokens";
 
@@ -21,19 +22,15 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   const systemScheme = useColorScheme();
   const [preference, setPreference] = useState<ThemePreference>("system");
 
-  useEffect(() => {
-    let active = true;
+  useAsyncEffect((isActive) => {
     getThemePreference(db)
       .then((stored) => {
-        if (active) {
+        if (isActive()) {
           setPreference(stored);
           Appearance.setColorScheme(stored === "system" ? "unspecified" : stored);
         }
       })
       .catch(() => undefined);
-    return () => {
-      active = false;
-    };
   }, [db]);
 
   const scheme = preference === "system" ? (systemScheme === "dark" ? "dark" : "light") : preference;

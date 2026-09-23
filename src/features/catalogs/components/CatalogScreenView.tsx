@@ -16,16 +16,16 @@ import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
 
-import CatalogFilters from "../components/CatalogFilters";
-import CatalogItemCard from "../components/CatalogItemCard";
-import type { CatalogCategoryOption } from "../data/catalog.data";
+import BarcodeScannerModal from "@/components/ui/BarcodeScannerModal";
+import type { CatalogCategoryOption } from "@/data/catalog.data";
+import CatalogFilters from "./CatalogFilters";
+import CatalogItemCard from "./CatalogItemCard";
 import type { CatalogScreenController } from "../hooks/useCatalogScreen";
 import ArchiveProductModal from "./ArchiveProductModal";
-import BarcodeScannerModal from "./BarcodeScannerModal";
 import CatalogEmptyState from "./CatalogEmptyState";
 import CatalogFormModal from "./CatalogFormModal";
 import ProductDetailsModal from "./ProductDetailsModal";
-import type { CatalogScreenProps } from "../types/catalog-screen.types";
+import type { CatalogScreenProps } from "../types";
 
 type CatalogScreenViewProps = CatalogScreenProps & {
   categories: CatalogCategoryOption[];

@@ -18,6 +18,7 @@ import type { InventoryItem } from "@/domain/inventory";
 import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
+import { parseNumberInput } from "@/validation/number.validation";
 import { stockAdjustmentSchema, type StockAdjustmentInput } from "@/validation/inventory.validation";
 
 import { adjustmentReasons, adjustmentTypeOptions } from "../data/inventory.data";
@@ -163,7 +164,8 @@ export default function StockAdjustmentModal({
   const [fieldError, setFieldError] = useState("");
   const reasons = adjustmentReasons[type];
   const currentQuantity = item.quantity;
-  const parsedQuantity = quantity.trim() ? Number(quantity) : NaN;
+  const parsedInput = parseNumberInput(quantity);
+  const parsedQuantity = typeof parsedInput === "number" ? parsedInput : NaN;
   const hasIntegerQuantity = Number.isSafeInteger(parsedQuantity) && parsedQuantity >= 0;
   const delta = hasIntegerQuantity
     ? type === "stock_in"
@@ -210,7 +212,7 @@ export default function StockAdjustmentModal({
     setFieldError("");
     const result = stockAdjustmentSchema.safeParse({
       type,
-      quantity: hasIntegerQuantity ? parsedQuantity : quantity,
+      quantity,
       reason,
       reference,
       note,

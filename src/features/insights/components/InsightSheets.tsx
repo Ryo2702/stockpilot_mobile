@@ -20,7 +20,7 @@ import {
 
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
-import { catalogCategoryOptions } from "@/features/catalogs/data/catalog.data";
+import { catalogCategoryOptions } from "@/data/catalog.data";
 import {
   insightPeriods,
   type InsightCategory,

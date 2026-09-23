@@ -6,7 +6,7 @@ import type { OwnerStore } from "@/services/owner-store.service";
 import useInventoryActions from "./useInventoryActions";
 import useInventoryList from "./useInventoryList";
 import useInventoryMovements from "./useInventoryMovements";
-import type { InventoryPage } from "../types/inventory-screen.types";
+import type { InventoryPage } from "../types";
 
 export default function useInventoryScreen(ownerStore: OwnerStore) {
   const db = useSQLiteContext();

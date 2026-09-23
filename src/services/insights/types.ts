@@ -2,10 +2,10 @@ import type { SQLiteDatabase } from "expo-sqlite";
 
 import type { CatalogCategory } from "@/domain/catalog";
 import type { ProductStockStatus } from "@/domain/product";
-import type { OwnerStore } from "../owner-store.service";
+import type { NamedStoreScope } from "@/domain/store";
 
 export type InsightsDatabase = Pick<SQLiteDatabase, "getAllAsync" | "getFirstAsync" | "runAsync">;
-export type StoreScope = Pick<OwnerStore, "businessId" | "storeId" | "storeName">;
+export type StoreScope = NamedStoreScope;
 
 export const insightPeriods = [
   "today",

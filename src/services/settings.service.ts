@@ -4,10 +4,6 @@ type SettingsDatabase = Pick<SQLiteDatabase, "getFirstAsync" | "runAsync">;
 
 export type ThemePreference = "light" | "dark" | "system";
 export type ActiveStoreSelection = { businessId: string; storeId: string };
-export const TRIAL_DURATION_DAYS = 3;
-
-const trialExpirationKey = "trial_expires_at";
-const millisecondsPerDay = 24 * 60 * 60 * 1000;
 
 async function readSetting(db: SettingsDatabase, key: string): Promise<unknown> {
   const row = await db.getFirstAsync<{ valueJson: string }>(
@@ -30,18 +26,6 @@ async function writeSetting(db: SettingsDatabase, key: string, value: unknown) {
     JSON.stringify(value),
     new Date().toISOString(),
   );
-}
-
-// ponytail: local expiry resets with app data or backups; use server entitlement for tamper-proof gating.
-export async function getOrCreateTrialExpiration(db: SettingsDatabase) {
-  const savedExpiration = await readSetting(db, trialExpirationKey);
-  if (typeof savedExpiration === "number" && Number.isSafeInteger(savedExpiration)) {
-    return savedExpiration;
-  }
-
-  const expiration = Date.now() + TRIAL_DURATION_DAYS * millisecondsPerDay;
-  await writeSetting(db, trialExpirationKey, expiration);
-  return expiration;
 }
 
 export async function getThemePreference(db: SettingsDatabase): Promise<ThemePreference> {

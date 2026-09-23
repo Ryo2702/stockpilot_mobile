@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 
-import { catalogCategoryOptions } from "@/features/catalogs/data/catalog.data";
+import { catalogCategoryOptions } from "@/data/catalog.data";
 
 import useInventoryScreen from "./hooks/useInventoryScreen";
-import InventoryScreenView from "./partials/InventoryScreenView";
-import type { InventoryScreenProps } from "./types/inventory-screen.types";
+import InventoryScreenView from "./components/InventoryScreenView";
+import type { InventoryScreenProps } from "./types";
 
 export default function InventoryScreen(props: InventoryScreenProps) {
   const inventory = useInventoryScreen(props.ownerStore);

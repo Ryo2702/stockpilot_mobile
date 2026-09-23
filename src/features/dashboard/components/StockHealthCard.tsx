@@ -7,7 +7,7 @@ import {
 import { Image, Text, View } from "react-native";
 
 import { Card } from "@/components/ui/Card";
-import type { StoreStockHealthState } from "@/services/stock-health.service";
+import type { StoreStockHealthState } from "@/domain/stock-health";
 import { radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";

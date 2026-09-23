@@ -9,8 +9,8 @@ import type {
   InventoryMovementSummary,
   InventoryPreferences,
 } from "@/domain/inventory";
+import type { StoreScope } from "@/domain/store";
 
-type StoreScope = Pick<InventoryItem, "businessId" | "storeId">;
 type InventoryReader = Pick<SQLiteDatabase, "getAllAsync" | "getFirstAsync">;
 type InventoryWriter = InventoryReader & Pick<SQLiteDatabase, "runAsync">;
 

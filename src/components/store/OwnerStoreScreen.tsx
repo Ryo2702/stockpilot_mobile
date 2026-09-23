@@ -11,8 +11,6 @@ import OwnerStoreScreenView from "./partials/OwnerStoreScreenView";
 export type OwnerStoreScreenProps = {
   ownerStore: OwnerStore;
   ownerStores?: OwnerStore[];
-  trialDaysRemaining: number;
-  trialExpirationLabel: string;
   onSelectStore?: (store: OwnerStore) => Promise<void>;
   onCreateStore?: (store: StoreInput) => Promise<OwnerStore>;
   onNavigate?: (key: BottomNavKey) => void;

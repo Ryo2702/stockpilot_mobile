@@ -10,7 +10,7 @@ import { radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
 
-import { getCatalogCategoryOption } from "../data/catalog.data";
+import { getCatalogCategoryOption } from "@/data/catalog.data";
 
 type CatalogItemCardProps = {
   product: Product;

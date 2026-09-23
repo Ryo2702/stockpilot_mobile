@@ -12,8 +12,9 @@ import { spacing, useThemeStyles } from "@/theme";
 import type { ThemeColors } from "@/theme/tokens";
 
 import type { InventoryScreenController } from "../hooks/useInventoryScreen";
-import type { CatalogCategoryOption } from "@/features/catalogs/data/catalog.data";
-import type { InventoryScreenProps } from "../types/inventory-screen.types";
+import BarcodeScannerModal from "@/components/ui/BarcodeScannerModal";
+import type { CatalogCategoryOption } from "@/data/catalog.data";
+import type { InventoryScreenProps } from "../types";
 import {
   InventoryDetailContent,
   InventoryListContent,
@@ -29,7 +30,6 @@ import {
   InventorySortSheet,
 } from "./InventorySheets";
 import StockAdjustmentModal from "./StockAdjustmentModal";
-import BarcodeScannerModal from "@/features/catalogs/partials/BarcodeScannerModal";
 
 type InventoryScreenViewProps = InventoryScreenProps & {
   categories: CatalogCategoryOption[];

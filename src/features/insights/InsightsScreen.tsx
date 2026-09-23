@@ -1,6 +1,6 @@
 import useInsightsScreen from "./hooks/useInsightsScreen";
-import InsightsScreenView from "./partials/InsightsScreenView";
-import type { InsightsScreenProps } from "./types/insights-screen.types";
+import InsightsScreenView from "./components/InsightsScreenView";
+import type { InsightsScreenProps } from "./types";
 
 export default function InsightsScreen(props: InsightsScreenProps) {
   const insights = useInsightsScreen(props.ownerStore);

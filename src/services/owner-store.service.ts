@@ -24,6 +24,7 @@ import {
   type StoreOverviewRecord,
   type StoreWriteDatabase,
 } from "../database/repositories/store.repository";
+import createId from "@/utils/createId";
 
 export type OwnerStore = OwnerStoreRecord;
 export type OwnerStoreDetails = OwnerStore & StoreSchema;
@@ -47,13 +48,6 @@ export class StoreLimitReachedError extends Error {
     );
     this.name = "StoreLimitReachedError";
   }
-}
-
-function createId(prefix: string) {
-  return (
-    globalThis.crypto?.randomUUID?.() ??
-    `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`
-  );
 }
 
 async function createStoreRecord(

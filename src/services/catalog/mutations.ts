@@ -1,29 +1,23 @@
 import { Platform } from "react-native";
 
-import type { Product } from "@/domain/product";
 import {
   DuplicateBarcodeError,
   DuplicateSkuError,
   InvalidCatalogInputError,
   ProductNotFoundError,
   StoreNotFoundError,
-} from "@/features/catalogs/errors/catalog.errors";
+} from "@/domain/catalog.errors";
+import type { Product } from "@/domain/product";
+import type { StoreScope } from "@/domain/store";
 import {
   createProductSchema,
   updateProductSchema,
   type CreateProductInput,
   type UpdateProductInput,
 } from "@/validation/product.validation";
-import type { OwnerStore } from "../owner-store.service";
+import createId from "@/utils/createId";
 import { getProduct } from "./queries";
 import type { CatalogDatabase, CatalogExecutor } from "./types";
-
-function createId(prefix: string) {
-  return (
-    globalThis.crypto?.randomUUID?.() ??
-    `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`
-  );
-}
 
 async function withProductTransaction(
   db: CatalogDatabase,
@@ -36,7 +30,7 @@ async function withProductTransaction(
   }
 }
 
-async function assertStoreExists(db: CatalogExecutor, store: OwnerStore) {
+async function assertStoreExists(db: CatalogExecutor, store: StoreScope) {
   const result = await db.getFirstAsync<{ id: string }>(
     "SELECT id FROM stores WHERE id = ? AND business_id = ?",
     store.storeId,
@@ -47,7 +41,7 @@ async function assertStoreExists(db: CatalogExecutor, store: OwnerStore) {
 
 async function assertUniqueSku(
   db: CatalogExecutor,
-  store: OwnerStore,
+  store: StoreScope,
   sku: string | undefined,
   productId = "",
 ) {
@@ -65,7 +59,7 @@ async function assertUniqueSku(
 
 async function assertUniqueBarcode(
   db: CatalogExecutor,
-  store: OwnerStore,
+  store: StoreScope,
   barcode: string | undefined,
   productId = "",
 ) {
@@ -83,7 +77,7 @@ async function assertUniqueBarcode(
 
 export async function createProduct(
   db: CatalogDatabase,
-  store: OwnerStore,
+  store: StoreScope,
   input: CreateProductInput,
 ) {
   const parsed = createProductSchema.safeParse(input);
@@ -166,7 +160,7 @@ export async function createProduct(
 
 export async function updateProduct(
   db: CatalogDatabase,
-  store: OwnerStore,
+  store: StoreScope,
   productId: string,
   input: UpdateProductInput,
 ) {
@@ -216,7 +210,7 @@ export async function updateProduct(
   return getProduct(db, store, productId);
 }
 
-export async function archiveProduct(db: CatalogDatabase, store: OwnerStore, productId: string) {
+export async function archiveProduct(db: CatalogDatabase, store: StoreScope, productId: string) {
   await withProductTransaction(db, async (tx) => {
     await assertStoreExists(tx, store);
     const existing = await tx.getFirstAsync<{ id: string }>(
@@ -238,7 +232,7 @@ export async function archiveProduct(db: CatalogDatabase, store: OwnerStore, pro
   });
 }
 
-export async function restoreProduct(db: CatalogDatabase, store: OwnerStore, productId: string) {
+export async function restoreProduct(db: CatalogDatabase, store: StoreScope, productId: string) {
   await withProductTransaction(db, async (tx) => {
     await assertStoreExists(tx, store);
     const existing = await tx.getFirstAsync<{ id: string }>(

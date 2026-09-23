@@ -6,10 +6,7 @@ import type {
   StoreInsights,
   StoreScope,
 } from "./types";
-
-function createId() {
-  return globalThis.crypto?.randomUUID?.() ?? `report-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
+import createId from "@/utils/createId";
 
 const reportTitles: Record<InsightReportType, string> = {
   monthly: "Monthly Inventory Report",
@@ -51,7 +48,7 @@ export async function saveInsightsReport(
     insights.period.end,
   );
   const report: InsightReport = {
-    id: createId(),
+    id: createId("report"),
     type,
     title: reportTitles[type],
     periodLabel: insights.period.label,

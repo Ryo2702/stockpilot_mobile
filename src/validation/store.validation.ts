@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { parseNumberInput } from "./number.validation";
+
 export const ownerNameSchema = z
   .string()
   .trim()
@@ -56,7 +58,10 @@ export const storeSchema = z
     currencyCode: optionalUppercase(/^[A-Z]{3}$/, "Use a 3-letter currency code.").default("PHP"),
     customCurrencyName: optionalText(50),
     customCurrencySymbol: optionalText(10),
-    currencyDecimalPlaces: z.coerce.number().int().min(0).max(4).default(2),
+    currencyDecimalPlaces: z.preprocess(
+      parseNumberInput,
+      z.number().int().min(0).max(4).default(2),
+    ),
     addressLine1: optionalText(120),
     addressLine2: optionalText(120),
     barangay: optionalText(80),

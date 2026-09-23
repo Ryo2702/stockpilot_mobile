@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { inventorySortValues } from "@/domain/inventory";
+import { parseNumberInput } from "./number.validation";
 
 const optionalText = (max: number) =>
   z.preprocess(
@@ -9,8 +10,8 @@ const optionalText = (max: number) =>
   );
 
 const quantitySchema = z.preprocess(
-  (value) => (value === "" || value === undefined ? undefined : value),
-  z.coerce.number().int("Enter a whole number.").min(0, "Quantity cannot be negative.").max(Number.MAX_SAFE_INTEGER),
+  parseNumberInput,
+  z.number().int("Enter a whole number.").min(0, "Quantity cannot be negative.").max(Number.MAX_SAFE_INTEGER),
 );
 
 export const stockAdjustmentTypes = ["stock_in", "stock_out", "set_current_stock"] as const;
@@ -52,6 +53,9 @@ export type StockAdjustmentInput = z.infer<typeof stockAdjustmentSchema>;
 
 export const inventoryPreferencesSchema = z.object({
   defaultSort: z.enum(inventorySortValues),
-  defaultReorderLevel: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
+  defaultReorderLevel: z.preprocess(
+    parseNumberInput,
+    z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
+  ),
   defaultUnit: z.string().trim().min(1).max(32).optional(),
 });

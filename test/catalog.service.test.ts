@@ -8,7 +8,7 @@ import {
   DuplicateSkuError,
   InvalidCatalogInputError,
   ProductNotFoundError,
-} from "../src/features/catalogs/errors/catalog.errors";
+} from "../src/domain/catalog.errors";
 import {
   archiveProduct,
   createProduct,

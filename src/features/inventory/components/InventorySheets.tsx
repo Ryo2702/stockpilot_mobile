@@ -19,9 +19,9 @@ import type {
   InventoryImportAnalysis,
   InventoryImportPreviewRow,
   InventoryImportProgress,
-} from "@/services/inventory-import.service";
+} from "@/services/inventory";
 
-import type { CatalogCategoryOption } from "@/features/catalogs/data/catalog.data";
+import type { CatalogCategoryOption } from "@/data/catalog.data";
 import {
   inventorySortOptions,
   inventoryStatusOptions,

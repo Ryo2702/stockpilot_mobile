@@ -7,16 +7,18 @@ import type {
   InventoryMovementFilter,
   InventoryMovementPeriod,
 } from "@/domain/inventory";
+import useAsyncEffect from "@/hooks/useAsyncEffect";
+import useDebouncedValue from "@/hooks/useDebouncedValue";
 import {
   getInventoryMovementDetail,
   getInventoryMovementHistory,
-} from "@/services/inventory.service";
+} from "@/services/inventory";
 import type { OwnerStore } from "@/services/owner-store.service";
 
 import type {
   InventoryMovementListReturnPage,
   InventoryPage,
-} from "../types/inventory-screen.types";
+} from "../types";
 
 type UseInventoryMovementsOptions = {
   db: SQLiteDatabase;
@@ -34,7 +36,8 @@ export default function useInventoryMovements({
   reloadKey,
 }: UseInventoryMovementsOptions) {
   const [movementSearch, setMovementSearch] = useState("");
-  const [debouncedMovementSearch, setDebouncedMovementSearch] = useState("");
+  const [debouncedMovementSearchValue, setDebouncedMovementSearch] = useDebouncedValue(movementSearch, 220);
+  const debouncedMovementSearch = debouncedMovementSearchValue.trim();
   const [movementType, setMovementType] = useState<InventoryMovementFilter>("all");
   const [movementPeriod, setMovementPeriod] = useState<InventoryMovementPeriod>("all");
   const [movementProductId, setMovementProductId] = useState<string | undefined>();
@@ -49,11 +52,6 @@ export default function useInventoryMovements({
   const [movementDetailReturnPage, setMovementDetailReturnPage] = useState<"detail" | "movements">("movements");
   const [movementDetail, setMovementDetail] = useState<InventoryMovement | null>(null);
   const [movementDetailError, setMovementDetailError] = useState("");
-
-  useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedMovementSearch(movementSearch.trim()), 220);
-    return () => clearTimeout(timeout);
-  }, [movementSearch]);
 
   useEffect(() => {
     setMovementSearch("");
@@ -73,9 +71,8 @@ export default function useInventoryMovements({
     setMovementDetailError("");
   }, [ownerStore.businessId, ownerStore.storeId]);
 
-  useEffect(() => {
+  useAsyncEffect((isActive) => {
     if (page !== "movements") return;
-    let active = true;
     setMovementLoading(true);
     setMovementError("");
     getInventoryMovementHistory(db, ownerStore, {
@@ -86,13 +83,13 @@ export default function useInventoryMovements({
       offset: 0,
     })
       .then((result) => {
-        if (!active) return;
+        if (!isActive()) return;
         setMovementItems(result.items);
         setMovementTotal(result.total);
         setMovementHasMore(result.items.length < result.total);
       })
       .catch(() => {
-        if (active) {
+        if (isActive()) {
           setMovementItems([]);
           setMovementTotal(0);
           setMovementHasMore(false);
@@ -100,31 +97,24 @@ export default function useInventoryMovements({
         }
       })
       .finally(() => {
-        if (active) setMovementLoading(false);
+        if (isActive()) setMovementLoading(false);
       });
-    return () => {
-      active = false;
-    };
   }, [db, debouncedMovementSearch, movementPeriod, movementProductId, movementType, ownerStore, page, reloadKey]);
 
-  useEffect(() => {
+  useAsyncEffect((isActive) => {
     if (page !== "movementDetail" || !selectedMovementId) return;
-    let active = true;
     setMovementDetailError("");
     getInventoryMovementDetail(db, ownerStore, selectedMovementId)
       .then((value) => {
-        if (active) setMovementDetail(value);
+        if (isActive()) setMovementDetail(value);
       })
       .catch((error) => {
-        if (active) {
+        if (isActive()) {
           setMovementDetailError(error instanceof InventoryError
             ? error.message
             : "Movement detail couldn't be loaded. The local inventory database could not be read.");
         }
       });
-    return () => {
-      active = false;
-    };
   }, [db, ownerStore, page, selectedMovementId]);
 
   const openMovements = (productId?: string) => {

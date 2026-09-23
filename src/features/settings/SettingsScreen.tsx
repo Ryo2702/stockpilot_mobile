@@ -55,7 +55,9 @@ import type { StoreErrors, StoreForm } from "@/components/store/store.types";
 import { BottomNavigation, type BottomNavKey } from "@/components/ui/BottomNavigation";
 import { Button } from "@/components/ui/Button";
 import { getCurrencySymbol } from "@/domain/currency";
-import { productUnitOptions } from "@/features/catalogs/data/catalog.data";
+import { productUnitOptions } from "@/data/catalog.data";
+import useAsyncEffect from "@/hooks/useAsyncEffect";
+import { parseNumberInput } from "@/validation/number.validation";
 import {
   getOwnerStoreDetails,
   type OwnerStore,
@@ -77,7 +79,7 @@ import {
 import {
   getInventoryProductDefaults,
   saveInventoryProductDefaults,
-} from "@/services/inventory.service";
+} from "@/services/inventory";
 import { getThemePreference } from "@/services/settings.service";
 import { ownerNameSchema, storeSchema, type StoreInput, type StoreSchema } from "@/validation/store.validation";
 import { spacing } from "@/theme";
@@ -306,7 +308,6 @@ function Field({
   error,
   help,
   keyboardType,
-  maxLength,
   autoCapitalize = "sentences",
 }: {
   label: string;
@@ -316,7 +317,6 @@ function Field({
   error?: string;
   help?: string;
   keyboardType?: "default" | "number-pad" | "decimal-pad" | "numbers-and-punctuation";
-  maxLength?: number;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
 }) {
   const { colors } = useTheme();
@@ -329,7 +329,6 @@ function Field({
         autoCapitalize={autoCapitalize}
         autoCorrect={false}
         keyboardType={keyboardType}
-        maxLength={maxLength}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={colors.text.muted}
@@ -400,75 +399,59 @@ export default function SettingsScreen({
     setOwnerName(ownerStore.ownerName);
   }, [ownerStore.businessId, ownerStore.ownerName]);
 
-  useEffect(() => {
-    let active = true;
+  useAsyncEffect((isActive) => {
     setStoreDetailsLoading(true);
     getOwnerStoreDetails(db, ownerStore.businessId, ownerStore.storeId)
       .then((details) => {
-        if (!active) return;
+        if (!isActive()) return;
         setStoreDetails(details);
         setStoreForm(details ? toStoreForm(details) : {});
       })
       .catch(() => {
-        if (active) setStoreDetails(null);
+        if (isActive()) setStoreDetails(null);
       })
       .finally(() => {
-        if (active) setStoreDetailsLoading(false);
+        if (isActive()) setStoreDetailsLoading(false);
       });
-    return () => {
-      active = false;
-    };
   }, [db, ownerStore.businessId, ownerStore.storeId]);
 
-  useEffect(() => {
-    let active = true;
+  useAsyncEffect((isActive) => {
     getInventoryProductDefaults(db, ownerStore)
       .then((defaults) => {
-        if (!active) return;
+        if (!isActive()) return;
         setProductDefaults(defaults);
         setReorderDraft(String(defaults.defaultReorderLevel));
       })
       .catch(() => undefined);
-    return () => {
-      active = false;
-    };
   }, [db, ownerStore.businessId, ownerStore.storeId]);
 
-  useEffect(() => {
-    let active = true;
+  useAsyncEffect((isActive) => {
     getStorageUsage(db)
       .then((result) => {
-        if (active) setStorage(result);
+        if (isActive()) setStorage(result);
       })
       .catch(() => {
-        if (active) setStorage(null);
+        if (isActive()) setStorage(null);
       });
-    return () => {
-      active = false;
-    };
   }, [db, backupFiles.length]);
 
-  useEffect(() => {
+  useAsyncEffect((isActive) => {
     if (page !== "backup") return;
-    let active = true;
     setBackupError("");
     listLocalBackups()
       .then((files) => {
-        if (!active) return;
+        if (!isActive()) return;
         setBackupFiles(files);
         setLastBackup((current) => current && current.uri === null ? current : files[0] ?? null);
       })
       .catch(() => {
-        if (active) setBackupFiles([]);
+        if (isActive()) setBackupFiles([]);
       });
     void canShareBackup().then((available) => {
-      if (active) setShareAvailable(available);
+      if (isActive()) setShareAvailable(available);
     }).catch(() => {
-      if (active) setShareAvailable(false);
+      if (isActive()) setShareAvailable(false);
     });
-    return () => {
-      active = false;
-    };
   }, [db, page]);
 
   useEffect(() => {
@@ -550,11 +533,12 @@ export default function SettingsScreen({
   };
 
   const saveReorderLevel = async () => {
-    const value = Number(reorderDraft.trim());
-    if (!reorderDraft.trim() || !Number.isSafeInteger(value) || value < 0) {
+    const parsed = parseNumberInput(reorderDraft);
+    if (typeof parsed !== "number" || !Number.isSafeInteger(parsed) || parsed < 0) {
       setReorderError("Enter a whole number of 0 or more.");
       return;
     }
+    const value = parsed;
     setSaving(true);
     setReorderError("");
     try {
@@ -833,7 +817,6 @@ export default function SettingsScreen({
           setOwnerNameError("");
         }}
         autoCapitalize="words"
-        maxLength={50}
         error={ownerNameError}
       />
       <Button title="Save Changes" loading={saving} onPress={() => void saveOwnerName()} />
@@ -865,7 +848,6 @@ export default function SettingsScreen({
         onChangeText={(value) => updateStoreField("name", value)}
         placeholder="e.g. Main Store"
         autoCapitalize="words"
-        maxLength={50}
         error={storeErrors.name}
       />
       {formError ? <Text accessibilityRole="alert" style={styles.error}>{formError}</Text> : null}
@@ -898,7 +880,6 @@ export default function SettingsScreen({
           label="Describe your store type"
           value={storeForm.customStoreType ?? ""}
           onChangeText={(value) => updateStoreField("customStoreType", value)}
-          maxLength={50}
           error={storeErrors.customStoreType}
         />
       ) : null}
@@ -950,7 +931,6 @@ export default function SettingsScreen({
             onChangeText={(value) => updateStoreField("customCurrencyName", value)}
             placeholder="e.g. Credits"
             autoCapitalize="words"
-            maxLength={50}
             error={storeErrors.customCurrencyName}
           />
           <Field
@@ -959,7 +939,6 @@ export default function SettingsScreen({
             onChangeText={(value) => updateStoreField("customCurrencySymbol", value)}
             placeholder="e.g. ¤"
             autoCapitalize="none"
-            maxLength={10}
             error={storeErrors.customCurrencySymbol}
           />
         </>
@@ -982,19 +961,18 @@ export default function SettingsScreen({
   const addressContent = (
     <View style={styles.form}>
       <Text style={styles.infoText}>Address details are optional.</Text>
-      <Field label="Address Line 1" value={storeForm.addressLine1 ?? ""} onChangeText={(value) => updateStoreField("addressLine1", value)} maxLength={120} error={storeErrors.addressLine1} />
-      <Field label="Address Line 2" value={storeForm.addressLine2 ?? ""} onChangeText={(value) => updateStoreField("addressLine2", value)} maxLength={120} error={storeErrors.addressLine2} />
-      <Field label="Barangay" value={storeForm.barangay ?? ""} onChangeText={(value) => updateStoreField("barangay", value)} maxLength={80} error={storeErrors.barangay} />
-      <Field label="City" value={storeForm.city ?? ""} onChangeText={(value) => updateStoreField("city", value)} maxLength={80} error={storeErrors.city} />
-      <Field label="Province / State" value={storeForm.provinceState ?? ""} onChangeText={(value) => updateStoreField("provinceState", value)} maxLength={80} error={storeErrors.provinceState} />
-      <Field label="Postal Code" value={storeForm.postalCode ?? ""} onChangeText={(value) => updateStoreField("postalCode", value)} maxLength={20} error={storeErrors.postalCode} />
+      <Field label="Address Line 1" value={storeForm.addressLine1 ?? ""} onChangeText={(value) => updateStoreField("addressLine1", value)} error={storeErrors.addressLine1} />
+      <Field label="Address Line 2" value={storeForm.addressLine2 ?? ""} onChangeText={(value) => updateStoreField("addressLine2", value)} error={storeErrors.addressLine2} />
+      <Field label="Barangay" value={storeForm.barangay ?? ""} onChangeText={(value) => updateStoreField("barangay", value)} error={storeErrors.barangay} />
+      <Field label="City" value={storeForm.city ?? ""} onChangeText={(value) => updateStoreField("city", value)} error={storeErrors.city} />
+      <Field label="Province / State" value={storeForm.provinceState ?? ""} onChangeText={(value) => updateStoreField("provinceState", value)} error={storeErrors.provinceState} />
+      <Field label="Postal Code" value={storeForm.postalCode ?? ""} onChangeText={(value) => updateStoreField("postalCode", value)} error={storeErrors.postalCode} />
       <Field
         label="Country Code"
         value={storeForm.countryCode ?? ""}
-        onChangeText={(value) => updateStoreField("countryCode", value.toUpperCase())}
+        onChangeText={(value) => updateStoreField("countryCode", value)}
         placeholder="PH"
         autoCapitalize="characters"
-        maxLength={2}
         help={countryCodeOptions.find((option) => option.value === storeForm.countryCode)?.label}
         error={storeErrors.countryCode}
       />
@@ -1028,7 +1006,6 @@ export default function SettingsScreen({
           setReorderError("");
         }}
         keyboardType="number-pad"
-        maxLength={16}
         error={reorderError}
       />
       <Button title="Save Changes" loading={saving} onPress={() => void saveReorderLevel()} />

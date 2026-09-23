@@ -28,7 +28,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import useStoreSelector from "@/components/store/store-selector/hooks/useStoreSelector";
 import StoreSelectorModal from "@/components/store/store-selector/partials/StoreSelectorModal";
 import { Button } from "@/components/ui/Button";
-import { importInventoryCsv } from "@/services/inventory-import.service";
+import { importInventoryCsv } from "@/services/inventory";
 import type { OwnerStore } from "@/services/owner-store.service";
 import { radii, spacing, typography, useTheme, useThemeStyles } from "@/theme";
 import type { ThemeColors } from "@/theme/tokens";
