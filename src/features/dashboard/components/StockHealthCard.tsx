@@ -99,7 +99,7 @@ export default function StockHealthCard({ state }: { state: StoreStockHealthStat
 
   return (
     <Card style={[styles.card, { backgroundColor: background, borderColor: background }]}>
-      <View style={[styles.imageFrame, scheme === "dark" && { backgroundColor: colors.white }]}>
+      <View style={[styles.imageFrame, scheme === "dark" && { borderWidth: 1, borderColor: colors.white }]}>
         <Image accessible={false} source={presentation.image} resizeMode="contain" style={styles.image} />
       </View>
       <View style={styles.copy}>
