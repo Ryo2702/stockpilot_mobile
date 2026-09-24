@@ -1,7 +1,7 @@
 {
   "name": "stockpilot",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "1.9.0",
   "dependencies": {
     "@bwip-js/react-native": "^4.11.4",
     "@expo/ui": "~57.0.18",

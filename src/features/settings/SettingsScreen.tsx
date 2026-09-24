@@ -138,7 +138,7 @@ const themeLabels: Record<ThemePreference, string> = {
   dark: "Dark",
   system: "System",
 };
-const version = Constants.expoConfig?.version ?? "1.0.0";
+const version = Constants.expoConfig?.version ?? "1.9.0";
 const build = Constants.nativeBuildVersion ?? "Development";
 const currencyDisplayNames = (() => {
   try {
