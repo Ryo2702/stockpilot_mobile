@@ -252,6 +252,17 @@ describe("database migration", () => {
           updated_at TEXT NOT NULL,
           UNIQUE (business_id, name)
         );
+        CREATE TABLE stock_movements (
+          id TEXT PRIMARY KEY,
+          business_id TEXT NOT NULL,
+          store_id TEXT NOT NULL,
+          product_id TEXT NOT NULL,
+          delta INTEGER NOT NULL,
+          quantity_before INTEGER NOT NULL,
+          quantity_after INTEGER NOT NULL,
+          reason TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        );
         INSERT INTO schema_migrations (version, name, applied_at) VALUES
           (1, 'initial', 'now'),
           (2, 'expand_stores_and_add_store_settings', 'now');
