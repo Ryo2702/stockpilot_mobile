@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { Stack } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
-import { Platform, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Text, View } from "react-native";
 
 import { migrate } from "@/database/migrate";
 import { ThemeProvider } from "@/theme";
@@ -72,9 +72,11 @@ export default function RootLayout() {
 function RootContent() {
   const { colors } = useTheme();
   return (
-    <Stack screenOptions={{
-      headerShown: false,
-      contentStyle: { backgroundColor: colors.background.app },
-    }} />
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+      <Stack screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.background.app },
+      }} />
+    </KeyboardAvoidingView>
   );
 }

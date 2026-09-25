@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from "react";
 import {
   Modal,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -129,7 +131,7 @@ function SheetFrame({
   const styles = useThemeStyles(createStyles);
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.root}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.root}>
         <Pressable accessibilityLabel="Close sheet" onPress={onClose} style={styles.backdrop} />
         <View style={styles.sheet}>
           <View style={styles.handle} />
@@ -139,7 +141,7 @@ function SheetFrame({
           </View>
           {children}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -178,7 +180,7 @@ export function InsightPeriodSheet({
 
   return (
     <SheetFrame visible={visible} onClose={onClose} title="Choose Period">
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         {insightPeriods.map((period) => (
           <Pressable
             key={period}

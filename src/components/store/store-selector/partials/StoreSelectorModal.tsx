@@ -1,4 +1,4 @@
-import { Modal, View } from "react-native";
+import { KeyboardAvoidingView, Modal, Platform, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { OwnerStore } from "@/services/owner-store.service";
@@ -33,33 +33,35 @@ export default function StoreSelectorModal({
       animationType="slide"
       onRequestClose={selector.dismiss}
     >
-      <SafeAreaView style={styles.modalSafeArea} edges={["top", "bottom"]}>
-        <View style={styles.modalContent}>
-          {selector.view === "list" ? (
-            <StoreList
-              ownerStore={ownerStore}
-              stores={selector.stores}
-              switchingStoreId={selector.switchingStoreId}
-              switchError={selector.switchError}
-              showAddStoreButton={showAddStoreButton}
-              canCreateStore={Boolean(onCreateStore)}
-              disabled={disabled}
-              onSelectStore={(store) => void selector.selectStore(store)}
-              onClose={selector.dismiss}
-              onAddStore={selector.openCreate}
-            />
-          ) : (
-            <StoreCreateForm
-              storeForm={selector.storeForm}
-              storeErrors={selector.storeErrors}
-              saving={selector.saving}
-              onStoreFieldChange={selector.updateStoreField}
-              onBack={selector.showList}
-              onCreateStore={() => void selector.createStore()}
-            />
-          )}
-        </View>
-      </SafeAreaView>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+        <SafeAreaView style={styles.modalSafeArea} edges={["top", "bottom"]}>
+          <View style={styles.modalContent}>
+            {selector.view === "list" ? (
+              <StoreList
+                ownerStore={ownerStore}
+                stores={selector.stores}
+                switchingStoreId={selector.switchingStoreId}
+                switchError={selector.switchError}
+                showAddStoreButton={showAddStoreButton}
+                canCreateStore={Boolean(onCreateStore)}
+                disabled={disabled}
+                onSelectStore={(store) => void selector.selectStore(store)}
+                onClose={selector.dismiss}
+                onAddStore={selector.openCreate}
+              />
+            ) : (
+              <StoreCreateForm
+                storeForm={selector.storeForm}
+                storeErrors={selector.storeErrors}
+                saving={selector.saving}
+                onStoreFieldChange={selector.updateStoreField}
+                onBack={selector.showList}
+                onCreateStore={() => void selector.createStore()}
+              />
+            )}
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

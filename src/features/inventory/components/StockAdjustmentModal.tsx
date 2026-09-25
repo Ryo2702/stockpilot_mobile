@@ -3,6 +3,8 @@ import type { ComponentProps } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
   Modal,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -231,12 +233,13 @@ export default function StockAdjustmentModal({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={() => { if (!saving) onClose(); }}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-        <View style={styles.header}>
-          <IconButton icon={ChevronLeft} label="Close stock adjustment" disabled={saving} onPress={onClose} />
-          <Text style={styles.headerTitle}>Adjust Stock</Text>
-        </View>
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+        <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+          <View style={styles.header}>
+            <IconButton icon={ChevronLeft} label="Close stock adjustment" disabled={saving} onPress={onClose} />
+            <Text style={styles.headerTitle}>Adjust Stock</Text>
+          </View>
+          <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.product}>
             <Text style={styles.productName}>{item.name}</Text>
             <Text style={styles.meta}>{item.sku ? `SKU: ${item.sku}` : "No SKU"}</Text>
@@ -331,32 +334,33 @@ export default function StockAdjustmentModal({
             />
           </View>
           <Text style={styles.meta}>Adjustment will be recorded in this store's stock history.</Text>
-        </ScrollView>
-      </SafeAreaView>
+          </ScrollView>
+        </SafeAreaView>
 
-      <Modal visible={reasonOpen} transparent animationType="fade" onRequestClose={() => setReasonOpen(false)}>
-        <View style={styles.overlay}>
-          <SafeAreaView style={styles.reasonSheet} edges={["bottom"]}>
-            <Text style={styles.reasonTitle}>Select reason</Text>
-            <ScrollView>
-              {reasons.map((option) => (
-                <Pressable
-                  key={option.value}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: reason === option.value }}
-                  onPress={() => { setReason(option.value); setReasonOpen(false); }}
-                  style={({ pressed }) => [styles.reasonOption, pressed && styles.pressed]}
-                >
-                  <Text style={[styles.reasonLabel, reason === option.value && styles.reasonSelected]}>{option.label}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-            <Pressable accessibilityRole="button" onPress={() => setReasonOpen(false)} style={styles.cancelReason}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </Pressable>
-          </SafeAreaView>
-        </View>
-      </Modal>
+        <Modal visible={reasonOpen} transparent animationType="fade" onRequestClose={() => setReasonOpen(false)}>
+          <View style={styles.overlay}>
+            <SafeAreaView style={styles.reasonSheet} edges={["bottom"]}>
+              <Text style={styles.reasonTitle}>Select reason</Text>
+              <ScrollView>
+                {reasons.map((option) => (
+                  <Pressable
+                    key={option.value}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: reason === option.value }}
+                    onPress={() => { setReason(option.value); setReasonOpen(false); }}
+                    style={({ pressed }) => [styles.reasonOption, pressed && styles.pressed]}
+                  >
+                    <Text style={[styles.reasonLabel, reason === option.value && styles.reasonSelected]}>{option.label}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+              <Pressable accessibilityRole="button" onPress={() => setReasonOpen(false)} style={styles.cancelReason}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </Pressable>
+            </SafeAreaView>
+          </View>
+        </Modal>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

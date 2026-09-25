@@ -2,6 +2,8 @@ import { Camera, Check, ChevronDown, ChevronLeft } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
   Modal,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -205,22 +207,23 @@ export default function CatalogFormModal({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={close}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-        <View style={styles.header}>
-          <IconButton
-            icon={ChevronLeft}
-            label="Close item form"
-            disabled={saving}
-            onPress={close}
-          />
-          <Text style={styles.title}>{product ? "Edit Item" : "Add Item"}</Text>
-        </View>
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+        <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+          <View style={styles.header}>
+            <IconButton
+              icon={ChevronLeft}
+              label="Close item form"
+              disabled={saving}
+              onPress={close}
+            />
+            <Text style={styles.title}>{product ? "Edit Item" : "Add Item"}</Text>
+          </View>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
           <FormField
             label="Item Name *"
             accessibilityLabel="Item name"
@@ -338,8 +341,9 @@ export default function CatalogFormModal({
             style={styles.saveButton}
           />
           <Button title="Cancel" variant="ghost" disabled={saving} onPress={close} />
-        </ScrollView>
-      </SafeAreaView>
+          </ScrollView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
