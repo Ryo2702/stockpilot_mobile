@@ -117,6 +117,12 @@ Use the shared spacing scale:
 
 Operational surfaces such as Inventory, POS, Catalog, and Search use compact rows. Onboarding, empty states, and success screens may use more whitespace. Reports use compact metrics with deliberate section spacing.
 
+### Motion
+
+- Use a single, short 160ms fade when the main in-app section changes.
+- Keep existing native modal fades and slides; they already communicate the destination without extra choreography.
+- Do not add bounce, parallax, looping decoration, or animation that delays operational work.
+
 ## 6. Theme module and dark mode
 
 Settings contains one **StockPilot 2.0 Theme** module:
@@ -209,9 +215,15 @@ The StockPilot wordmark uses Mocha for **Stock** and Latte for **Pilot**. The ex
 
 ### Onboarding, owner setup, and store setup
 
-- Main background is white with sparse Oat decorative surfaces only.
+- Onboarding follows the active appearance: light uses white with sparse Oat supporting surfaces, while dark preserves its existing warm-dark background, surfaces, warm-light text, and caramel actions.
 - Titles use Mocha and descriptions use neutral secondary text.
 - Primary CTAs use Latte with dark text.
+- In dark mode, keep the existing black mascot on its transparent asset, subtle off-screen background forms, 20px horizontal padding, 52px primary actions, and the same short step transition; refine hierarchy and spacing before changing color.
+- First-store setup uses four compact groups: Store details, Store type, Currency & Format, and optional Location.
+- Store name is required; Store code and Location are not. Keep name/code responsive and side by side only where width permits.
+- Store types use the existing mascots in a compact horizontal selector—never a full vertical grid. Selected cards use Oat, Latte border/badge, and Mocha check.
+- Currency and decimal places share a responsive row; small screens may stack them rather than shrink touch targets.
+- Location starts collapsed with an Add Location action. Reveal address fields only after the owner asks for them, and provide Remove Location when expanded.
 - Keep the current circular store selector: selected = Oat surface + Latte border + Mocha check; unselected = white with neutral border.
 - Store-type chips follow the same selected-state system.
 - Local-only information panels use Oat with Mocha icon.

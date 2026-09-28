@@ -28,7 +28,7 @@ export function IconButton({
       ? colors.text.onPrimary
       : variant === "danger"
         ? colors.semantic.danger
-        : colors.text.secondary;
+        : colors.primary[700];
 
   return (
     <Pressable

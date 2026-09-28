@@ -1,5 +1,4 @@
 import { useSQLiteContext } from "expo-sqlite";
-import { useVideoPlayer } from "expo-video";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, Platform, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -11,7 +10,7 @@ import { storeSchema, type StoreInput } from "@/validation/store.validation";
 
 import ExistingStoreSelectionStep from "./ExistingStoreSelectionStep";
 import OnboardingStep from "./OnboardingStep";
-import { mascotVideo, ownerNameSchema } from "./onboarding.data";
+import { ownerNameSchema } from "./onboarding.data";
 import { useOnboardingStyles } from "./onboarding.styles";
 
 type OnboardingScreenProps = {
@@ -54,15 +53,6 @@ function FirstRunOnboarding({ onComplete }: Pick<OnboardingScreenProps, "onCompl
   const [storeErrors, setStoreErrors] = useState<StoreErrors>({});
   const [saving, setSaving] = useState(false);
   const transition = useRef(new Animated.Value(0)).current;
-  const player = useVideoPlayer(mascotVideo, (videoPlayer) => {
-    videoPlayer.loop = true;
-    videoPlayer.muted = true;
-  });
-
-  useEffect(() => {
-    player.play();
-  }, [player]);
-
   useEffect(() => {
     transition.stopAnimation();
     transition.setValue(0);
@@ -79,6 +69,7 @@ function FirstRunOnboarding({ onComplete }: Pick<OnboardingScreenProps, "onCompl
   }, [step, transition]);
 
   const advance = () => setStep((currentStep) => Math.min(currentStep + 1, 4));
+  const back = () => setStep((currentStep) => Math.max(currentStep - 1, 0));
   const continueWithOwnerName = () => {
     const result = ownerNameSchema.safeParse(ownerName);
 
@@ -158,7 +149,6 @@ function FirstRunOnboarding({ onComplete }: Pick<OnboardingScreenProps, "onCompl
             storeForm={storeForm}
             storeErrors={storeErrors}
             saving={saving}
-            player={player}
             onOwnerNameChange={(value) => {
               setOwnerName(value);
               if (ownerError) setOwnerError(undefined);
@@ -167,6 +157,7 @@ function FirstRunOnboarding({ onComplete }: Pick<OnboardingScreenProps, "onCompl
             onStoreFieldChange={updateStoreField}
             onCreateStore={createStore}
             onAdvance={advance}
+            onBack={back}
           />
         </Animated.View>
       </ScrollView>

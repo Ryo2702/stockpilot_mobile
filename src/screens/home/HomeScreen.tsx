@@ -1,5 +1,6 @@
 import { useSQLiteContext } from "expo-sqlite";
-import { lazy, Suspense, useCallback, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Animated, Easing, Platform } from "react-native";
 
 import PinScreen from "@/components/auth/PinScreen";
 import StoreSwitchModal from "@/components/store/StoreSwitchModal";
@@ -62,6 +63,22 @@ export default function HomeScreen() {
   const [isSwitching, setIsSwitching] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const sectionTransition = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    sectionTransition.stopAnimation();
+    sectionTransition.setValue(0);
+
+    const animation = Animated.timing(sectionTransition, {
+      toValue: 1,
+      duration: 160,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: Platform.OS !== "web",
+    });
+
+    animation.start();
+    return () => animation.stop();
+  }, [activeSection, sectionTransition]);
 
   useAsyncEffect((isActive) => {
     setLoading(true);
@@ -357,7 +374,9 @@ export default function HomeScreen() {
 
   return (
     <>
-      <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
+      <Animated.View style={{ flex: 1, opacity: sectionTransition }}>
+        <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
+      </Animated.View>
       <StoreSwitchModal visible={isSwitching} />
     </>
   );

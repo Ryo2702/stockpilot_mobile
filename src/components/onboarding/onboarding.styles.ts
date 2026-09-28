@@ -14,49 +14,94 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flexGrow: 1,
     justifyContent: "center",
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[8],
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[6],
   },
   content: {
     width: "100%",
     alignSelf: "center",
     maxWidth: 420,
-    gap: spacing[8],
+    gap: spacing[6],
+  },
+  storeSetup: {
+    gap: spacing[5],
+  },
+  storeSetupHeader: {
+    gap: spacing[2],
+  },
+  storeSetupHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+  },
+  storeSetupBackButton: {
+    width: 44,
+    height: 44,
+    marginLeft: -spacing[2],
+  },
+  storeSetupTitleRow: {
+    minWidth: 0,
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+  },
+  storeSetupIcon: {
+    width: control.md,
+    height: control.md,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.full,
+    backgroundColor: colors.primary[50],
+  },
+  storeSetupTitle: {
+    ...typography.h2,
+    flexShrink: 1,
+    color: colors.primary[700],
+  },
+  storeSetupSubtitle: {
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+  },
+  storeSetupCreateAction: {
+    width: "100%",
+    minHeight: 52,
+    borderRadius: radii.lg,
   },
   ownerNameScreen: {
     position: "relative",
     width: "100%",
-    gap: spacing[8],
+    gap: spacing[6],
     overflow: "hidden",
   },
   ownerNameBackdropTop: {
     position: "absolute",
-    top: 72,
-    left: -90,
-    width: 180,
-    height: 180,
+    top: 84,
+    left: -104,
+    width: 196,
+    height: 196,
     borderRadius: radii.full,
     backgroundColor: colors.primary[50],
-    opacity: 0.55,
+    opacity: 0.28,
   },
   ownerNameBackdropBottom: {
     position: "absolute",
-    right: -100,
-    bottom: 0,
-    width: 190,
-    height: 190,
+    right: -112,
+    bottom: -12,
+    width: 208,
+    height: 208,
     borderRadius: radii.full,
     backgroundColor: colors.primary[50],
-    opacity: 0.65,
+    opacity: 0.34,
   },
   brand: {
     alignItems: "center",
     gap: spacing[1],
   },
   brandName: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: "700",
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: "600",
     color: colors.primary[700],
   },
   brandNameAccent: {
@@ -68,11 +113,12 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   hero: {
     alignItems: "center",
+    gap: spacing[1],
   },
   mascot: {
-    width: 150,
-    height: 150,
-    marginBottom: spacing[4],
+    width: 124,
+    height: 124,
+    marginBottom: spacing[3],
   },
   heading: {
     ...typography.h2,
@@ -80,34 +126,58 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     textAlign: "center",
   },
   featureHeading: {
-    maxWidth: 260,
+    maxWidth: 280,
   },
   title: {
     ...typography.title,
-    marginTop: spacing[1],
     color: colors.primary[700],
     textAlign: "center",
   },
   subtitle: {
-    ...typography.caption,
-    maxWidth: 300,
-    marginTop: spacing[2],
+    ...typography.bodySmall,
+    maxWidth: 320,
+    marginTop: spacing[1],
     color: colors.text.secondary,
     textAlign: "center",
   },
   form: {
-    gap: spacing[3],
+    gap: spacing[4],
   },
-  formIntro: {
-    ...typography.bodySmall,
-    color: colors.text.secondary,
+  storeFormFields: {
+    gap: spacing[5],
   },
   formSection: {
     gap: spacing[3],
   },
-  sectionTitle: {
-    ...typography.title,
+  compactSectionHeading: {
+    minHeight: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+  },
+  sectionNumber: {
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.primary[600],
+    borderRadius: radii.full,
+    backgroundColor: colors.primary[50],
+  },
+  sectionNumberText: {
+    ...typography.caption,
     color: colors.primary[700],
+    fontWeight: "700",
+  },
+  compactSectionTitle: {
+    ...typography.title,
+    flexShrink: 1,
+    color: colors.primary[700],
+  },
+  sectionOptional: {
+    ...typography.caption,
+    color: colors.text.muted,
   },
   field: {
     gap: spacing[1],
@@ -127,23 +197,27 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
   fieldLabel: {
     ...typography.label,
     color: colors.text.primary,
+    fontWeight: "600",
   },
   optional: {
     ...typography.caption,
     color: colors.text.muted,
   },
   input: {
-    minHeight: control.lg,
+    minHeight: 52,
     paddingHorizontal: spacing[4],
     borderWidth: 1,
     borderColor: colors.border.strong,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     color: colors.text.primary,
     backgroundColor: colors.background.surface,
-    ...typography.caption,
+    ...typography.bodySmall,
   },
   inputError: {
     borderColor: colors.semantic.danger,
+  },
+  inputFocused: {
+    borderColor: colors.border.focus,
   },
   error: {
     ...typography.caption,
@@ -179,38 +253,42 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.primary[700],
     fontWeight: "600",
   },
-  storeTypeList: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
+  storeTypeScroller: {
     gap: spacing[2],
+    paddingRight: spacing[4],
   },
-  storeTypeChoice: {
+  compactStoreTypeChoice: {
     position: "relative",
-    flexGrow: 1,
-    flexBasis: "30%",
-    minWidth: 84,
-    maxWidth: 132,
-    height: 132,
+    width: 92,
+    minHeight: 100,
     alignItems: "center",
     justifyContent: "center",
+    gap: 2,
     padding: spacing[1],
     borderWidth: 1,
     borderColor: colors.border.default,
     borderRadius: radii.lg,
     backgroundColor: colors.background.surface,
   },
-  storeTypeChoiceSelected: {
-    borderWidth: 2,
+  compactStoreTypeChoiceSelected: {
     borderColor: colors.primary[600],
     backgroundColor: colors.primary[50],
   },
-  storeTypeImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: radii.md,
+  compactStoreTypeImage: {
+    width: 54,
+    height: 54,
   },
-  storeTypeCheck: {
+  compactStoreTypeLabel: {
+    ...typography.caption,
+    minHeight: 28,
+    color: colors.text.secondary,
+    textAlign: "center",
+  },
+  compactStoreTypeLabelSelected: {
+    color: colors.primary[700],
+    fontWeight: "600",
+  },
+  compactStoreTypeCheck: {
     position: "absolute",
     top: spacing[1],
     right: spacing[1],
@@ -223,6 +301,32 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: radii.full,
     backgroundColor: colors.primary[600],
   },
+  currencyFormatRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing[3],
+  },
+  currencyFormatCurrency: {
+    flexGrow: 1,
+    flexBasis: 128,
+    minWidth: 128,
+  },
+  currencyFormatDecimals: {
+    flexGrow: 1,
+    flexBasis: 236,
+    minWidth: 236,
+  },
+  decimalChoices: {
+    flexDirection: "row",
+    gap: spacing[1],
+  },
+  decimalChoice: {
+    minHeight: control.lg,
+    flexGrow: 1,
+    flexBasis: 0,
+    minWidth: 44,
+    paddingHorizontal: 0,
+  },
   dropdownSelector: {
     minHeight: control.lg,
     flexDirection: "row",
@@ -232,7 +336,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: spacing[4],
     borderWidth: 1,
     borderColor: colors.border.strong,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     backgroundColor: colors.background.surface,
   },
   dropdownText: {
@@ -297,22 +401,49 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.text.muted,
     textAlign: "center",
   },
+  locationCollapsed: {
+    minHeight: control.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+  },
+  locationAddIcon: {
+    width: control.md,
+    height: control.md,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.full,
+    backgroundColor: colors.primary[50],
+  },
+  locationCopy: {
+    minWidth: 0,
+    flex: 1,
+    gap: 1,
+  },
+  locationAddTitle: {
+    ...typography.label,
+    color: colors.primary[700],
+  },
+  locationDescription: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+  locationRemove: {
+    alignSelf: "flex-start",
+  },
   actions: {
-    gap: spacing[3],
+    gap: spacing[4],
   },
   legalConsent: {
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing[2],
-    padding: spacing[3],
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    borderRadius: radii.md,
-    backgroundColor: colors.background.subtle,
+    paddingVertical: spacing[2],
   },
   checkbox: {
-    width: 22,
-    height: 22,
+    width: 20,
+    height: 20,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -331,18 +462,20 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   action: {
     width: "100%",
+    minHeight: 52,
+    borderRadius: radii.lg,
   },
   featureList: {
     gap: spacing[4],
   },
   featureRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: spacing[3],
   },
   featureIcon: {
-    width: 36,
-    height: 36,
+    width: control.md,
+    height: control.md,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: radii.full,
@@ -353,16 +486,17 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
   featureTitle: {
     ...typography.label,
     color: colors.text.primary,
+    fontWeight: "600",
   },
   featureDescription: {
-    ...typography.caption,
+    ...typography.bodySmall,
     color: colors.text.secondary,
   },
-  nextCard: {
+  nextSteps: {
     gap: spacing[3],
   },
   nextTitle: {
-    ...typography.label,
+    ...typography.title,
     color: colors.text.primary,
   },
   nextRow: {
@@ -371,8 +505,8 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     gap: spacing[3],
   },
   stepNumber: {
-    width: 22,
-    height: 22,
+    width: 28,
+    height: 28,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: radii.full,
@@ -384,7 +518,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     fontWeight: "700",
   },
   nextLabel: {
-    ...typography.caption,
+    ...typography.bodySmall,
     color: colors.text.secondary,
   },
 });

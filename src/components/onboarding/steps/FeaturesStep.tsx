@@ -17,7 +17,7 @@ export default function FeaturesStep({ onAdvance }: FeaturesStepProps) {
   return (
     <>
       <View style={styles.hero}>
-        <Text style={[styles.heading, styles.featureHeading]}>Everything you need in one app</Text>
+        <Text style={[styles.heading, styles.featureHeading]}>Everything you need{"\n"}in one app</Text>
       </View>
 
       <View style={styles.featureList}>

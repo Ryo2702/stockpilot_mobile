@@ -1,18 +1,18 @@
-import { VideoView } from "expo-video";
 import { Check } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { onboardingLegalNotice } from "@/data/legal.data";
 import { useTheme } from "@/theme/ThemeProvider";
 
+import { mascotImage } from "../onboarding.data";
 import { useOnboardingStyles } from "../onboarding.styles";
 import type { OnboardingStepProps } from "./types";
 
-type WelcomeStepProps = Pick<OnboardingStepProps, "player" | "ownerName" | "onAdvance">;
+type WelcomeStepProps = Pick<OnboardingStepProps, "ownerName" | "onAdvance">;
 
-export default function WelcomeStep({ player, ownerName, onAdvance }: WelcomeStepProps) {
+export default function WelcomeStep({ ownerName, onAdvance }: WelcomeStepProps) {
   const { colors } = useTheme();
   const styles = useOnboardingStyles();
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -20,14 +20,11 @@ export default function WelcomeStep({ player, ownerName, onAdvance }: WelcomeSte
   return (
     <>
       <View style={styles.hero}>
-        <VideoView
-          player={player}
+        <Image
+          source={mascotImage}
           style={styles.mascot}
-          contentFit="contain"
-          nativeControls={false}
-          playsInline
-          surfaceType="textureView"
-          accessibilityLabel="StockPilot mascot animation"
+          resizeMode="contain"
+          accessibilityLabel="StockPilot mascot"
         />
         <Text style={styles.heading}>Hi, {ownerName}!</Text>
         <Text style={styles.title}>Welcome to StockPilot</Text>

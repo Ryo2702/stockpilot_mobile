@@ -11,7 +11,7 @@ import { ownerNameSchema } from "@/validation/store.validation";
 
 import type { StoreForm } from "./steps/types";
 
-export const mascotVideo = require("../../../assets/mascot-clean.mp4");
+export const mascotImage = require("../../../assets/images/stockpilot/headMascot-transparent.png");
 export { ownerNameSchema };
 
 export function getFeatures(colors: ThemeColors): Array<{

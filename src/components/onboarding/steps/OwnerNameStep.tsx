@@ -1,19 +1,19 @@
-import { VideoView } from "expo-video";
-import { Text, TextInput, View } from "react-native";
+import { useState } from "react";
+import { Image, Text, TextInput, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { useTheme } from "@/theme/ThemeProvider";
 
+import { mascotImage } from "../onboarding.data";
 import { useOnboardingStyles } from "../onboarding.styles";
 import type { OnboardingStepProps } from "./types";
 
 type OwnerNameStepProps = Pick<
   OnboardingStepProps,
-  "player" | "ownerName" | "ownerError" | "onOwnerNameChange" | "onOwnerContinue"
+  "ownerName" | "ownerError" | "onOwnerNameChange" | "onOwnerContinue"
 >;
 
 export default function OwnerNameStep({
-  player,
   ownerName,
   ownerError,
   onOwnerNameChange,
@@ -21,6 +21,7 @@ export default function OwnerNameStep({
 }: OwnerNameStepProps) {
   const { colors } = useTheme();
   const styles = useOnboardingStyles();
+  const [isNameFocused, setIsNameFocused] = useState(false);
 
   return (
     <View style={styles.ownerNameScreen}>
@@ -35,18 +36,15 @@ export default function OwnerNameStep({
       </View>
 
       <View style={styles.hero}>
-        <VideoView
-          player={player}
+        <Image
+          source={mascotImage}
           style={styles.mascot}
-          contentFit="contain"
-          nativeControls={false}
-          playsInline
-          surfaceType="textureView"
-          accessibilityLabel="StockPilot mascot animation"
+          resizeMode="contain"
+          accessibilityLabel="StockPilot mascot"
         />
         <Text style={styles.heading}>Hello Owner!</Text>
         <Text style={styles.title}>What's your name?</Text>
-        <Text style={styles.subtitle}>Let's personalize your experience</Text>
+        <Text style={styles.subtitle}>Let's personalize your experience.</Text>
       </View>
 
       <View style={styles.form}>
@@ -55,12 +53,14 @@ export default function OwnerNameStep({
           accessibilityLabel="Owner name"
           autoCapitalize="words"
           autoCorrect={false}
+          onBlur={() => setIsNameFocused(false)}
           onChangeText={onOwnerNameChange}
+          onFocus={() => setIsNameFocused(true)}
           onSubmitEditing={onOwnerContinue}
           placeholder="e.g. Juan, Maria or your Business name"
           placeholderTextColor={colors.text.muted}
           returnKeyType="next"
-          style={[styles.input, ownerError ? styles.inputError : null]}
+          style={[styles.input, isNameFocused && styles.inputFocused, ownerError ? styles.inputError : null]}
           value={ownerName}
         />
         {ownerError ? <Text style={styles.error}>{ownerError}</Text> : null}

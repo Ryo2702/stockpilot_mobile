@@ -115,6 +115,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   label: {
     ...typography.label,
     color: colors.text.onPrimary,
+    fontWeight: "600",
   },
   lightLabel: {
     color: colors.text.primary,
