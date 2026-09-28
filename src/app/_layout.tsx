@@ -50,8 +50,8 @@ export default function RootLayout() {
   if (databaseTab === "checking") return null;
   if (databaseTab === "busy") {
     return (
-      <View style={{ flex: 1, justifyContent: "center", padding: 24, backgroundColor: "#f8fafc" }}>
-        <Text accessibilityRole="alert" style={{ color: "#111827" }}>
+      <View style={{ flex: 1, justifyContent: "center", padding: 24, backgroundColor: "#ffffff" }}>
+        <Text accessibilityRole="alert" style={{ color: "#241c17" }}>
           StockPilot’s web database is already open in another tab. Close that tab and reload this page.
         </Text>
       </View>

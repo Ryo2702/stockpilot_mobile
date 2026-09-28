@@ -36,7 +36,7 @@ const createStyles = (colors: ThemeColors) => ({
   },
   catalogCount: {
     ...typography.h2,
-    color: colors.text.primary,
+    color: colors.primary[700],
     lineHeight: 28,
   },
   statusCard: {

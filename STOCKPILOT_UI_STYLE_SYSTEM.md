@@ -1,1494 +1,311 @@
 # StockPilot UI Style System
 
-**Scope:** CSS/design-system rules only.\
-**Purpose:** Define the visual foundation, theme, typography, spacing,
-icons, and reusable UI component styling for StockPilot.
-
-> This document does **not** define backend logic, APIs, database
-> behavior, authentication, or business logic.
-
-------------------------------------------------------------------------
-
-## 1. Design Direction
-
-StockPilot should feel like a clean, practical inventory application
-built for daily use.
-
-### Principles
-
--   Clean and professional
--   Mobile-first
--   High readability
--   Minimal visual noise
--   Flat surfaces
--   No gradients
--   Consistent spacing
--   Clear visual hierarchy
--   Strong but controlled use of blue
--   Status colors only when they communicate meaning
--   Avoid the generic "AI dashboard" appearance
--   Prefer functional UI over decorative UI
--   Keep components visually consistent across every module
-
-The interface should primarily use neutral white/gray surfaces with blue
-as the main interactive color.
-
-------------------------------------------------------------------------
-
-## 2. Icon System
-
-Use **Lucide Icons** as the default icon library.
-
-### Rules
-
--   Do not create custom SVG icons when a suitable Lucide icon exists.
--   Do not fetch icons from an API.
--   Do not use emoji as interface icons.
--   Keep icon stroke width visually consistent.
--   Use icons primarily at `16px`, `18px`, `20px`, and `24px`.
--   Icons inside buttons should normally match the text color.
--   Icon-only buttons must have an accessible label.
--   Custom SVG is reserved for genuine brand assets such as the
-    StockPilot logo or mascot.
-
-### Suggested Lucide Icons
-
-  Action          Icon
-  --------------- ---------------------
-  Dashboard       `LayoutDashboard`
-  Store           `Store`
-  Catalog         `Package`
-  Inventory       `Boxes`
-  Camera          `Camera`
-  Insights        `Lightbulb`
-  Search          `Search`
-  Notifications   `Bell`
-  Settings        `Settings`
-  Add             `Plus`
-  Edit            `Pencil`
-  Delete          `Trash2`
-  Archive         `Archive`
-  Filter          `SlidersHorizontal`
-  Sort            `ArrowUpDown`
-  Back            `ArrowLeft`
-  Forward         `ChevronRight`
-  Close           `X`
-  More actions    `Ellipsis`
-  Success         `CircleCheck`
-  Warning         `TriangleAlert`
-  Error           `CircleAlert`
-  Info            `Info`
-
-------------------------------------------------------------------------
-
-## 3. Theme Tokens
-
-Use CSS custom properties as the source of truth.
-
-``` css
-:root {
-  /* Brand */
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-200: #bfdbfe;
-  --color-primary-300: #93c5fd;
-  --color-primary-400: #60a5fa;
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
-  --color-primary-800: #1e40af;
-  --color-primary-900: #1e3a8a;
-
-  /* Neutral */
-  --color-white: #ffffff;
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f3f4f6;
-  --color-gray-200: #e5e7eb;
-  --color-gray-300: #d1d5db;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #6b7280;
-  --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1f2937;
-  --color-gray-900: #111827;
-
-  /* Semantic */
-  --color-success: #22c55e;
-  --color-success-bg: #f0fdf4;
-
-  --color-warning: #f59e0b;
-  --color-warning-bg: #fffbeb;
-
-  --color-danger: #ef4444;
-  --color-danger-bg: #fef2f2;
-
-  --color-info: #3b82f6;
-  --color-info-bg: #eff6ff;
-
-  /* Surfaces */
-  --background-app: #f8fafc;
-  --background-surface: #ffffff;
-  --background-subtle: #f9fafb;
-
-  /* Text */
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --text-muted: #6b7280;
-  --text-disabled: #9ca3af;
-  --text-on-primary: #ffffff;
-
-  /* Border */
-  --border-default: #e5e7eb;
-  --border-strong: #d1d5db;
-  --border-focus: #2563eb;
-
-  /* Radius */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-full: 9999px;
-
-  /* Shadow */
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.08);
-
-  /* Spacing */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-
-  /* Controls */
-  --control-sm: 32px;
-  --control-md: 40px;
-  --control-lg: 48px;
-
-  /* Animation */
-  --duration-fast: 120ms;
-  --duration-normal: 180ms;
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
-}
-```
-
-------------------------------------------------------------------------
-
-## 4. Typography
-
-Use a clean sans-serif UI typeface.
-
-Recommended stack:
-
-``` css
---font-sans:
-  Inter,
-  ui-sans-serif,
-  system-ui,
-  -apple-system,
-  BlinkMacSystemFont,
-  "Segoe UI",
-  sans-serif;
-```
-
-Base:
-
-``` css
-body {
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--text-primary);
-  background: var(--background-app);
-  -webkit-font-smoothing: antialiased;
-}
-```
-
-### Type Scale
-
-  Style          Size   Weight   Line Height
-  ------------ ------ -------- -------------
-  Display        32px      700          40px
-  H1             28px      700          36px
-  H2             24px      700          32px
-  H3             20px      600          28px
-  Title          18px      600          26px
-  Body           16px      400          24px
-  Body Small     14px      400          20px
-  Label          14px      500          20px
-  Caption        12px      400          16px
-
-Avoid excessive bold text. Weight should indicate hierarchy, not
-decorate every second sentence like the interface is shouting for
-attention.
-
-------------------------------------------------------------------------
-
-## 5. Spacing System
-
-Use a **4px base unit**.
-
-Primary layout spacing should normally use:
-
-``` text
-4px
-8px
-12px
-16px
-20px
-24px
-32px
-40px
-48px
-```
-
-Recommended defaults:
-
--   Screen horizontal padding: `16px`
--   Large screen/container padding: `24px`
--   Card padding: `16px`
--   Dense card padding: `12px`
--   Section gap: `24px`
--   Component gap: `12px`
--   Inline icon/text gap: `8px`
--   Form field gap: `16px`
-
-Do not invent arbitrary spacing such as `13px`, `19px`, or `27px` unless
-there is a genuine visual reason.
-
-------------------------------------------------------------------------
-
-## 6. Borders and Radius
-
-Default border:
-
-``` css
-border: 1px solid var(--border-default);
-```
-
-Recommended radius:
-
--   Small controls: `6px`
--   Inputs/buttons: `8px`
--   Cards: `12px`
--   Large panels/modals: `16px`
--   Pills/badges: `9999px`
-
-Do not make every container excessively rounded. StockPilot is an
-inventory tool, not a collection of floating marshmallows.
-
-------------------------------------------------------------------------
-
-## 7. Buttons
-
-### Primary Button
-
-``` css
-.button-primary {
-  min-height: var(--control-md);
-  padding: 0 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  border: 1px solid var(--color-primary-600);
-  border-radius: var(--radius-md);
-
-  background: var(--color-primary-600);
-  color: var(--color-white);
-
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-
-  cursor: pointer;
-  transition:
-    background var(--duration-normal) var(--ease-standard),
-    border-color var(--duration-normal) var(--ease-standard);
-}
-
-.button-primary:hover {
-  background: var(--color-primary-700);
-  border-color: var(--color-primary-700);
-}
-```
-
-### Secondary Button
-
-White surface, neutral border, dark text.
-
-### Ghost Button
-
-Transparent background with no visible border until interaction.
-
-### Danger Button
-
-Use red only for destructive actions such as permanent deletion.
-
-### Button Sizes
-
--   Small: `32px`
--   Medium: `40px`
--   Large/mobile primary action: `48px`
+## StockPilot 2.0 — Mocha + Latte + Oat
 
-Do not use color to distinguish every possible action. Primary blue
-should identify the most important action.
+**Scope:** React Native / Expo visual-system rules for the existing StockPilot product.
 
-------------------------------------------------------------------------
+**Purpose:** Keep every current workflow visually consistent, easy to scan, and comfortable for repeated daily use. This document does not change business logic, data models, navigation structure, or product workflows.
 
-## 8. Icon Buttons
+StockPilot is an inventory, POS, reporting, and stock-management application. Its coffee-inspired palette should feel warm and trustworthy—not decorative, rustic, or café-like.
 
-``` css
-.icon-button {
-  width: 40px;
-  height: 40px;
+## 1. Design principles
 
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+1. Prioritize hierarchy before color.
+2. Keep typography and icon weight consistent.
+3. Make the current screen, its important information, and its next action clear within one to two seconds.
+4. Use whitespace to separate unrelated work.
+5. Give each screen one dominant visual priority.
+6. Keep operational screens fast, compact, and practical.
+7. Keep secondary information quiet.
+8. Use semantic colors only for actual semantic meaning.
+9. Favor rows, grouping, spacing, and type over decorative cards.
+10. Preserve current navigation and workflows; visual consistency must not become an information-architecture rewrite.
 
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
+The experience should be professional, modern, lightweight, clean, focused, warm, and suitable for daily business use.
 
-  background: transparent;
-  color: var(--text-secondary);
-}
-```
+## 2. Source of truth
 
-Use Lucide for the icon itself.
+The React Native token system is the implementation source of truth:
 
-Examples:
+- `src/theme/tokens.ts` defines light and dark color tokens, spacing, radii, controls, and typography.
+- `src/theme/ThemeProvider.tsx` resolves the persisted Light, Dark, or System appearance preference.
+- Shared controls in `src/components/ui` consume those tokens before a feature introduces local styling.
+- `src/features/settings/SettingsScreen.tsx` exposes the StockPilot 2.0 theme module and color-mode preference.
 
--   Search
--   Filter
--   Notifications
--   Settings
--   More actions
--   Close
--   Back
+Do not add CSS variables, Tailwind configuration, another palette, or a parallel theme store to the mobile app. Use `useTheme()` or `useThemeStyles()` and existing tokens instead of hard-coded colors.
 
-------------------------------------------------------------------------
+## 3. Brand palette
 
-## 9. Input Fields
+| Role | Name | Hex | Use |
+| --- | --- | --- | --- |
+| Brand anchor | Mocha Brown | `#6F4E37` | Page titles, important headings, active navigation, key totals, high-emphasis values, important icons, wordmark “Stock” |
+| Interactive accent | Latte Caramel | `#C89F7A` | Primary actions, selected controls, active filters and tabs, focus borders, links, progress, chart series, wordmark “Pilot” |
+| Quiet warm surface | Oat Cream | `#F6F0E8` | Secondary backgrounds, search, grouped settings, selected soft surfaces, information panels, filters, empty-state icon containers |
 
-Inputs should be quiet, readable, and predictable.
+Mocha is an anchor, not a page background. Latte communicates interaction or selection, not a warning. Oat supports layout and must not overpower content.
 
-``` css
-.input {
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 12px;
+### 3.1 Light appearance neutrals
 
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
+| Token role | Hex |
+| --- | --- |
+| Screen background / structural white | `#FFFFFF` |
+| Warm surface | `#F6F0E8` |
+| Primary text | `#241C17` |
+| Secondary text | `#746A62` |
+| Muted text | `#9B928A` |
+| Border | `#E6DED6` |
+| Strong border | `#DDD4CB` |
+| Disabled surface | `#F1ECE6` |
+| Disabled text | `#AAA19A` |
 
-  background: var(--background-surface);
-  color: var(--text-primary);
+Target balance: 60–70% white, 15–20% Oat Cream, 8–12% Mocha, and 5–8% Latte. The interface must look light first and warm second.
 
-  font: inherit;
-  font-size: 14px;
+### 3.2 Token mapping
 
-  outline: none;
-}
+The existing `primary` scale remains the compatibility path for current screens:
 
-.input:focus {
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.12);
-}
+| Token | Light role |
+| --- | --- |
+| `primary[50]` | Oat Cream soft surface |
+| `primary[100]` / `primary[200]` | warm supporting and border tones |
+| `primary[500]` / `primary[600]` | Latte Caramel interactive accent |
+| `primary[700]` | Mocha Brown anchor |
+| `primary[800]` / `primary[900]` | dark Mocha / primary text |
 
-.input::placeholder {
-  color: var(--text-disabled);
-}
-```
+Use `primary[700]` for an anchored heading or icon, `primary[600]` for a selected or interactive control, and semantic tokens for inventory states. Do not use a token's numerical position as a reason to create a new color.
 
-Field structure:
+## 4. Semantic inventory colors
 
-``` text
-Label
-Input
-Helper/Error message
-```
+Inventory meaning stays independent from the brand palette.
 
-Use Lucide icons for optional leading/trailing controls such as
-`Search`, `Eye`, `Calendar`, or `X`.
+| Meaning | Color | Required presentation |
+| --- | --- | --- |
+| Healthy / success | `#22C55E` | color + “Healthy” or “Success” label + optional icon |
+| Low stock / warning | `#F59E0B` | color + “Low Stock” or warning label + optional icon |
+| Critical / out of stock / error | `#EF4444` | color + explicit label + optional icon |
 
-------------------------------------------------------------------------
+Never communicate status with color alone. Latte is never a warning color and Mocha is never a critical color.
 
-## 10. Search Field
+## 5. Typography and spacing
 
-Search is a specialized input, not an entirely different species of
-component.
+Keep the project’s existing font family. Do not introduce decorative display fonts or uppercase every label.
 
-Structure:
+| Role | Size | Weight |
+| --- | --- | --- |
+| Page title | 24–28px | Bold |
+| Primary metric | 24–32px | Bold |
+| Section title | 16–18px | Semibold |
+| Product name | 15–17px | Semibold |
+| Body | 14–16px | Regular |
+| Metadata | 12–14px | Regular |
+| Helper text | 12–13px | Regular |
+| Button label | 14–16px | Semibold |
 
-``` text
-[Search icon] Search catalogs...
-```
+Prices, totals, quantities, and inventory values must remain especially readable.
 
-Use the Lucide `Search` icon.
+Use the shared spacing scale:
 
-Optional clear action uses `X`.
+| Space | Use |
+| --- | --- |
+| 4px | micro spacing |
+| 8px | related elements |
+| 12px | compact groups |
+| 16px | standard separation |
+| 24px | section separation |
+| 32px | major separation |
+| 48px+ | intentional breathing room only |
 
-------------------------------------------------------------------------
+Operational surfaces such as Inventory, POS, Catalog, and Search use compact rows. Onboarding, empty states, and success screens may use more whitespace. Reports use compact metrics with deliberate section spacing.
 
-## 11. Cards
+## 6. Theme module and dark mode
 
-Default card:
+Settings contains one **StockPilot 2.0 Theme** module:
 
-``` css
-.card {
-  padding: 16px;
+- The visual identity is always Mocha + Latte + Oat; it is not a selectable legacy skin.
+- The persisted color-mode options are **Light**, **Dark**, and **System**.
+- System follows the device appearance.
+- Do not add another color-picker, blue theme, or second appearance preference.
 
-  background: var(--background-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-}
-```
+### 6.1 Dark appearance
 
-Cards should use borders before shadows.
+| Role | Hex |
+| --- | --- |
+| Background | `#181411` |
+| Surface | `#211B17` |
+| Elevated / subtle surface | `#2A221D` |
+| Primary text | `#F6F0E8` |
+| Secondary text | `#C5BBB2` |
+| Muted text | `#968C84` |
+| Border | `#3A302A` |
+| Interactive accent | `#C89F7A` |
 
-Use shadows only when elevation is actually meaningful, such as:
+Use the lighter Mocha-compatible token for dark selected text where necessary. Do not use raw `#6F4E37` as body text on dark surfaces. Semantic inventory colors remain semantically unchanged and need a dark supporting surface when required for contrast.
 
--   floating menus
--   dialogs
--   popovers
+## 7. Shared component rules
 
-Do not put a shadow under every dashboard card.
+### Buttons
 
-### Card Types
+- **Primary:** Latte Caramel background with `#241C17` text. Reserve it for one dominant action per local context.
+- **Secondary:** white surface, warm neutral border, Mocha text.
+- **Tertiary:** transparent surface, Mocha text.
+- **Destructive:** semantic red only; never Mocha or Latte.
+- Disabled controls use disabled neutral colors and remain visibly unavailable.
 
--   Standard Card
--   Summary Card
--   Catalog Card
--   Inventory Card
--   Store Card
--   Insight Card
--   Empty-State Card
--   Stock Health Card
+Examples of primary actions: Get Started, Continue, Add Product, Checkout, Complete Sale, Import, Export, and Save. Do not make every visible action primary.
 
-------------------------------------------------------------------------
+### Inputs and search
 
-## 12. Status Badges
+- Default input: white, `#E6DED6` border, `#241C17` text, `#9B928A` placeholder.
+- Focused input: white with Latte border; an optional very soft warm surface is acceptable.
+- Error: semantic red border. Latte does not represent validation failure.
+- Search: Oat Cream by default with no strong border; use white plus Latte border only on focus.
 
-Use semantic status colors consistently.
+### Selected controls
 
-### Healthy
+- Selected chips, tabs, filters, radio buttons, checkboxes, and store selectors use Oat surface + Latte border + Mocha text/check where possible.
+- A selected state must combine color with border, check/icon, and/or text—not color alone.
+- Avoid solid Latte fills unless the control needs unusually strong emphasis.
 
-Green:
+### Cards, panels, and sheets
 
-``` text
-#22C55E
-```
+- Normal card: white with a subtle warm border.
+- Highlighted card: Oat Cream.
+- Important card: white or Oat Cream with a small Latte accent, not a full Mocha fill.
+- Information panel: Oat Cream, Mocha icon and title, neutral body copy.
+- Dialogs and bottom sheets: white background, neutral handle/divider, Mocha title, Latte primary action.
+- Avoid nested cards, excessive shadows, and turning every settings row into a card.
 
-### Low Stock
+### Loading, empty, and error states
 
-Orange:
+- Skeletons use neutral gray only.
+- Progress uses Latte.
+- Empty states use intentional whitespace, a small Oat icon container, Mocha icon/title, neutral description, and Latte CTA.
+- Keep navigation visible where possible.
+- Error and destructive states use semantic red with clear text.
 
-``` text
-#F59E0B
-```
+### Icons
 
-### Critical / Out of Stock
+Use Lucide-style icons with consistent stroke weights.
 
-Red:
+- 18–20px for inline actions.
+- 20–24px for navigation and settings.
+- 24–28px for important action icons.
+- Default important icons use Mocha; muted icons use neutral gray; interactive icons use Mocha with an Oat or Latte supporting surface.
+- Use an existing Lucide icon before creating custom SVG artwork.
 
-``` text
-#EF4444
-```
+## 8. Navigation and identity
+
+Maintain the current application routes and workflows. Do not replace the existing navigation with a new information architecture merely to match a palette.
 
-Example:
+- Navigation background is white with an `#E6DED6` divider/border.
+- Inactive icons and labels use neutral gray.
+- Active icons and labels use Mocha, with an optional Latte indicator and Oat supporting surface.
+- Keep camera/POS entry points prominent enough to find, but do not turn them into an oversized floating control.
+- The current page must be identifiable immediately through active icon, label, and selected treatment.
 
-``` css
-.badge {
-  min-height: 24px;
-  padding: 2px 8px;
+The StockPilot wordmark uses Mocha for **Stock** and Latte for **Pilot**. The existing black StockPilot mascot remains black. Never recolor it brown or caramel; use the palette around it instead.
 
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+## 9. Screen application
 
-  border-radius: var(--radius-full);
+### Onboarding, owner setup, and store setup
 
-  font-size: 12px;
-  font-weight: 600;
-}
-```
+- Main background is white with sparse Oat decorative surfaces only.
+- Titles use Mocha and descriptions use neutral secondary text.
+- Primary CTAs use Latte with dark text.
+- Keep the current circular store selector: selected = Oat surface + Latte border + Mocha check; unselected = white with neutral border.
+- Store-type chips follow the same selected-state system.
+- Local-only information panels use Oat with Mocha icon.
+- Do not overdecorate setup screens or add coffee imagery.
 
-Status colors should communicate inventory state, not decorate unrelated
-components.
+### Dashboard
 
-------------------------------------------------------------------------
+- Preserve the existing dashboard structure.
+- Greeting is secondary neutral; owner and major headings are Mocha.
+- Store selector remains white with Mocha icon.
+- Total Products is the dominant inventory metric: Oat surface, Mocha metric/icon, restrained Latte accent.
+- Healthy, Low Stock, and Critical/Out of Stock remain semantic green, amber, and red; their cards are smaller than Total Products.
+- Keep Stock Health useful but secondary. The mascot remains black.
+- Inventory Value is an Oat-supported secondary section. Cost uses Mocha; selling value may use Latte.
+- Today’s Sales main value uses Mocha. Charts use Latte as primary series and Mocha as supporting series. One obvious POS action may use Latte.
+- Quick actions are mostly white or neutral; only the action that needs emphasis receives stronger Latte treatment.
 
-## 13. Navigation
+### Inventory, Catalog, and product detail
 
-Navigation should clearly indicate location without overwhelming the
-content.
+- Keep these screens operational, dense, and row-oriented.
+- Page titles use Mocha; store selectors stay white.
+- Search uses Oat by default and white + Latte border on focus.
+- Product rows are white. Product names are dark neutral, key price/quantity values may use Mocha, metadata stays neutral, and stock status stays semantic.
+- Selected category/filter chips use Oat + Latte border + Mocha text.
+- Add Product and primary stock actions use Latte with dark text.
+- Product detail keeps Mocha for title/current quantity/cost, Latte for selling value, and semantic green only for clearly labeled positive potential margin.
+- Archive and delete remain semantic destructive red.
 
-### Bottom Navigation
+### POS, scanner, cart, checkout, and receipt
 
-Primary mobile navigation can contain:
+- POS should be among the cleanest screens: Mocha title, white store context, Oat search, compact product rows, and a clear Latte add/checkout action.
+- Selected category chips use Latte text treatment appropriate to contrast; unselected chips use Oat.
+- Cart stays white; quantity controls use Oat; remove uses semantic red.
+- The total is large, bold, and Mocha. Checkout is the strongest bottom action.
+- Keep the scanner preview predominantly dark. Its frame uses Latte, not Oat; result sheets return to white with semantic stock status.
+- Checkout avoids unrequested payment-method controls.
+- Success is calm: semantic-green indicator, Mocha title/amount, Oat information panel, Latte receipt action, neutral new-sale action.
+- Exported printable receipts remain predominantly white with Mocha name/total and only small Latte accents.
 
--   Dashboard
--   Catalog
--   Camera
--   Inventory
--   Insights
+### Reports and analytics
 
-Use Lucide icons.
+- Preserve analytical density and existing report flows.
+- Use Mocha for title, key values, ranking numbers, and supporting chart series.
+- Use Latte for active tabs, primary chart series, progress fills, and selected filters.
+- Use neutral grid/tracks and avoid random multi-color charts.
+- Positive and negative change use semantic green and red.
+- Gross Sales is the strongest metric; Transactions, Units Sold, and Average Sale stay quieter.
+- Favor ranked product-performance lists over oversized decorative charts.
 
-The Camera action may use a blue filled circular or rounded button to
-distinguish scanning as a primary action.
+### Import and export
 
-### Active State
+- Stepper: active Latte, completed Mocha, inactive neutral.
+- File and store icons use Mocha; upload/select/import/export CTAs use Latte with dark text.
+- Preview rows are white. Ready is semantic green, existing products use neutral/Oat treatment, warnings use semantic amber, and errors use semantic red.
+- Export selected scope/format uses Oat + Latte border. Generated-file state uses Oat.
 
-Use:
+### Settings
 
--   Primary blue icon
--   Primary blue label
--   Optional subtle blue background
+- Settings remains mostly neutral and row-based.
+- Page and section titles use Mocha.
+- Icon containers use Oat and important icons use Mocha.
+- Rows remain white with neutral chevrons and dividers.
+- Active switches use Latte.
+- The StockPilot 2.0 Theme module identifies the global Mocha + Latte + Oat identity and lets the user choose Light, Dark, or System.
+- Save actions use Latte. Do not use warm accent colors to make every row loud.
 
-Inactive navigation uses muted gray.
+## 10. Accessibility
 
-------------------------------------------------------------------------
+- Never rely on color alone for state or inventory health.
+- Use dark ink (`#241C17`) on Latte surfaces; do not use very light text there.
+- Preserve accessible labels for icon-only controls.
+- Maintain sufficient contrast for text, controls, focus borders, and semantic status labels in both appearances.
+- Use clear labels such as Healthy, Low Stock, Critical, Out of Stock, Success, or Error alongside their semantic color.
 
-## 14. Header / App Bar
+## 11. Do not
 
-Typical structure:
+- Do not return to StockPilot blue or introduce another brand accent.
+- Do not use gradients, glassmorphism, neon, wood textures, coffee cups, coffee beans, rustic decoration, vintage café typography, or restaurant illustrations.
+- Do not use giant Mocha page backgrounds.
+- Do not make every surface Oat Cream, every button Latte, every metric emphasized, or every component a card.
+- Do not add notification UI, workflow steps, controls, or features solely for visual decoration.
+- Do not recolor the black mascot.
+- Do not use color where typography, spacing, position, scale, alignment, or grouping communicates the hierarchy more clearly.
 
-``` text
-[Back / Brand]        [Search] [Bell] [More]
-Title
-Optional subtitle
-```
+## 12. Final constraint
 
-Mobile app bar:
+All current StockPilot 2.0 areas—onboarding, owner and store setup, dashboard, inventory, catalog, POS, scanner, cart, checkout, receipt, reports, analytics, product detail, import/export, settings, forms, search, filters, dialogs, sheets, empty states, loading states, and errors—must feel like one product.
 
--   Height: approximately `56px`
--   Horizontal padding: `16px`
--   Icon controls: `40px`
--   Title: `18–20px`, semibold
+Design importance, in order:
 
-Use Lucide icons for all utility actions.
+1. Typography
+2. Position
+3. Spacing
+4. Scale
+5. Color
 
-------------------------------------------------------------------------
-
-## 15. Notification Badge
-
-Use a small red badge only when unread notifications exist.
-
-``` css
-.notification-badge {
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: var(--radius-full);
-  background: var(--color-danger);
-  color: var(--color-white);
-
-  font-size: 10px;
-  font-weight: 700;
-}
-```
-
-Do not show a decorative badge containing `0`.
-
-------------------------------------------------------------------------
-
-## 16. Lists and Rows
-
-Inventory applications naturally contain a lot of rows. Humans
-apparently enjoy owning thousands of objects and then needing software
-to remember where they put them.
-
-Standard row:
-
-``` text
-[Icon / Thumbnail] Catalog Name          Quantity
-                   SKU / Category        Status
-```
-
-Recommended:
-
--   Minimum row height: `56px`
--   Comfortable row: `64–72px`
--   Horizontal padding: `16px`
--   Separator: `1px solid var(--border-default)`
-
-Keep the most important information visually dominant.
-
-------------------------------------------------------------------------
-
-## 17. Catalog Item
-
-Catalog list items should prioritize:
-
-1.  Catalog name
-2.  Current quantity
-3.  Stock status
-4.  SKU/category
-5.  Optional secondary information
-
-Do not require catalog images.
-
-Use `Package` as a neutral Lucide fallback when an image is unavailable.
-
-------------------------------------------------------------------------
-
-## 18. Stock Health
-
-Stock health uses three core states:
-
-  State      Color    Meaning
-  ---------- -------- ------------------------------
-  Healthy    Green    Stock level is acceptable
-  Warning    Orange   Stock is becoming low
-  Critical   Red      Immediate attention required
-
-The StockPilot mascot may visually reflect these states, but status must
-never depend solely on the mascot or color.
-
-Always include a text label.
-
-Example:
-
-``` text
-Healthy
-Low Stock
-Critical
-```
-
-------------------------------------------------------------------------
-
-## 19. Insight Cards
-
-Insights should look actionable, not like a fake futuristic AI console.
-
-Structure:
-
-``` text
-[Status Icon]
-
-Critical Stock Risk
-
-Rice 25kg may run out soon based on its current movement.
-
-Recommended action:
-Restock approximately 20 units.
-
-[View catalog]
-```
-
-Use standard surfaces and typography.
-
-No glowing borders.\
-No gradients.\
-No neon "AI" effects.
-
-------------------------------------------------------------------------
-
-## 20. Empty States
-
-Structure:
-
-``` text
-[Lucide icon or StockPilot mascot]
-
-No catalogs yet
-
-Add your first catalog to start tracking inventory.
-
-[Add Catalog]
-```
-
-Keep the message concise.
-
-Recommended Lucide icons:
-
--   `PackageOpen`
--   `Store`
--   `SearchX`
--   `Inbox`
--   `FileX`
-
-------------------------------------------------------------------------
-
-## 21. Dialogs and Sheets
-
-For mobile interfaces, prefer bottom sheets for contextual actions.
-
-Use modal dialogs for:
-
--   confirmations
--   destructive actions
--   important decisions
-
-Typical structure:
-
-``` text
-Title
-Description
-
-[Cancel] [Confirm]
-```
-
-Do not open a modal for trivial actions that could happen directly.
-
-------------------------------------------------------------------------
-
-## 22. Dropdown / Action Menu
-
-Use Lucide `Ellipsis` for contextual menus.
-
-Example:
-
-``` text
-Edit
-Move Stock
-Archive
-Delete
-```
-
-Each menu action can use its corresponding Lucide icon.
-
-Dangerous actions should be visually separated where appropriate.
-
-------------------------------------------------------------------------
-
-## 23. Tabs
-
-Tabs should use a simple underline or subtle selected background.
-
-Avoid giant pill-style navigation for every tab group.
-
-Example:
-
-``` text
-All | Healthy | Low Stock | Critical
-```
-
-------------------------------------------------------------------------
-
-## 24. Segmented Control
-
-Use when switching between a small number of closely related views.
-
-Example:
-
-``` text
-[List] [Grid]
-```
-
-Use Lucide `List` and `Grid2X2` when icons improve recognition.
-
-------------------------------------------------------------------------
-
-## 25. Toggle / Switch
-
-Use switches only for immediate binary settings.
-
-Examples:
-
--   Notifications enabled
--   Sound enabled
-
-Do not use switches for actions requiring confirmation.
-
-------------------------------------------------------------------------
-
-## 26. Progress and Loading
-
-Use:
-
--   compact spinner for short waits
--   skeleton content when layout is known
--   progress bar for measurable operations
-
-Avoid full-screen loading states unless the whole screen genuinely
-cannot function yet.
-
-------------------------------------------------------------------------
-
-## 27. Toasts
-
-Use toasts for brief action feedback.
-
-Examples:
-
-``` text
-Catalog added
-Inventory updated
-Store archived
-```
-
-Do not use toast notifications for errors requiring user decisions.
-
-------------------------------------------------------------------------
-
-## 28. Destructive Actions
-
-Deletion should use:
-
--   Lucide `Trash2`
--   Red semantic color
--   Confirmation when data loss is meaningful
-
-Archive should generally be preferred over deletion where
-recovery/history matters.
-
-------------------------------------------------------------------------
-
-## 29. Focus and Accessibility
-
-Interactive controls must expose visible focus states.
-
-``` css
-:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
-}
-```
-
-Requirements:
-
--   Do not communicate state using color alone.
--   Maintain readable contrast.
--   Icon-only buttons require accessible names.
--   Touch targets should generally be at least `44px × 44px`.
--   Body text should normally remain at least `14px`.
--   Avoid tiny low-contrast gray text.
-
-------------------------------------------------------------------------
-
-## 30. Motion
-
-Motion should communicate state changes, not entertain the user while
-they are trying to count boxes.
-
-Recommended duration:
-
-``` text
-120–200ms
-```
-
-Use motion for:
-
--   button state transitions
--   menu opening
--   bottom sheets
--   tab transitions
--   expanding content
--   mascot idle behavior
-
-Respect reduced-motion preferences:
-
-``` css
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-```
-
-------------------------------------------------------------------------
-
-## 31. Responsive Rules
-
-### Mobile
-
-``` text
-0–767px
-```
-
--   Single-column layout
--   Bottom navigation
--   16px screen padding
--   Full-width primary actions where useful
--   Bottom sheets for contextual actions
-
-### Tablet
-
-``` text
-768–1023px
-```
-
--   More horizontal breathing room
--   Two-column layouts where useful
--   Navigation may move to a rail/sidebar
-
-### Desktop
-
-``` text
-1024px+
-```
-
--   Persistent sidebar allowed
--   Main content max width where appropriate
--   Multi-column dashboards allowed
--   Tables can replace condensed mobile lists
-
-------------------------------------------------------------------------
-
-## 32. Component Inventory
-
-The default StockPilot design system should provide styles for:
-
-``` text
-AppShell
-AppHeader
-BottomNavigation
-Sidebar
-PageHeader
-SectionHeader
-
-Button
-IconButton
-FloatingCameraButton
-
-Input
-SearchInput
-Textarea
-Select
-Checkbox
-Radio
-Switch
-
-Card
-SummaryCard
-StoreCard
-CatalogCard
-InventoryCard
-InsightCard
-StockHealthCard
-
-Badge
-StatusBadge
-NotificationBadge
-
-List
-ListItem
-CatalogRow
-InventoryRow
-StoreRow
-
-Tabs
-SegmentedControl
-
-DropdownMenu
-ContextMenu
-
-Dialog
-BottomSheet
-Popover
-
-Toast
-Alert
-
-EmptyState
-Skeleton
-Spinner
-ProgressBar
-
-Divider
-Avatar
-Tooltip
-```
-
-------------------------------------------------------------------------
-
-## 33. Component Variants
-
-Components should use explicit variants rather than one-off CSS.
-
-Example button API:
-
-``` text
-variant:
-- primary
-- secondary
-- ghost
-- danger
-
-size:
-- sm
-- md
-- lg
-
-state:
-- default
-- hover
-- focus
-- disabled
-- loading
-```
-
-Badge variants:
-
-``` text
-neutral
-primary
-success
-warning
-danger
-info
-```
-
-Card variants:
-
-``` text
-default
-interactive
-selected
-critical
-```
-
-Keep variants limited. If a component needs seventeen variants, the
-component abstraction has probably lost the argument.
-
-------------------------------------------------------------------------
-
-## 34. CSS Naming
-
-Prefer predictable semantic names.
-
-Example:
-
-``` css
-.app-shell {}
-.page-header {}
-.section-header {}
-
-.button {}
-.button-primary {}
-.button-secondary {}
-
-.card {}
-.card-header {}
-.card-content {}
-.card-footer {}
-
-.input-group {}
-.input-label {}
-.input {}
-.input-message {}
-
-.status-badge {}
-.stock-health {}
-```
-
-If CSS Modules are used:
-
-``` text
-Button.module.css
-Card.module.css
-Input.module.css
-StockHealth.module.css
-```
-
-Avoid class names based purely on appearance such as:
-
-``` text
-.blue-box
-.big-gray-text
-.left-card
-```
-
-Components change. Semantic meaning survives longer.
-
-------------------------------------------------------------------------
-
-## 35. Global CSS Foundation
-
-``` css
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html {
-  -webkit-text-size-adjust: 100%;
-}
-
-html,
-body {
-  min-height: 100%;
-}
-
-body {
-  margin: 0;
-  background: var(--background-app);
-  color: var(--text-primary);
-}
-
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-button:disabled {
-  cursor: not-allowed;
-}
-
-img,
-svg {
-  display: block;
-  max-width: 100%;
-}
-```
-
-------------------------------------------------------------------------
-
-## 36. Visual Rules
-
-### Use
-
--   White surfaces
--   Light neutral application background
--   Thin borders
--   Blue primary actions
--   Lucide icons
--   Strong text hierarchy
--   Consistent spacing
--   Status colors with semantic meaning
--   Clear active/focus states
--   Simple cards
--   Flat UI
-
-### Avoid
-
--   Gradients
--   Glassmorphism
--   Excessive shadows
--   Neon colors
--   Random SVG icons
--   API-fetched icons
--   Emoji icons
--   Excessive rounded containers
--   Decorative charts
--   Glowing AI effects
--   Multiple competing primary colors
--   Oversized typography
--   Excessive animations
--   Visual effects that do not improve usability
-
-------------------------------------------------------------------------
-
-## 37. Brand Asset Exception
-
-Lucide should handle interface icons.
-
-The following can remain custom brand assets:
-
--   StockPilot logo
--   StockPilot app icon
--   StockPilot wordmark
--   StockPilot cat mascot
--   Stock-health mascot states
-
-These are brand illustrations, not generic UI icons, so replacing them
-with Lucide would defeat the point.
-
-------------------------------------------------------------------------
-
-## 38. Source of Truth
-
-For implementation, follow this priority:
-
-1.  This UI Style System for visual rules.
-2.  Shared theme tokens for colors, spacing, typography, radius, and
-    motion.
-3.  Shared reusable components.
-4.  Module-specific composition.
-5.  One-off styling only when a genuine module requirement cannot be
-    represented by the shared system.
-
-Do not duplicate the same visual values independently inside every
-module.
-
-------------------------------------------------------------------------
-
-## 39. Final Constraint
-
-This design system defines **presentation only**.
-
-It must not introduce:
-
--   API calls
--   backend dependencies
--   database logic
--   authentication logic
--   network icon services
--   unnecessary SVG packages
--   module business rules
-
-**Lucide is the default UI icon system.**
-
-Custom SVG/illustration assets are reserved for StockPilot branding and
-mascot artwork.
-
-The result should remain visually consistent whether the interface is
-displaying one store, multiple independent stores, catalogs, inventory
-movement, stock health, camera actions, or insights.
-
-------------------------------------------------------------------------
-
-## 40. shadcn/ui Component Foundation
-
-Use **shadcn/ui** as the default component foundation for the web/React
-implementation of this design system.
-
-### Current Direction
-
--   Component system: **shadcn/ui**
--   Component base for a new project: **Base UI**
--   Icons: **Lucide**
--   Styling: **Tailwind CSS + CSS variables**
--   Theme: StockPilot tokens defined by this document
--   Component ownership: generated component source stays inside the
-    project and can be customized
--   Do not introduce a second general-purpose component library unless a
-    requirement genuinely cannot be handled by shadcn/ui
-
-For an existing project, keep its current shadcn component base rather
-than migrating merely for novelty.
-
-### Initialization
-
-For a new compatible web project:
-
-``` bash
-npx shadcn@latest init
-```
-
-For an existing configured project, add only the components StockPilot
-actually needs instead of installing the entire registry.
-
-Example:
-
-``` bash
-npx shadcn@latest add button card input label badge dialog alert-dialog sheet dropdown-menu select checkbox switch tabs table tooltip skeleton spinner progress separator textarea
-```
-
-### StockPilot Component Mapping
-
-  StockPilot UI                         shadcn/ui Foundation
-  ------------------------------------- -------------------------
-  Primary / Secondary / Danger Button   `Button`
-  Icon Button                           `Button`
-  Text Input                            `Input`
-  Search Input                          `Input` / `Input Group`
-  Text Area                             `Textarea`
-  Field Label                           `Label` / `Field`
-  Select                                `Select`
-  Native Select when appropriate        `Native Select`
-  Checkbox                              `Checkbox`
-  Radio                                 `Radio Group`
-  Toggle Setting                        `Switch`
-  Standard Card                         `Card`
-  Status Badge                          `Badge`
-  Modal                                 `Dialog`
-  Destructive Confirmation              `Alert Dialog`
-  Mobile Action Panel                   `Sheet` or `Drawer`
-  Context Actions                       `Dropdown Menu`
-  Right-click Context Menu              `Context Menu`
-  Tooltip                               `Tooltip`
-  Popover                               `Popover`
-  Tabs                                  `Tabs`
-  Segmented Actions                     `Toggle Group`
-  Data Table                            `Table` / `Data Table`
-  Loading Placeholder                   `Skeleton`
-  Loading Indicator                     `Spinner`
-  Progress                              `Progress`
-  Empty State                           `Empty`
-  Separator                             `Separator`
-  Sidebar                               `Sidebar`
-  Pagination                            `Pagination`
-  Search / Command Interface            `Command`
-  Scrollable Panel                      `Scroll Area`
-  Alert Message                         `Alert`
-
-### Composition Rule
-
-Do not use raw shadcn components directly throughout feature screens
-when StockPilot needs a stable domain-specific component.
-
-Preferred structure:
-
-``` text
-components/
-├── ui/                 # shadcn-generated primitives
-├── stockpilot/         # reusable StockPilot compositions
-│   ├── status-badge
-│   ├── catalog-row
-│   ├── inventory-row
-│   ├── store-card
-│   ├── insight-card
-│   ├── stock-health-card
-│   ├── empty-state
-│   └── page-header
-└── layout/
-```
-
-`components/ui` is the primitive layer.
-
-`components/stockpilot` is the application design-system layer.
-
-Feature screens compose these components rather than recreating button,
-card, badge, dialog, and input styles repeatedly.
-
-### Styling Rule
-
-shadcn/ui is a **component foundation**, not permission to replace the
-StockPilot visual identity with its default appearance.
-
-StockPilot tokens remain authoritative for:
-
--   primary blue
--   neutral surfaces
--   semantic stock colors
--   typography
--   radius
--   spacing
--   borders
--   focus states
--   motion
-
-Customize the generated components to match those tokens.
-
-### Lucide Rule
-
-Keep **Lucide** as the icon library used with shadcn/ui.
-
-Example:
-
-``` tsx
-import { Plus, Search, Bell, Camera } from "lucide-react"
-```
-
-Do not add a second icon package just because a component example on the
-internet happened to use one.
-
-### Component Variants
-
-Use shadcn component variants for reusable states.
-
-Buttons:
-
-``` text
-default
-secondary
-outline
-ghost
-destructive
-```
-
-StockPilot may wrap or rename these semantically:
-
-``` text
-primary
-secondary
-ghost
-danger
-```
-
-Inventory status is separate from button intent:
-
-``` text
-healthy
-warning
-critical
-neutral
-```
-
-Do not turn every stock state into a button variant.
-
-### Forms
-
-Use shadcn primitives consistently for forms:
-
-``` text
-Label
-Input / Select / Checkbox / Switch
-Description
-Validation message
-```
-
-StockPilot form spacing and typography must still follow this design
-system.
-
-### Dialog vs Sheet
-
-Use:
-
--   `Dialog` for focused desktop confirmations/forms.
--   `Alert Dialog` for meaningful destructive confirmation.
--   `Sheet` or `Drawer` for mobile contextual workflows.
--   `Dropdown Menu` for compact contextual actions.
-
-Avoid opening a dialog when an inline action is simpler.
-
-### Tables vs Mobile Lists
-
-Desktop inventory views may use shadcn `Table` or a composed
-`Data Table`.
-
-Mobile should normally use StockPilot rows/cards instead of forcing a
-desktop table into a tiny viewport.
-
-### Accessibility
-
-Do not remove accessibility behavior supplied by shadcn/ui's underlying
-primitives while restyling them.
-
-Preserve:
-
--   keyboard navigation
--   focus visibility
--   accessible labels
--   dialog focus management
--   menu keyboard behavior
--   disabled states
--   semantic form controls
-
-### Dependency Discipline
-
-Add shadcn components as they become necessary.
-
-Do not run `add --all` by default. A component system is supposed to
-reduce clutter, not manufacture a museum of unused TSX files.
-
-### Final Component Rule
-
-When a suitable shadcn/ui primitive exists:
-
-1.  Use the shadcn primitive.
-2.  Apply StockPilot theme tokens.
-3.  Use Lucide for icons.
-4.  Compose a StockPilot-specific wrapper when the pattern is reused.
-5.  Create a custom component from scratch only when the existing
-    primitives do not fit the requirement.
-6.  Use custom SVG only for genuine StockPilot brand artwork or visuals
-    that Lucide cannot represent.
+Color supports hierarchy. It does not create hierarchy by itself.

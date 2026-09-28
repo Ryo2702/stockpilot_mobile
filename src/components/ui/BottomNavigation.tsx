@@ -69,8 +69,8 @@ export function BottomNavigation({
                   isCamera
                     ? colors.text.onPrimary
                     : active
-                      ? colors.primary[600]
-                      : colors.text.primary
+                      ? colors.primary[700]
+                      : colors.text.muted
                 }
                 size={isCamera ? 22 : 21}
                 strokeWidth={active || isCamera ? 2.2 : 2}
@@ -117,6 +117,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   activeIcon: {
     backgroundColor: colors.primary[50],
+    borderWidth: 1,
+    borderColor: colors.primary[600],
   },
   cameraButton: {
     width: 52,
@@ -130,7 +132,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     textAlign: "center",
   },
   activeLabel: {
-    color: colors.primary[600],
+    color: colors.primary[700],
     fontWeight: "600",
   },
   pressed: {

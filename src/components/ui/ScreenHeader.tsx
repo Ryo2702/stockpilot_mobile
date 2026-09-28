@@ -72,7 +72,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   title: {
     ...typography.h2,
-    color: colors.text.primary,
+    color: colors.primary[700],
   },
   subtitle: {
     ...typography.bodySmall,

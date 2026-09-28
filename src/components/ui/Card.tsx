@@ -38,7 +38,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   selected: {
     backgroundColor: colors.primary[50],
-    borderColor: colors.primary[200],
+    borderColor: colors.primary[600],
   },
   critical: {
     backgroundColor: colors.semantic.dangerBackground,

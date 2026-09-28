@@ -116,7 +116,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   error: { ...typography.caption, color: colors.semantic.danger },
   errorBorder: { borderColor: colors.semantic.danger },
   actions: { gap: spacing[2] },
-  overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(15, 23, 42, 0.32)" },
+  overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(36, 28, 23, 0.32)" },
   reasonSheet: {
     maxHeight: "75%",
     gap: spacing[2],

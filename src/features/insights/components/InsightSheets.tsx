@@ -53,7 +53,7 @@ const reportActionRows = [
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   root: { flex: 1, justifyContent: "flex-end" },
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(15, 23, 42, 0.38)" },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(36, 28, 23, 0.38)" },
   sheet: {
     maxHeight: "88%",
     paddingHorizontal: spacing[5],

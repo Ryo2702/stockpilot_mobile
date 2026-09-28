@@ -39,7 +39,13 @@ export function Button({
   const styles = useThemeStyles(createStyles);
   const isDisabled = disabled || loading;
   const isLight = variant === "secondary" || variant === "ghost";
-  const iconColor = variant === "primary" || variant === "danger" ? colors.text.onPrimary : colors.text.secondary;
+  const iconColor = isDisabled
+    ? colors.text.disabled
+    : variant === "danger"
+      ? colors.white
+      : variant === "primary"
+        ? colors.text.onPrimary
+        : colors.text.secondary;
 
   return (
     <Pressable
@@ -51,7 +57,7 @@ export function Button({
         styles[size],
         styles[variant],
         pressed && !isDisabled && styles.pressed,
-        isDisabled && styles.disabled,
+        isDisabled && variant !== "ghost" && styles.disabled,
         style,
       ]}
       {...props}
@@ -61,7 +67,7 @@ export function Button({
       ) : (
         <>
           {Icon ? <Icon color={iconColor} size={size === "sm" ? 16 : 18} strokeWidth={2} /> : null}
-          <Text style={[styles.label, isLight && styles.lightLabel]}>{title}</Text>
+          <Text style={[styles.label, isLight && styles.lightLabel, variant === "danger" && styles.dangerLabel, isDisabled && styles.disabledLabel]}>{title}</Text>
         </>
       )}
     </Pressable>
@@ -113,10 +119,17 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   lightLabel: {
     color: colors.text.primary,
   },
+  dangerLabel: {
+    color: colors.white,
+  },
   pressed: {
     opacity: 0.8,
   },
   disabled: {
-    opacity: 0.5,
+    backgroundColor: colors.background.disabled,
+    borderColor: colors.background.disabled,
+  },
+  disabledLabel: {
+    color: colors.text.disabled,
   },
 });

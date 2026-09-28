@@ -23,7 +23,7 @@ import {
 } from "../data/inventory.data";
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(15, 23, 42, 0.32)" },
+  overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(36, 28, 23, 0.32)" },
   sheet: {
     maxHeight: "88%",
     gap: spacing[3],

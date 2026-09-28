@@ -14,8 +14,8 @@ import {
   Info,
   KeyRound,
   MapPin,
-  Moon,
   Package,
+  Palette,
   ReceiptText,
   RefreshCw,
   Ruler,
@@ -242,7 +242,7 @@ function SettingsRow({
   const content = (
     <>
       <View style={styles.iconSlot}>
-        <Icon color={destructive ? colors.semantic.danger : colors.text.muted} size={20} strokeWidth={1.8} />
+        <Icon color={destructive ? colors.semantic.danger : colors.primary[700]} size={20} strokeWidth={1.8} />
       </View>
       <View style={styles.rowCopy}>
         <Text style={[styles.rowTitle, destructive && styles.destructiveRowTitle]}>{title}</Text>
@@ -885,7 +885,7 @@ export default function SettingsScreen({
     "stock-preferences": "Stock Preferences",
     reorder: "Default Reorder Settings",
     unit: "Default Unit",
-    appearance: "Appearance",
+    appearance: "Theme",
     security: "Security",
     "security-questions": "Recovery Questions",
     terms: legalPages.terms.title,
@@ -960,7 +960,7 @@ export default function SettingsScreen({
         <SettingsRow icon={Ruler} title="Default Unit" value={getUnitLabel(productDefaults.defaultUnit)} onPress={() => setPage("unit")} />
       </SettingsGroup>
       <SettingsGroup label="Appearance">
-        <SettingsRow icon={Moon} title="Theme" value={themeLabels[preference]} onPress={() => setPage("appearance")} />
+        <SettingsRow icon={Palette} title="StockPilot 2.0 Theme" value={themeLabels[preference]} onPress={() => setPage("appearance")} />
       </SettingsGroup>
       <SettingsGroup label="Security">
         <SettingsRow
@@ -1228,7 +1228,14 @@ export default function SettingsScreen({
 
   const appearanceContent = (
     <>
-      <SettingsGroup label="Theme">
+      <SettingsGroup label="StockPilot 2.0">
+        <SettingsRow
+          icon={Palette}
+          title="Mocha + Latte + Oat"
+          description="A warm, focused visual system for daily stock work."
+        />
+      </SettingsGroup>
+      <SettingsGroup label="Color Mode">
         <RadioRow label="Light" selected={preference === "light"} onPress={() => void saveTheme("light")} />
         <RadioRow label="Dark" selected={preference === "dark"} onPress={() => void saveTheme("dark")} />
         <RadioRow label="System" description="Follows your device appearance" selected={preference === "system"} onPress={() => void saveTheme("system")} />

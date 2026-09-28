@@ -57,7 +57,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 24,
     lineHeight: 32,
     fontWeight: "700",
-    color: colors.text.primary,
+    color: colors.primary[700],
   },
   brandNameAccent: {
     color: colors.primary[600],
@@ -76,7 +76,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   heading: {
     ...typography.h2,
-    color: colors.text.primary,
+    color: colors.primary[700],
     textAlign: "center",
   },
   featureHeading: {
@@ -85,7 +85,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
   title: {
     ...typography.title,
     marginTop: spacing[1],
-    color: colors.text.primary,
+    color: colors.primary[700],
     textAlign: "center",
   },
   subtitle: {
@@ -107,7 +107,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   sectionTitle: {
     ...typography.title,
-    color: colors.text.primary,
+    color: colors.primary[700],
   },
   field: {
     gap: spacing[1],
@@ -246,7 +246,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
   dropdownOverlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(15, 23, 42, 0.32)",
+    backgroundColor: "rgba(36, 28, 23, 0.32)",
   },
   dropdownSheet: {
     maxHeight: "75%",
