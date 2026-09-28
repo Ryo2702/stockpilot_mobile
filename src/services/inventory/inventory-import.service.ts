@@ -98,7 +98,7 @@ function storeNameKey(name: string) {
   return name.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-function parseCsvRecords(csv: string) {
+export function parseCsvRecords(csv: string) {
   const records: string[][] = [];
   let record: string[] = [];
   let field = "";

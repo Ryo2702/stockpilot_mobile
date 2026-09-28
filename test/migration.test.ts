@@ -60,11 +60,12 @@ describe("database migration", () => {
         { version: 7 },
         { version: 8 },
         { version: 9 },
+        { version: 10 },
       ]);
       expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'products'")).toEqual({ name: "products" });
       expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'catalogs'")).toBeUndefined();
       expect(database.all<{ name: string }>("PRAGMA table_info(products)").map(({ name }) => name)).toEqual(
-        expect.arrayContaining(["barcode", "unit", "notes", "category"]),
+        expect.arrayContaining(["barcode", "unit", "notes", "category", "cost_price"]),
       );
       expect(database.all<{ name: string }>("PRAGMA table_info(stores)").map(({ name }) => name)).toEqual(
         expect.arrayContaining(["code", "store_type", "currency_mode", "status"]),
@@ -110,6 +111,7 @@ describe("database migration", () => {
         { version: 7 },
         { version: 8 },
         { version: 9 },
+        { version: 10 },
       ]);
     } finally {
       database.close();

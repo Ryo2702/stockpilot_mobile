@@ -1,7 +1,7 @@
 import { Archive, Check, ChevronDown, Download, History, Menu, Settings, Upload, X } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
@@ -15,12 +15,6 @@ import type {
 import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
-import type {
-  InventoryImportAnalysis,
-  InventoryImportPreviewRow,
-  InventoryImportProgress,
-} from "@/services/inventory";
-
 import type { CatalogCategoryOption } from "@/data/catalog.data";
 import {
   inventorySortOptions,
@@ -97,33 +91,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   menuRow: { minHeight: control.lg, flexDirection: "row", alignItems: "center", gap: spacing[3], paddingHorizontal: spacing[2] },
   menuLabel: { ...typography.bodySmall, flex: 1, color: colors.text.primary },
   copy: { ...typography.bodySmall, color: colors.text.secondary },
-  filename: { ...typography.label, color: colors.text.primary },
-  importSummary: { flexDirection: "row", gap: spacing[2] },
-  importSummaryCard: {
-    flex: 1,
-    minWidth: 110,
-    gap: spacing[1],
-    padding: spacing[3],
-    borderRadius: radii.md,
-    backgroundColor: colors.gray[50],
-  },
-  importSummaryLabel: { ...typography.caption, color: colors.text.secondary },
-  importSummaryValue: { ...typography.label, color: colors.text.primary },
-  importRow: {
-    gap: spacing[1],
-    padding: spacing[3],
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    borderRadius: radii.md,
-    backgroundColor: colors.background.surface,
-  },
-  importRowHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing[2] },
-  importRowName: { ...typography.label, flex: 1, color: colors.text.primary },
-  importRowAction: { ...typography.caption, color: colors.primary[700] },
-  importRowDetail: { ...typography.caption, color: colors.text.secondary },
-  progressTrack: { height: 6, overflow: "hidden", borderRadius: radii.full, backgroundColor: colors.gray[100] },
-  progressFill: { height: "100%", borderRadius: radii.full, backgroundColor: colors.primary[600] },
-  error: { ...typography.caption, color: colors.semantic.danger },
   pressed: { opacity: 0.7 },
 });
 
@@ -405,124 +372,6 @@ export function InventoryPreferencesSheet({
         ))}
       </ScrollView>
       <Button title="Save Preference" loading={saving} onPress={() => void save()} />
-    </BottomSheet>
-  );
-}
-
-export function InventoryImportSheet({
-  visible,
-  fileName,
-  storeName,
-  analysis,
-  analyzing,
-  importing,
-  progress,
-  error,
-  onClose,
-  onAnalyzeAgain,
-  onConfirm,
-}: {
-  visible: boolean;
-  fileName: string;
-  storeName: string;
-  analysis: InventoryImportAnalysis | null;
-  analyzing: boolean;
-  importing: boolean;
-  progress: InventoryImportProgress | null;
-  error: string;
-  onClose: () => void;
-  onAnalyzeAgain: () => void;
-  onConfirm: () => void;
-}) {
-  const styles = useThemeStyles(createStyles);
-  const renderRow = ({ item }: { item: InventoryImportPreviewRow }) => (
-    <View style={styles.importRow}>
-      <View style={styles.importRowHeading}>
-        <Text style={styles.importRowName}>{item.productName}</Text>
-        <Text style={styles.importRowAction}>
-          {item.action === "new_product"
-            ? "New product"
-            : item.currentQuantity === item.importedQuantity ? "No stock change" : "Update stock"}
-        </Text>
-      </View>
-      {item.sourceName !== item.productName ? <Text style={styles.importRowDetail}>File name: {item.sourceName}</Text> : null}
-      <Text style={styles.importRowDetail}>
-        {item.category.replaceAll("_", " ")} · {item.sku ? `SKU: ${item.sku} · ` : ""}{item.unit}
-      </Text>
-      <Text style={styles.importRowDetail}>
-        {item.action === "new_product"
-          ? `Starting stock: ${item.importedQuantity} ${item.unit}`
-          : `Current ${item.currentQuantity} ${item.unit} → ${item.importedQuantity} ${item.unit}`}
-      </Text>
-    </View>
-  );
-
-  const sourceStores = analysis?.sourceStoreNames.length
-    ? analysis.sourceStoreNames.join(", ")
-    : "Not specified in file";
-  return (
-    <BottomSheet visible={visible} title="Review Inventory Import" onClose={() => { if (!importing && !analyzing) onClose(); }}>
-      <FlatList
-        style={[styles.scroll, { maxHeight: 420 }]}
-        contentContainerStyle={styles.content}
-        data={analysis?.rows ?? []}
-        keyExtractor={(item) => `${item.rowNumber}:${item.sku ?? item.productName}`}
-        renderItem={renderRow}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={(
-          <View style={styles.content}>
-            <Text style={styles.filename}>{fileName}</Text>
-            {analysis ? (
-              <Text style={styles.copy}>Export source: {sourceStores}  ·  Destination: {storeName}</Text>
-            ) : (
-              <Text style={styles.copy}>Preparing this file for {storeName}…</Text>
-            )}
-            <Text style={styles.copy}>
-              Matching products update stock in this store. Missing products will be added to its Catalog using the file details. Existing Catalog details stay unchanged; set prices separately because currency can vary by store. Every quantity change is recorded in movement history.
-            </Text>
-            {analysis ? (
-              <View style={styles.importSummary}>
-                <View style={styles.importSummaryCard}>
-                  <Text style={styles.importSummaryLabel}>New products</Text>
-                  <Text style={styles.importSummaryValue}>{analysis.newProductCount}</Text>
-                </View>
-                <View style={styles.importSummaryCard}>
-                  <Text style={styles.importSummaryLabel}>Existing products</Text>
-                  <Text style={styles.importSummaryValue}>{analysis.existingProductCount}</Text>
-                </View>
-              </View>
-            ) : null}
-            {progress ? (
-              <View style={styles.section}>
-                <Text style={styles.copy}>
-                  {progress.phase === "validating" ? "Analyzing file" : "Updating inventory"} · {Math.floor(progress.percent)}%
-                </Text>
-                <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: `${progress.percent}%` }]} />
-                </View>
-              </View>
-            ) : null}
-            {analysis ? <Text style={styles.sectionTitle}>Products in this import ({analysis.rows.length})</Text> : null}
-          </View>
-        )}
-        ListEmptyComponent={analysis ? <Text style={styles.copy}>No inventory rows to import.</Text> : null}
-        ListFooterComponent={error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
-      />
-      <View style={styles.actions}>
-        {error && analysis ? (
-          <Button title="Analyze Again" variant="secondary" disabled={importing || analyzing} onPress={onAnalyzeAgain} style={styles.action} />
-        ) : (
-          <Button title="Cancel" variant="secondary" disabled={importing || analyzing} onPress={onClose} style={styles.action} />
-        )}
-        <Button
-          title={analyzing ? "Analyzing file" : "Import to Store"}
-          loading={importing || analyzing}
-          disabled={!analysis?.canImport || Boolean(error) || importing || analyzing}
-          onPress={onConfirm}
-          style={styles.action}
-        />
-      </View>
     </BottomSheet>
   );
 }

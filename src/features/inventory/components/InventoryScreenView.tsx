@@ -24,12 +24,12 @@ import {
 } from "./InventoryViews";
 import {
   InventoryFilterSheet,
-  InventoryImportSheet,
   InventoryMoreSheet,
   InventoryPreferencesSheet,
   InventorySortSheet,
 } from "./InventorySheets";
 import StockAdjustmentModal from "./StockAdjustmentModal";
+import InventoryImportScreen from "./InventoryImportScreen";
 
 type InventoryScreenViewProps = InventoryScreenProps & {
   categories: CatalogCategoryOption[];
@@ -72,6 +72,7 @@ export default function InventoryScreenView({
   const [moreVisible, setMoreVisible] = useState(false);
   const [preferencesVisible, setPreferencesVisible] = useState(false);
   const [scannerVisible, setScannerVisible] = useState(false);
+  const [importVisible, setImportVisible] = useState(false);
   const handledActionRequest = useRef<number | null>(null);
 
   const subpage = inventory.page !== "list";
@@ -118,7 +119,7 @@ export default function InventoryScreenView({
     }
     onNavigate(key);
   };
-  const startInventoryImport = () => void inventory.pickInventoryImport();
+  const startInventoryImport = () => setImportVisible(true);
 
   useEffect(() => {
     if (!actionRequest || handledActionRequest.current === actionRequest.id) return;
@@ -127,6 +128,20 @@ export default function InventoryScreenView({
     if (actionRequest.action === "import") startInventoryImport();
     else void exportInventory();
   }, [actionRequest, inventory, onActionRequestHandled]);
+
+  if (importVisible) {
+    return (
+      <InventoryImportScreen
+        ownerStore={ownerStore}
+        ownerStores={ownerStores}
+        onBack={() => setImportVisible(false)}
+        onViewInventory={() => {
+          setImportVisible(false);
+          inventory.reload();
+        }}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
@@ -222,19 +237,6 @@ export default function InventoryScreenView({
         defaultSort={inventory.defaultSort}
         onClose={() => setPreferencesVisible(false)}
         onSave={inventory.saveDefaultSort}
-      />
-      <InventoryImportSheet
-        visible={Boolean(inventory.pendingImport)}
-        fileName={inventory.pendingImport?.fileName ?? ""}
-        storeName={ownerStore.storeName}
-        analysis={inventory.pendingImport?.analysis ?? null}
-        analyzing={inventory.analyzingImport}
-        importing={inventory.importing}
-        progress={inventory.importProgress}
-        error={inventory.importError}
-        onClose={inventory.cancelImport}
-        onAnalyzeAgain={() => void inventory.reanalyzeInventoryImport()}
-        onConfirm={() => void inventory.confirmInventoryImport()}
       />
       {inventory.detail?.item && inventory.detail.item.isActive ? (
         <StockAdjustmentModal

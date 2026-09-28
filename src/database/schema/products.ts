@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS products (
       )
     ),
   unit TEXT NOT NULL DEFAULT 'ea',
+  cost_price REAL NULL CHECK (cost_price IS NULL OR cost_price >= 0),
   current_price REAL NULL CHECK (current_price IS NULL OR current_price >= 0),
   reorder_level INTEGER NOT NULL DEFAULT 0,
   critical_level INTEGER NOT NULL DEFAULT 0,

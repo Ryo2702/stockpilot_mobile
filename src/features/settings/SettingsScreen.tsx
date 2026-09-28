@@ -9,8 +9,10 @@ import {
   Database,
   Download,
   FileText,
+  Fingerprint,
   HardDrive,
   Info,
+  KeyRound,
   MapPin,
   Moon,
   Package,
@@ -44,6 +46,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import StoreSelector from "@/components/store/StoreSelector";
+import {
+  SecurityQuestionFields,
+  createSecurityQuestionDrafts,
+  toSecurityRecoveryAnswers,
+} from "@/components/auth/SecurityQuestionFields";
 import {
   countryCodeOptions,
   currencyModeOptions,
@@ -82,7 +89,16 @@ import {
   getInventoryProductDefaults,
   saveInventoryProductDefaults,
 } from "@/services/inventory";
-import { getAppPin, getThemePreference, saveAppPin } from "@/services/settings.service";
+import {
+  getAppPin,
+  getAppSecuritySettings,
+  getThemePreference,
+  hasFingerprintAvailable,
+  saveAppFingerprintEnabled,
+  saveAppPin,
+  saveAppSecurityRecovery,
+  type AppSecuritySettings,
+} from "@/services/settings.service";
 import { isValidPin } from "@/validation/pin.validation";
 import { ownerNameSchema, storeSchema, type StoreInput, type StoreSchema } from "@/validation/store.validation";
 import { spacing } from "@/theme";
@@ -106,6 +122,7 @@ type Page =
   | "unit"
   | "appearance"
   | "storage"
+  | "security-questions"
   | "premium"
   | "restore-purchase";
 
@@ -122,6 +139,7 @@ type SettingsScreenProps = {
   onRestoreComplete: () => Promise<void>;
   onNavigate: (key: BottomNavKey) => void;
   onPinChanged: (pin: string) => void;
+  onSecuritySettingsChanged: (settings: AppSecuritySettings) => void;
   initialPage: SettingsPage;
   onClose: () => void;
 };
@@ -138,7 +156,7 @@ const themeLabels: Record<ThemePreference, string> = {
   dark: "Dark",
   system: "System",
 };
-const version = Constants.expoConfig?.version ?? "1.9.0";
+const version = Constants.expoConfig?.version ?? "2.0.0";
 const build = Constants.nativeBuildVersion ?? "Development";
 const currencyDisplayNames = (() => {
   try {
@@ -363,6 +381,7 @@ export default function SettingsScreen({
   onRestoreComplete,
   onNavigate,
   onPinChanged,
+  onSecuritySettingsChanged,
   initialPage,
   onClose,
 }: SettingsScreenProps) {
@@ -399,12 +418,19 @@ export default function SettingsScreen({
   const [deleteStoreError, setDeleteStoreError] = useState("");
   const [currencySearch, setCurrencySearch] = useState("");
   const [securityPin, setSecurityPin] = useState<string | null | undefined>(undefined);
+  const [pendingSecurityPin, setPendingSecurityPin] = useState<string>();
+  const [securitySettings, setSecuritySettings] = useState<AppSecuritySettings>();
+  const [fingerprintAvailable, setFingerprintAvailable] = useState<boolean>();
   const [securityLoadError, setSecurityLoadError] = useState(false);
   const [currentPin, setCurrentPin] = useState("");
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [securityError, setSecurityError] = useState("");
   const [securitySaving, setSecuritySaving] = useState(false);
+  const [recoveryCurrentPin, setRecoveryCurrentPin] = useState("");
+  const [recoveryDrafts, setRecoveryDrafts] = useState(() => createSecurityQuestionDrafts());
+  const [recoveryError, setRecoveryError] = useState("");
+  const [recoverySaving, setRecoverySaving] = useState(false);
 
   const currencyMatches = useMemo(() => {
     const query = currencySearch.trim().toLowerCase();
@@ -443,10 +469,12 @@ export default function SettingsScreen({
   }, [db, ownerStore.businessId, ownerStore.storeId]);
 
   useAsyncEffect((isActive) => {
-    getAppPin(db)
-      .then((pin) => {
+    Promise.all([getAppPin(db), getAppSecuritySettings(db), hasFingerprintAvailable()])
+      .then(([pin, settings, hasFingerprint]) => {
         if (isActive()) {
           setSecurityPin(pin);
+          setSecuritySettings(settings);
+          setFingerprintAvailable(hasFingerprint);
           setSecurityLoadError(false);
         }
       })
@@ -497,6 +525,13 @@ export default function SettingsScreen({
     }
     if (page === "store-name" || page === "store-type" || page === "currency" || page === "store-address") {
       setPage("store-preferences");
+      return;
+    }
+    if (page === "security-questions") {
+      setPendingSecurityPin(undefined);
+      setRecoveryCurrentPin("");
+      setRecoveryDrafts(createSecurityQuestionDrafts());
+      setPage("security");
       return;
     }
     if ((page === "backup" && initialPage === "backup") || (page === "about" && initialPage === "about")) {
@@ -622,6 +657,16 @@ export default function SettingsScreen({
     setSecuritySaving(true);
     setSecurityError("");
     try {
+      if (!securityPin) {
+        setPendingSecurityPin(newPin);
+        setRecoveryCurrentPin(newPin);
+        setRecoveryDrafts(createSecurityQuestionDrafts());
+        setRecoveryError("");
+        setNewPin("");
+        setConfirmPin("");
+        setPage("security-questions");
+        return;
+      }
       await saveAppPin(db, newPin);
       setSecurityPin(newPin);
       onPinChanged(newPin);
@@ -634,6 +679,72 @@ export default function SettingsScreen({
     } finally {
       setSecuritySaving(false);
     }
+  };
+
+  const saveRecoveryQuestions = async () => {
+    const pinForRecovery = securityPin ?? pendingSecurityPin;
+    if (!pinForRecovery || recoveryCurrentPin !== pinForRecovery) {
+      setRecoveryError("Enter your current PIN to update recovery questions.");
+      return;
+    }
+    const answers = toSecurityRecoveryAnswers(recoveryDrafts);
+    if (!answers) {
+      setRecoveryError("Choose and answer all five different questions.");
+      return;
+    }
+
+    setRecoverySaving(true);
+    setRecoveryError("");
+    try {
+      await saveAppSecurityRecovery(db, answers);
+      if (!securityPin) {
+        await saveAppPin(db, pinForRecovery);
+        setSecurityPin(pinForRecovery);
+        setPendingSecurityPin(undefined);
+        onPinChanged(pinForRecovery);
+      }
+      const settings = await getAppSecuritySettings(db);
+      setSecuritySettings(settings);
+      onSecuritySettingsChanged(settings);
+      setRecoveryCurrentPin("");
+      setRecoveryDrafts(createSecurityQuestionDrafts());
+      setPage("security");
+    } catch {
+      setRecoveryError("Recovery questions couldn't be saved. Please try again.");
+    } finally {
+      setRecoverySaving(false);
+    }
+  };
+
+  const toggleFingerprint = async () => {
+    if (securitySaving || !securityPin || !securitySettings || !fingerprintAvailable) return;
+    if (currentPin !== securityPin) {
+      setSecurityError("Enter your current PIN before changing fingerprint unlock.");
+      return;
+    }
+
+    setSecuritySaving(true);
+    setSecurityError("");
+    try {
+      const enabled = !securitySettings.fingerprintEnabled;
+      await saveAppFingerprintEnabled(db, enabled);
+      const settings = { ...securitySettings, fingerprintEnabled: enabled };
+      setSecuritySettings(settings);
+      onSecuritySettingsChanged(settings);
+      setCurrentPin("");
+    } catch {
+      setSecurityError("Fingerprint unlock couldn't be updated. Please try again.");
+    } finally {
+      setSecuritySaving(false);
+    }
+  };
+
+  const openRecoveryQuestions = () => {
+    if (!securitySettings) return;
+    setRecoveryCurrentPin("");
+    setRecoveryDrafts(createSecurityQuestionDrafts(securitySettings.recoveryQuestions.map(({ questionId }) => questionId)));
+    setRecoveryError("");
+    setPage("security-questions");
   };
 
   const refreshStorage = async () => {
@@ -776,6 +887,7 @@ export default function SettingsScreen({
     unit: "Default Unit",
     appearance: "Appearance",
     security: "Security",
+    "security-questions": "Recovery Questions",
     terms: legalPages.terms.title,
     privacy: legalPages.privacy.title,
     faq: legalPages.faq.title,
@@ -1176,12 +1288,73 @@ export default function SettingsScreen({
         secureTextEntry
         maxLength={6}
       />
+      {securityPin ? (
+        <>
+          <SettingsGroup label="Fingerprint">
+            {fingerprintAvailable ? (
+              <SettingsRow
+                icon={Fingerprint}
+                title="Fingerprint Unlock"
+                description={(securitySettings?.fingerprintEnabled ? "Enabled" : "Disabled") + " · Use an enrolled fingerprint instead of your PIN"}
+                onPress={() => void toggleFingerprint()}
+              />
+            ) : (
+              <SettingsRow
+                icon={Fingerprint}
+                title="Fingerprint Unlock"
+                description={fingerprintAvailable === undefined ? "Checking this device…" : "No enrolled fingerprint is available on this device"}
+              />
+            )}
+          </SettingsGroup>
+          <SettingsGroup label="Recovery">
+            <SettingsRow
+              icon={KeyRound}
+              title="Recovery Questions"
+              description={(securitySettings?.recoveryQuestions.length === 5 ? "5 questions set" : "Set up") + " · Answer five questions if you forget your PIN"}
+              onPress={openRecoveryQuestions}
+            />
+          </SettingsGroup>
+        </>
+      ) : (
+        <View style={styles.infoNote}>
+          <Text style={styles.infoText}>After creating a PIN, choose five recovery questions so you can reset it safely.</Text>
+        </View>
+      )}
       {securityError ? <Text accessibilityRole="alert" style={styles.error}>{securityError}</Text> : null}
       <Button
         title={securityPin ? "Change PIN" : "Create PIN"}
         loading={securitySaving}
         onPress={() => void saveSecurityPin()}
       />
+    </View>
+  );
+
+  const securityQuestionsContent = !securityPin && !pendingSecurityPin ? (
+    <View style={styles.infoNote}>
+      <Text style={styles.infoText}>Create a PIN before setting recovery questions.</Text>
+    </View>
+  ) : (
+    <View style={styles.form}>
+      <Text style={styles.infoText}>
+        Choose five different questions and answers. StockPilot will ask for all five before allowing a PIN reset.
+      </Text>
+      <Field
+        label="Current PIN"
+        value={recoveryCurrentPin}
+        onChangeText={(value) => {
+          setRecoveryCurrentPin(value.replace(/\D/g, "").slice(0, 6));
+          setRecoveryError("");
+        }}
+        keyboardType="number-pad"
+        secureTextEntry
+        maxLength={6}
+      />
+      <SecurityQuestionFields drafts={recoveryDrafts} onChange={(drafts) => {
+        setRecoveryDrafts(drafts);
+        setRecoveryError("");
+      }} />
+      {recoveryError ? <Text accessibilityRole="alert" style={styles.error}>{recoveryError}</Text> : null}
+      <Button title="Save Recovery Questions" loading={recoverySaving} onPress={() => void saveRecoveryQuestions()} />
     </View>
   );
 
@@ -1338,6 +1511,7 @@ export default function SettingsScreen({
     unit: unitContent,
     appearance: appearanceContent,
     security: securityContent,
+    "security-questions": securityQuestionsContent,
     terms: legalContent("terms"),
     privacy: legalContent("privacy"),
     faq: legalContent("faq"),

@@ -14,10 +14,16 @@ import {
   type OwnerStore,
 } from "@/services/owner-store.service";
 import {
+  authenticateWithFingerprint,
   getAppPin,
+  getAppSecuritySettings,
   getActiveStoreSelection,
+  hasFingerprintAvailable,
   saveAppPin,
+  saveAppSecurityRecovery,
   saveActiveStoreSelection,
+  verifyAppSecurityRecovery,
+  type AppSecuritySettings,
 } from "@/services/settings.service";
 import type { StoreInput } from "@/validation/store.validation";
 
@@ -33,6 +39,7 @@ const MoreScreen = lazy(() => import("@/features/settings/MoreScreen"));
 type HomeSection = Exclude<BottomNavKey, "camera">;
 type InventoryActionRequest = { id: number; action: "import" | "export" };
 type AuthState = "checking" | "setup" | "locked" | "unlocked";
+const defaultSecuritySettings: AppSecuritySettings = { fingerprintEnabled: false, recoveryQuestions: [] };
 
 export default function HomeScreen() {
   const db = useSQLiteContext();
@@ -42,6 +49,8 @@ export default function HomeScreen() {
   const [ownerStore, setOwnerStore] = useState<OwnerStore | null>(null);
   const [ownerStores, setOwnerStores] = useState<OwnerStore[]>([]);
   const [storedPin, setStoredPin] = useState<string | null>(null);
+  const [securitySettings, setSecuritySettings] = useState<AppSecuritySettings>(defaultSecuritySettings);
+  const [fingerprintAvailable, setFingerprintAvailable] = useState(false);
   const [authState, setAuthState] = useState<AuthState>("checking");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [activeSection, setActiveSection] = useState<HomeSection>("dashboard");
@@ -58,8 +67,8 @@ export default function HomeScreen() {
     setLoading(true);
     setError(false);
 
-    Promise.all([getOwnerStores(db), getAppPin(db)])
-      .then(async ([stores, pin]) => {
+    Promise.all([getOwnerStores(db), getAppPin(db), getAppSecuritySettings(db), hasFingerprintAvailable()])
+      .then(async ([stores, pin, nextSecuritySettings, nextFingerprintAvailable]) => {
         const selection = await getActiveStoreSelection(db).catch(() => null);
         const selectedStore = stores.find(
           (store) => store.businessId === selection?.businessId && store.storeId === selection.storeId,
@@ -68,6 +77,8 @@ export default function HomeScreen() {
           setOwnerStores(stores);
           setOwnerStore(selectedStore);
           setStoredPin(pin);
+          setSecuritySettings(nextSecuritySettings);
+          setFingerprintAvailable(nextFingerprintAvailable);
           setAuthState(stores.length ? (pin ? "locked" : "setup") : "unlocked");
         }
       })
@@ -236,9 +247,12 @@ export default function HomeScreen() {
     <PinScreen
       mode="setup"
       ownerName={ownerStore?.ownerName}
-      onSubmit={async (pin) => {
+      onSubmit={async (pin, recoveryAnswers) => {
+        if (!recoveryAnswers) return false;
+        await saveAppSecurityRecovery(db, recoveryAnswers);
         await saveAppPin(db, pin);
         setStoredPin(pin);
+        setSecuritySettings(await getAppSecuritySettings(db));
         setAuthState("unlocked");
         return true;
       }}
@@ -247,10 +261,25 @@ export default function HomeScreen() {
     <PinScreen
       mode="unlock"
       ownerName={ownerStore?.ownerName}
+      fingerprintAvailable={fingerprintAvailable}
+      fingerprintEnabled={securitySettings.fingerprintEnabled}
+      recoveryQuestions={securitySettings.recoveryQuestions}
       onSubmit={async (pin) => {
         const valid = pin === storedPin;
         if (valid) setAuthState("unlocked");
         return valid;
+      }}
+      onFingerprintUnlock={async () => {
+        const valid = await authenticateWithFingerprint();
+        if (valid) setAuthState("unlocked");
+        return valid;
+      }}
+      onVerifyRecovery={(answers) => verifyAppSecurityRecovery(db, answers)}
+      onResetPin={async (pin) => {
+        await saveAppPin(db, pin);
+        setStoredPin(pin);
+        setAuthState("unlocked");
+        return true;
       }}
     />
   ) : ownerStore ? (
@@ -268,6 +297,7 @@ export default function HomeScreen() {
         onRestoreComplete={refreshStores}
         onNavigate={navigate}
         onPinChanged={setStoredPin}
+        onSecuritySettingsChanged={setSecuritySettings}
         onExit={() => {
           setShowOnboarding(true);
           setActiveSection("dashboard");

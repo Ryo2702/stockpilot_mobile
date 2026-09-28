@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BottomNavigation, type BottomNavKey } from "@/components/ui/BottomNavigation";
 import type { OwnerStore, OwnerStoreDetails } from "@/services/owner-store.service";
+import type { AppSecuritySettings } from "@/services/settings.service";
 import type { StoreInput } from "@/validation/store.validation";
 import { spacing, useThemeStyles } from "@/theme";
 
@@ -24,6 +25,7 @@ type MoreScreenProps = {
   onRestoreComplete: () => Promise<void>;
   onNavigate: (key: BottomNavKey) => void;
   onPinChanged: (pin: string) => void;
+  onSecuritySettingsChanged: (settings: AppSecuritySettings) => void;
   onExit: () => void;
 };
 
