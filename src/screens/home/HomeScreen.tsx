@@ -21,10 +21,12 @@ import {
   getActiveStoreSelection,
   hasFingerprintAvailable,
   saveAppPin,
+  saveAppRememberPin,
   saveAppSecurityRecovery,
   saveActiveStoreSelection,
   verifyAppSecurityRecovery,
   type AppSecuritySettings,
+  type SecurityRecoveryAnswer,
 } from "@/services/settings.service";
 import type { StoreInput } from "@/validation/store.validation";
 
@@ -40,7 +42,11 @@ const MoreScreen = lazy(() => import("@/features/settings/MoreScreen"));
 type HomeSection = Exclude<BottomNavKey, "camera">;
 type InventoryActionRequest = { id: number; action: "import" | "export" };
 type AuthState = "checking" | "setup" | "locked" | "unlocked";
-const defaultSecuritySettings: AppSecuritySettings = { fingerprintEnabled: false, recoveryQuestions: [] };
+const defaultSecuritySettings: AppSecuritySettings = {
+  fingerprintEnabled: false,
+  rememberPin: false,
+  recoveryQuestions: [],
+};
 
 export default function HomeScreen() {
   const db = useSQLiteContext();
@@ -205,14 +211,23 @@ export default function HomeScreen() {
     setOwnerStore(selectedStore);
   };
 
-  const completeOnboarding = (store: OwnerStore) => {
+  const saveInitialSecurity = async (pin: string, recoveryAnswers?: SecurityRecoveryAnswer[]) => {
+    if (!recoveryAnswers) return false;
+    await saveAppSecurityRecovery(db, recoveryAnswers);
+    await saveAppPin(db, pin);
+    setStoredPin(pin);
+    setSecuritySettings(await getAppSecuritySettings(db));
+    return true;
+  };
+
+  const completeOnboarding = (store: OwnerStore, pinCreated = false) => {
     setOwnerStores((stores) => stores.some(
       (current) => current.businessId === store.businessId && current.storeId === store.storeId,
     ) ? stores : [...stores, store]);
     setOwnerStore(store);
     setShowOnboarding(false);
     setActiveSection("dashboard");
-    setAuthState(storedPin ? "locked" : "setup");
+    setAuthState(pinCreated ? "unlocked" : storedPin ? "locked" : "setup");
     void saveActiveStoreSelection(db, { businessId: store.businessId, storeId: store.storeId });
   };
 
@@ -258,6 +273,7 @@ export default function HomeScreen() {
       selectedStore={ownerStore ?? undefined}
       onSelectStore={switchStore}
       onCreateStore={createStore}
+      onSavePin={saveInitialSecurity}
       onComplete={completeOnboarding}
     />
   ) : authState === "setup" ? (
@@ -265,13 +281,9 @@ export default function HomeScreen() {
       mode="setup"
       ownerName={ownerStore?.ownerName}
       onSubmit={async (pin, recoveryAnswers) => {
-        if (!recoveryAnswers) return false;
-        await saveAppSecurityRecovery(db, recoveryAnswers);
-        await saveAppPin(db, pin);
-        setStoredPin(pin);
-        setSecuritySettings(await getAppSecuritySettings(db));
-        setAuthState("unlocked");
-        return true;
+        const saved = await saveInitialSecurity(pin, recoveryAnswers);
+        if (saved) setAuthState("unlocked");
+        return saved;
       }}
     />
   ) : authState === "locked" ? (
@@ -280,10 +292,20 @@ export default function HomeScreen() {
       ownerName={ownerStore?.ownerName}
       fingerprintAvailable={fingerprintAvailable}
       fingerprintEnabled={securitySettings.fingerprintEnabled}
+      rememberedPin={securitySettings.rememberPin}
       recoveryQuestions={securitySettings.recoveryQuestions}
-      onSubmit={async (pin) => {
+      savedPin={storedPin}
+      onSubmit={async (pin, _recoveryAnswers, rememberPin) => {
         const valid = pin === storedPin;
-        if (valid) setAuthState("unlocked");
+        if (valid) {
+          try {
+            await saveAppRememberPin(db, rememberPin ?? false);
+            setSecuritySettings((settings) => ({ ...settings, rememberPin: rememberPin ?? false }));
+          } catch {
+            // Unlock still works if this optional preference cannot be saved.
+          }
+          setAuthState("unlocked");
+        }
         return valid;
       }}
       onFingerprintUnlock={async () => {
@@ -369,6 +391,7 @@ export default function HomeScreen() {
   ) : (
     <OnboardingScreen
       onComplete={completeOnboarding}
+      onSavePin={saveInitialSecurity}
     />
   );
 

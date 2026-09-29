@@ -3,9 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, Platform, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import PinScreen from "@/components/auth/PinScreen";
 import { initialStoreForm } from "@/components/store/store.data";
 import type { StoreErrors, StoreFieldChange, StoreForm } from "@/components/store/store.types";
 import { createOwnerStore, type OwnerStore } from "@/services/owner-store.service";
+import type { SecurityRecoveryAnswer } from "@/services/settings.service";
 import { storeSchema, type StoreInput } from "@/validation/store.validation";
 
 import ExistingStoreSelectionStep from "./ExistingStoreSelectionStep";
@@ -14,7 +16,8 @@ import { ownerNameSchema } from "./onboarding.data";
 import { useOnboardingStyles } from "./onboarding.styles";
 
 type OnboardingScreenProps = {
-  onComplete: (ownerStore: OwnerStore) => void;
+  onComplete: (ownerStore: OwnerStore, pinCreated?: boolean) => void;
+  onSavePin: (pin: string, recoveryAnswers: SecurityRecoveryAnswer[]) => Promise<boolean>;
   existingStores?: OwnerStore[];
   selectedStore?: OwnerStore;
   onSelectStore?: (store: OwnerStore) => Promise<void>;
@@ -27,6 +30,7 @@ export default function OnboardingScreen({
   selectedStore,
   onSelectStore,
   onCreateStore,
+  onSavePin,
 }: OnboardingScreenProps) {
   if (existingStores?.length) {
     return (
@@ -40,10 +44,10 @@ export default function OnboardingScreen({
     );
   }
 
-  return <FirstRunOnboarding onComplete={onComplete} />;
+  return <FirstRunOnboarding onComplete={onComplete} onSavePin={onSavePin} />;
 }
 
-function FirstRunOnboarding({ onComplete }: Pick<OnboardingScreenProps, "onComplete">) {
+function FirstRunOnboarding({ onComplete, onSavePin }: Pick<OnboardingScreenProps, "onComplete" | "onSavePin">) {
   const styles = useOnboardingStyles();
   const db = useSQLiteContext();
   const [step, setStep] = useState(0);
@@ -52,6 +56,7 @@ function FirstRunOnboarding({ onComplete }: Pick<OnboardingScreenProps, "onCompl
   const [storeForm, setStoreForm] = useState(initialStoreForm);
   const [storeErrors, setStoreErrors] = useState<StoreErrors>({});
   const [saving, setSaving] = useState(false);
+  const [createdStore, setCreatedStore] = useState<OwnerStore>();
   const transition = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     transition.stopAnimation();
@@ -110,13 +115,28 @@ function FirstRunOnboarding({ onComplete }: Pick<OnboardingScreenProps, "onCompl
     setStoreErrors({});
 
     try {
-      onComplete(await createOwnerStore(db, ownerName, result.data));
+      const store = await createOwnerStore(db, ownerName, result.data);
+      setCreatedStore(store);
     } catch {
       setStoreErrors({ form: "Couldn't create your store. Please try again." });
     } finally {
       setSaving(false);
     }
   };
+
+  if (createdStore) {
+    return (
+      <PinScreen
+        mode="setup"
+        ownerName={createdStore.ownerName}
+        onSubmit={async (pin, recoveryAnswers) => {
+          if (!recoveryAnswers || !await onSavePin(pin, recoveryAnswers)) return false;
+          onComplete(createdStore, true);
+          return true;
+        }}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>

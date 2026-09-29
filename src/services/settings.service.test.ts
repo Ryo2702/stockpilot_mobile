@@ -20,6 +20,7 @@ jest.mock("expo-local-authentication", () => ({
 
 import {
   getAppSecuritySettings,
+  saveAppRememberPin,
   saveAppSecurityRecovery,
   verifyAppSecurityRecovery,
 } from "./settings.service";
@@ -52,6 +53,8 @@ describe("security recovery", () => {
 
     const settingsDatabase = database as unknown as SQLiteDatabase;
     await saveAppSecurityRecovery(settingsDatabase, answers);
+    expect((await getAppSecuritySettings(settingsDatabase)).rememberPin).toBe(false);
+    await saveAppRememberPin(settingsDatabase, true);
 
     expect(values.get("app_security")).not.toContain("Pancit");
     await expect(verifyAppSecurityRecovery(settingsDatabase, answers.map((entry) => ({
@@ -63,6 +66,7 @@ describe("security recovery", () => {
       { questionId: "favorite-teacher" as const, answer: "Wrong answer" },
     ])).resolves.toBe(false);
     await expect(getAppSecuritySettings(settingsDatabase)).resolves.toEqual(expect.objectContaining({
+      rememberPin: true,
       recoveryQuestions: expect.arrayContaining([expect.objectContaining({ questionId: "favorite-food" })]),
     }));
   });

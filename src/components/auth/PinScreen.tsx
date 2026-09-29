@@ -1,6 +1,6 @@
-import { Fingerprint } from "lucide-react-native";
+import { Check, Fingerprint } from "lucide-react-native";
 import { useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
@@ -10,7 +10,7 @@ import {
 } from "@/components/auth/SecurityQuestionFields";
 import { Button } from "@/components/ui/Button";
 import type { SecurityRecoveryAnswer, SecurityRecoveryQuestion } from "@/services/settings.service";
-import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
+import { control, radii, spacing, typography, useTheme, useThemeStyles } from "@/theme";
 import type { ThemeColors } from "@/theme/tokens";
 import { isValidPin } from "@/validation/pin.validation";
 
@@ -19,8 +19,10 @@ type PinScreenProps = {
   ownerName?: string;
   fingerprintAvailable?: boolean;
   fingerprintEnabled?: boolean;
+  rememberedPin?: boolean;
   recoveryQuestions?: SecurityRecoveryQuestion[];
-  onSubmit: (pin: string, recoveryAnswers?: SecurityRecoveryAnswer[]) => Promise<boolean>;
+  savedPin?: string | null;
+  onSubmit: (pin: string, recoveryAnswers?: SecurityRecoveryAnswer[], rememberPin?: boolean) => Promise<boolean>;
   onResetPin?: (pin: string) => Promise<boolean>;
   onVerifyRecovery?: (answers: SecurityRecoveryAnswer[]) => Promise<boolean>;
   onFingerprintUnlock?: () => Promise<boolean>;
@@ -33,16 +35,20 @@ export default function PinScreen({
   ownerName,
   fingerprintAvailable = false,
   fingerprintEnabled = false,
+  rememberedPin = false,
   recoveryQuestions = [],
+  savedPin,
   onSubmit,
   onResetPin,
   onVerifyRecovery,
   onFingerprintUnlock,
 }: PinScreenProps) {
+  const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const [stage, setStage] = useState<PinStage>("pin");
-  const [pin, setPin] = useState("");
+  const [pin, setPin] = useState(() => rememberedPin ? savedPin ?? "" : "");
   const [confirmation, setConfirmation] = useState("");
+  const [rememberPin, setRememberPin] = useState(rememberedPin);
   const [recoveryDrafts, setRecoveryDrafts] = useState(() => createSecurityQuestionDrafts());
   const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
@@ -79,7 +85,7 @@ export default function PinScreen({
     try {
       const saved = stage === "reset"
         ? await onResetPin?.(pin)
-        : await onSubmit(pin);
+        : await onSubmit(pin, undefined, rememberPin);
       if (saved) return;
       setError(stage === "reset" ? "Couldn't save your new PIN. Please try again." : "That PIN is incorrect.");
     } catch {
@@ -238,6 +244,21 @@ export default function PinScreen({
                   </View>
                 ) : null}
                 {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+                {mode === "unlock" && stage === "pin" ? (
+                  <Pressable
+                    accessibilityRole="checkbox"
+                    accessibilityLabel="Remember PIN on this device"
+                    accessibilityState={{ checked: rememberPin, disabled: saving }}
+                    disabled={saving}
+                    onPress={() => setRememberPin((current) => !current)}
+                    style={styles.rememberPin}
+                  >
+                    <View style={[styles.checkbox, rememberPin && styles.checkboxSelected]}>
+                      {rememberPin ? <Check color={colors.text.onPrimary} size={15} strokeWidth={3} /> : null}
+                    </View>
+                    <Text style={styles.rememberPinText}>Remember PIN on this device</Text>
+                  </Pressable>
+                ) : null}
                 <Button
                   title={isSetup ? "Continue" : stage === "reset" ? "Save New PIN" : "Unlock"}
                   loading={saving}
@@ -297,5 +318,18 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   inputError: { borderColor: colors.semantic.danger },
   error: { ...typography.caption, color: colors.semantic.danger },
+  rememberPin: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: spacing[2] },
+  checkbox: {
+    width: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.border.strong,
+    borderRadius: radii.xs,
+    backgroundColor: colors.background.surface,
+  },
+  checkboxSelected: { borderColor: colors.primary[600], backgroundColor: colors.primary[600] },
+  rememberPinText: { ...typography.bodySmall, color: colors.text.secondary },
   button: { width: "100%" },
 });

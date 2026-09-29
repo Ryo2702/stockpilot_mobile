@@ -15,6 +15,7 @@ export type SecurityRecoveryAnswer = { questionId: SecurityQuestionId; answer: s
 export type SecurityRecoveryQuestion = { questionId: SecurityQuestionId; label: string };
 export type AppSecuritySettings = {
   fingerprintEnabled: boolean;
+  rememberPin: boolean;
   recoveryQuestions: SecurityRecoveryQuestion[];
 };
 const APP_PIN_KEY = "stockpilot.app.pin";
@@ -28,6 +29,7 @@ type StoredSecurityQuestion = {
 };
 type StoredAppSecuritySettings = {
   fingerprintEnabled: boolean;
+  rememberPin?: boolean;
   recoveryQuestions: StoredSecurityQuestion[];
 };
 
@@ -66,6 +68,7 @@ function isStoredSecuritySettings(value: unknown): value is StoredAppSecuritySet
   if (!value || typeof value !== "object" || !("recoveryQuestions" in value)) return false;
   const settings = value as Partial<StoredAppSecuritySettings>;
   return typeof settings.fingerprintEnabled === "boolean"
+    && (settings.rememberPin === undefined || typeof settings.rememberPin === "boolean")
     && Array.isArray(settings.recoveryQuestions)
     && settings.recoveryQuestions.every((question) => (
       question
@@ -83,6 +86,7 @@ function isStoredSecuritySettings(value: unknown): value is StoredAppSecuritySet
 function publicSecuritySettings(settings: StoredAppSecuritySettings): AppSecuritySettings {
   return {
     fingerprintEnabled: settings.fingerprintEnabled,
+    rememberPin: settings.rememberPin ?? false,
     recoveryQuestions: settings.recoveryQuestions.map(({ questionId }) => ({
       questionId,
       label: securityQuestionById.get(questionId)?.label ?? "Security question",
@@ -206,6 +210,11 @@ export async function saveAppFingerprintEnabled(db: SettingsDatabase, enabled: b
   }
   const settings = await readStoredSecuritySettings(db);
   await saveStoredSecuritySettings(db, { ...settings, fingerprintEnabled: enabled });
+}
+
+export async function saveAppRememberPin(db: SettingsDatabase, rememberPin: boolean) {
+  const settings = await readStoredSecuritySettings(db);
+  await saveStoredSecuritySettings(db, { ...settings, rememberPin });
 }
 
 export async function saveAppSecurityRecovery(
