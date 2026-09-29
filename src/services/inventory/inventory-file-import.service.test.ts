@@ -6,7 +6,6 @@ import * as XLSX from "xlsx";
 import type { OwnerStore } from "@/services/owner-store.service";
 
 import {
-  applyInventoryFileImportMapping,
   commitInventoryFileImport,
   prepareInventoryFileImport,
   reviewInventoryFileImportRows,
@@ -65,6 +64,37 @@ describe("inventory file import", () => {
     expect(runAsync).not.toHaveBeenCalled();
   });
 
+  it("finds inventory after a cover sheet and title rows in a regular Excel workbook", async () => {
+    const { database, runAsync } = createDatabase();
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
+      ["ACME Supplier Catalogue"],
+      ["March 2026"],
+    ]), "Cover");
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
+      ["ACME Supplier Catalogue"],
+      ["Prepared for StockPilot"],
+      ["Product Name", "Quantity", "Retail Price", "Item Code"],
+      ["Rice 25kg", 8, 1250, "RICE-25"],
+    ]), "Products");
+
+    const review = await prepareInventoryFileImport(database, store, {
+      fileName: "supplier.xlsx",
+      fileSize: 0,
+      content: new Uint8Array(XLSX.write(workbook, { type: "array", bookType: "xlsx", compression: true }) as ArrayBuffer),
+    });
+
+    expect(review.rows).toHaveLength(1);
+    expect(review.rows[0]).toMatchObject({
+      name: "Rice 25kg",
+      quantity: "8",
+      sellingPrice: "1250",
+      sku: "RICE-25",
+      status: "ready",
+    });
+    expect(runAsync).not.toHaveBeenCalled();
+  });
+
   it("previews recognizable TXT rows without writing products", async () => {
     const { database, runAsync } = createDatabase();
     const review = await prepareInventoryFileImport(database, store, {
@@ -73,7 +103,6 @@ describe("inventory file import", () => {
       content: "Coke 1.5L | 20 | 55.00 | 70.00\nSprite 1.5L | 12 | 54.00 | 68.00",
     });
 
-    expect(review.requiresMapping).toBe(false);
     expect(review.rows).toHaveLength(2);
     expect(review.rows[0]).toMatchObject({
       name: "Coke 1.5L",
@@ -86,22 +115,13 @@ describe("inventory file import", () => {
     expect(runAsync).not.toHaveBeenCalled();
   });
 
-  it("holds unfamiliar columns for mapping before preview", async () => {
+  it("rejects files without recognizable product and quantity columns", async () => {
     const { database } = createDatabase();
-    const pending = await prepareInventoryFileImport(database, store, {
+    await expect(prepareInventoryFileImport(database, store, {
       fileName: "supplier.csv",
       fileSize: 42,
       content: "Item,Amount,Retail\nRice 25kg,8,1250",
-    });
-    expect(pending.requiresMapping).toBe(true);
-
-    const mapped = await applyInventoryFileImportMapping(
-      database,
-      store,
-      pending,
-      pending.mapping.map((entry) => entry.label === "Amount" ? { ...entry, field: "quantity" } : entry),
-    );
-    expect(mapped.rows[0]).toMatchObject({ name: "Rice 25kg", quantity: "8", status: "ready" });
+    })).rejects.toThrow("Product Name and Quantity columns are required");
   });
 
   it("requires an explicit approval before an exact existing-product stock update", async () => {

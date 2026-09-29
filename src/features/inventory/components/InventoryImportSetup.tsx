@@ -1,18 +1,11 @@
 import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Check, ChevronDown, FileText, Store, Trash2, X } from "lucide-react-native";
-import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import type { OwnerStore } from "@/services/owner-store.service";
-import {
-  inventoryFileImportFieldLabels,
-  inventoryFileImportFields,
-  type InventoryFileImportField,
-  type InventoryFileImportFieldMapping,
-} from "@/services/inventory";
 import { useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
 
@@ -160,91 +153,5 @@ export function StorePicker({
         </SafeAreaView>
       </View>
     </Modal>
-  );
-}
-
-function MappingPicker({
-  visible,
-  selected,
-  onClose,
-  onSelect,
-}: {
-  visible: boolean;
-  selected: InventoryFileImportField;
-  onClose: () => void;
-  onSelect: (field: InventoryFileImportField) => void;
-}) {
-  const { colors } = useTheme();
-  const styles = useThemeStyles(createInventoryImportStyles);
-  return (
-    <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.mappingMenu} onPress={() => undefined}>
-          {inventoryFileImportFields.map((field) => (
-            <Pressable
-              key={field}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: field === selected }}
-              onPress={() => { onSelect(field); onClose(); }}
-              style={({ pressed }) => [styles.mappingOption, pressed && styles.pressed]}
-            >
-              <Text style={[styles.mappingOptionLabel, field === selected && { color: colors.primary[700] }]}>{inventoryFileImportFieldLabels[field]}</Text>
-              {field === selected ? <Check color={colors.primary[600]} size={18} /> : null}
-            </Pressable>
-          ))}
-        </Pressable>
-      </Pressable>
-    </Modal>
-  );
-}
-
-export function FieldMapping({
-  mapping,
-  error,
-  saving,
-  onSave,
-}: {
-  mapping: InventoryFileImportFieldMapping[];
-  error: string;
-  saving: boolean;
-  onSave: (mapping: InventoryFileImportFieldMapping[]) => void;
-}) {
-  const styles = useThemeStyles(createInventoryImportStyles);
-  const [draft, setDraft] = useState(mapping);
-  const [openColumn, setOpenColumn] = useState<number | null>(null);
-  useEffect(() => setDraft(mapping), [mapping]);
-  const selected = draft.find(({ column }) => column === openColumn)?.field ?? "ignore";
-  return (
-    <View style={styles.sectionGap}>
-      <View style={styles.mappingIntro}>
-        <Text style={styles.sectionTitle}>Match file columns</Text>
-        <Text style={styles.copy}>Choose where StockPilot should find each product detail. Product Name and Quantity are required.</Text>
-      </View>
-      <Card style={styles.mappingCard}>
-        {draft.map((entry) => (
-          <View key={entry.column} style={styles.mappingRow}>
-            <Text numberOfLines={1} style={styles.mappingSource}>{entry.label}</Text>
-            <Text style={styles.mappingArrow}>→</Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Map ${entry.label} to ${inventoryFileImportFieldLabels[entry.field]}`}
-              onPress={() => setOpenColumn(entry.column)}
-              style={({ pressed }) => [styles.mappingSelect, pressed && styles.pressed]}
-            >
-              <Text numberOfLines={1} style={styles.mappingSelectText}>{inventoryFileImportFieldLabels[entry.field]}</Text>
-              <ChevronDown size={16} />
-            </Pressable>
-          </View>
-        ))}
-      </Card>
-      {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
-      <Button title="Review Products" loading={saving} onPress={() => onSave(draft)} />
-      <MappingPicker
-        visible={openColumn !== null}
-        selected={selected}
-        onClose={() => setOpenColumn(null)}
-        onSelect={(field) => setDraft((rows) => rows.map((row) => row.column === openColumn ? { ...row, field } : row))}
-      />
-    </View>
   );
 }

@@ -4,7 +4,6 @@ import type { OwnerStore } from "@/services/owner-store.service";
 import createId from "@/utils/createId";
 
 import {
-  assertInventoryFileImportMapping,
   createInitialInventoryFileImportMapping,
   createInventoryFileImportRows,
   getInventoryFileType,
@@ -14,7 +13,6 @@ import {
 } from "./inventory-file-import.parser";
 import {
   buildInventoryFileImportReview,
-  finalizeInventoryFileImportReview,
   normalizeInventoryFileCategory,
   parseInventoryFilePrice,
   parseInventoryFileQuantity,
@@ -22,7 +20,6 @@ import {
 import type {
   InventoryFileImportDatabase,
   InventoryFileImportExecutor,
-  InventoryFileImportFieldMapping,
   InventoryFileImportMetadata,
   InventoryFileImportProduct,
   InventoryFileImportProgress,
@@ -71,7 +68,7 @@ export async function prepareInventoryFileImport(
   };
   if (!metadata.sourceRecords.length) throw new Error("StockPilot could not identify inventory products in this file.");
   if (inventoryFileImportMappingNeedsReview(mapping)) {
-    return finalizeInventoryFileImportReview(metadata, [], true);
+    throw new Error("Product Name and Quantity columns are required. Use headers such as Product Name, Item Name, Quantity, or Qty.");
   }
 
   onProgress?.({ phase: "preparing", processed: 0, total: metadata.sourceRecords.length });
@@ -85,24 +82,12 @@ export async function prepareInventoryFileImport(
   return review;
 }
 
-export async function applyInventoryFileImportMapping(
-  db: InventoryFileImportExecutor,
-  store: OwnerStore,
-  review: InventoryFileImportReview,
-  mapping: InventoryFileImportFieldMapping[],
-): Promise<InventoryFileImportReview> {
-  assertInventoryFileImportMapping(mapping);
-  const metadata = { ...metadataFromReview(review), mapping };
-  return buildInventoryFileImportReview(db, store, metadata, createInventoryFileImportRows(review.sourceRecords, mapping));
-}
-
 export async function reviewInventoryFileImportRows(
   db: InventoryFileImportExecutor,
   store: OwnerStore,
   review: InventoryFileImportReview,
   rows: InventoryFileImportProduct[],
 ): Promise<InventoryFileImportReview> {
-  if (review.requiresMapping) throw new Error("Map the file columns before reviewing products.");
   return buildInventoryFileImportReview(db, store, metadataFromReview(review), rows);
 }
 

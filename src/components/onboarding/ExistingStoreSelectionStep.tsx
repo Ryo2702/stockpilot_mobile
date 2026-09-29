@@ -29,6 +29,13 @@ import useStoreSelector from "@/components/store/store-selector/hooks/useStoreSe
 import StoreSelectorModal from "@/components/store/store-selector/partials/StoreSelectorModal";
 import { Button } from "@/components/ui/Button";
 import { importInventoryCsv } from "@/services/inventory";
+import {
+  createInitialInventoryFileImportMapping,
+  createInventoryFileImportRows,
+  getInventoryFileType,
+  inventoryFileImportMappingNeedsReview,
+  parseInventoryFileSource,
+} from "@/services/inventory/inventory-file-import.parser";
 import type { OwnerStore } from "@/services/owner-store.service";
 import { radii, spacing, typography, useTheme, useThemeStyles } from "@/theme";
 import type { ThemeColors } from "@/theme/tokens";
@@ -60,6 +67,38 @@ function getStoreIcon(storeType: OwnerStore["storeType"]): LucideIcon {
   }
   if (storeType === "motor_shop" || storeType === "hardware") return Wrench;
   return Store;
+}
+
+function csvCell(value: string) {
+  return `"${value.replaceAll('"', '""')}"`;
+}
+
+function inventorySourceToCsv(fileName: string, fileSize: number | null, content: string | Uint8Array) {
+  const type = getInventoryFileType(fileName);
+  if (type === "csv") return typeof content === "string" ? content : new TextDecoder().decode(content);
+  if (type !== "xlsx" && type !== "xls") throw new Error("Choose a CSV or Excel inventory file.");
+
+  const parsed = parseInventoryFileSource({ fileName, fileSize, content }, type);
+  const mapping = createInitialInventoryFileImportMapping(parsed.columns, parsed.positional);
+  if (inventoryFileImportMappingNeedsReview(mapping)) {
+    throw new Error("Excel files must include Product Name and Quantity columns.");
+  }
+  const products = createInventoryFileImportRows(
+    parsed.records.map((values, index) => ({ id: `row-${index + 1}`, rowNumber: index + 2, values })),
+    mapping,
+  );
+  return [
+    ["name", "quantity", "sku", "barcode", "category", "unit", "current_price"].map(csvCell).join(","),
+    ...products.map((product) => [
+      product.name,
+      product.quantity,
+      product.sku,
+      product.barcode,
+      product.category,
+      product.unit,
+      product.sellingPrice,
+    ].map(csvCell).join(",")),
+  ].join("\r\n");
 }
 
 export default function ExistingStoreSelectionStep({
@@ -158,27 +197,31 @@ export default function ExistingStoreSelectionStep({
     }
   };
 
-  const importCsv = async () => {
+  const importInventoryFile = async () => {
     setMessage("");
     setImportProgress(null);
     setImporting(true);
     try {
       const selection = await DocumentPicker.getDocumentAsync({
-        type: ["text/csv", "text/comma-separated-values", "application/vnd.ms-excel"],
+        type: "*/*",
         base64: false,
         copyToCacheDirectory: true,
       });
       if (selection.canceled) return;
 
       const asset = selection.assets[0];
-      if (!asset.name.toLowerCase().endsWith(".csv")) {
-        throw new Error("Choose a .csv inventory file.");
-      }
+      const type = getInventoryFileType(asset.name);
+      if (type !== "csv" && type !== "xlsx" && type !== "xls") throw new Error("Choose a CSV or Excel inventory file.");
       setImportProgress({ phase: "reading", processed: 0, total: 0, percent: 0 });
-      const csv =
-        Platform.OS === "web"
-          ? await (asset.file?.text() ?? Promise.reject(new Error("Couldn't read the selected file.")))
-          : await new ExpoFile(asset.uri).text();
+      let content: string | Uint8Array;
+      if (Platform.OS === "web") {
+        if (!asset.file) throw new Error("Couldn't read the selected file.");
+        content = type === "csv" ? await asset.file.text() : new Uint8Array(await asset.file.arrayBuffer());
+      } else {
+        const file = new ExpoFile(asset.uri);
+        content = type === "csv" ? await file.text() : await file.bytes();
+      }
+      const csv = inventorySourceToCsv(asset.name, asset.size ?? null, content);
       const importResult = await importInventoryCsv(
         db,
         selectedStore,
@@ -384,7 +427,7 @@ export default function ExistingStoreSelectionStep({
             accessibilityRole="button"
             accessibilityState={{ disabled: screenBusy, busy: importing }}
             disabled={screenBusy}
-            onPress={() => void importCsv()}
+            onPress={() => void importInventoryFile()}
             style={({ pressed }) => [
               styles.actionCard,
               styles.importCard,
@@ -400,14 +443,14 @@ export default function ExistingStoreSelectionStep({
               )}
             </View>
             <Text style={styles.actionTitle}>Import</Text>
-            <Text style={styles.actionSubtitle}>Load from CSV</Text>
+            <Text style={styles.actionSubtitle}>Load CSV or Excel</Text>
           </Pressable>
         </View>
 
         <View style={styles.importInfo}>
           <Info color={colors.primary[600]} size={20} strokeWidth={2} />
           <Text style={styles.importHint}>
-            CSV: name and quantity are required; store_name, sku, reorder_level, and critical_level are optional. Unknown store names create stores. Matching SKUs replace current stock.
+            CSV or Excel: product name and quantity are required. CSV store names can create stores; Excel imports to the selected store. Matching SKUs replace current stock.
           </Text>
         </View>
 
@@ -416,7 +459,7 @@ export default function ExistingStoreSelectionStep({
             <View style={styles.progressHeading}>
               <Text style={styles.progressLabel}>
                 {importProgress.phase === "reading"
-                  ? "Reading CSV"
+                  ? "Reading file"
                   : importProgress.phase === "validating"
                     ? "Validating rows"
                     : importProgress.phase === "importing"
@@ -426,7 +469,7 @@ export default function ExistingStoreSelectionStep({
               <Text style={styles.progressPercent}>{Math.floor(importProgress.percent)}%</Text>
             </View>
             <View
-              accessibilityLabel="CSV import progress"
+              accessibilityLabel="Inventory import progress"
               accessibilityRole="progressbar"
               accessibilityValue={{ min: 0, max: 100, now: Math.floor(importProgress.percent) }}
               style={styles.progressTrack}

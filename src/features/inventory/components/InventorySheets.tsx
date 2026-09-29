@@ -1,7 +1,7 @@
 import { Archive, Check, ChevronDown, Download, History, Menu, Settings, Upload, X } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
@@ -294,6 +294,7 @@ export function InventoryMoreSheet({
   onMovements,
   onImport,
   onExport,
+  exporting,
   onArchived,
   onPreferences,
   onMore,
@@ -303,6 +304,7 @@ export function InventoryMoreSheet({
   onMovements: () => void;
   onImport: () => void;
   onExport: () => void;
+  exporting: boolean;
   onArchived: () => void;
   onPreferences: () => void;
   onMore: () => void;
@@ -310,24 +312,26 @@ export function InventoryMoreSheet({
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const actions = [
-    { label: "Stock Movement History", Icon: History, onPress: onMovements },
-    { label: "Import Inventory", Icon: Upload, onPress: onImport },
-    { label: "Export Inventory", Icon: Download, onPress: onExport },
-    { label: "Archived Products", Icon: Archive, onPress: onArchived },
-    { label: "Inventory Preferences", Icon: Settings, onPress: onPreferences },
-    { label: "More", Icon: Menu, onPress: onMore },
+    { label: "Stock Movement History", Icon: History, onPress: onMovements, loading: false, close: true },
+    { label: "Import Inventory", Icon: Upload, onPress: onImport, loading: false, close: true },
+    { label: exporting ? "Exporting Inventory…" : "Export Inventory", Icon: Download, onPress: onExport, loading: exporting, close: false },
+    { label: "Archived Products", Icon: Archive, onPress: onArchived, loading: false, close: true },
+    { label: "Inventory Preferences", Icon: Settings, onPress: onPreferences, loading: false, close: true },
+    { label: "More", Icon: Menu, onPress: onMore, loading: false, close: true },
   ];
   return (
     <BottomSheet visible={visible} title="Inventory Actions" onClose={onClose}>
       <View style={styles.menu}>
-        {actions.map(({ label, Icon, onPress }) => (
+        {actions.map(({ label, Icon, onPress, loading, close }) => (
           <Pressable
             key={label}
             accessibilityRole="button"
-            onPress={() => { onClose(); onPress(); }}
-            style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}
+            accessibilityState={{ busy: loading, disabled: loading }}
+            disabled={loading}
+            onPress={() => { if (close) onClose(); onPress(); }}
+            style={({ pressed }) => [styles.menuRow, pressed && !loading && styles.pressed]}
           >
-            <Icon color={colors.text.secondary} size={20} />
+            {loading ? <ActivityIndicator color={colors.primary[600]} size="small" /> : <Icon color={colors.text.secondary} size={20} />}
             <Text style={styles.menuLabel}>{label}</Text>
           </Pressable>
         ))}

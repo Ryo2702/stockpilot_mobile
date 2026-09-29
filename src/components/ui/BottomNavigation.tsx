@@ -1,10 +1,10 @@
 import type { LucideIcon } from "lucide-react-native";
 import {
   Boxes,
-  Camera,
   ChartNoAxesCombined,
   House,
   Package,
+  ReceiptText,
 } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -18,14 +18,15 @@ export type BottomNavKey =
   | "camera"
   | "inventory"
   | "insights"
+  | "pos"
   | "more";
 
-type BottomNavItemKey = Exclude<BottomNavKey, "more">;
+type BottomNavItemKey = Exclude<BottomNavKey, "camera" | "more">;
 
 const navItems: Array<{ key: BottomNavItemKey; label: string; icon: LucideIcon }> = [
   { key: "dashboard", label: "Home", icon: House },
   { key: "inventory", label: "Inventory", icon: Package },
-  { key: "camera", label: "Camera", icon: Camera },
+  { key: "pos", label: "POS", icon: ReceiptText },
   { key: "catalog", label: "Catalog", icon: Boxes },
   { key: "insights", label: "Insights", icon: ChartNoAxesCombined },
 ];
@@ -46,7 +47,7 @@ export function BottomNavigation({
     <View style={styles.container}>
       {navItems.map(({ key, label, icon: Icon }) => {
         const active = key === activeKey;
-        const isCamera = key === "camera";
+        const isPos = key === "pos";
 
         return (
           <Pressable
@@ -60,20 +61,20 @@ export function BottomNavigation({
             <View
               style={[
                 styles.iconSlot,
-                isCamera && styles.cameraButton,
-                active && !isCamera && styles.activeIcon,
+                isPos && styles.posButton,
+                active && !isPos && styles.activeIcon,
               ]}
             >
               <Icon
                 color={
-                  isCamera
+                  isPos
                     ? colors.text.onPrimary
                     : active
                       ? colors.primary[700]
                       : colors.text.muted
                 }
-                size={isCamera ? 22 : 21}
-                strokeWidth={active || isCamera ? 2.2 : 2}
+                size={isPos ? 22 : 21}
+                strokeWidth={active || isPos ? 2.2 : 2}
               />
             </View>
             <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.label, active && styles.activeLabel]}>
@@ -120,7 +121,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.primary[600],
   },
-  cameraButton: {
+  posButton: {
     width: 52,
     height: 52,
     backgroundColor: colors.primary[600],

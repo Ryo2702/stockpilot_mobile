@@ -73,6 +73,7 @@ export default function InventoryScreenView({
   const [preferencesVisible, setPreferencesVisible] = useState(false);
   const [scannerVisible, setScannerVisible] = useState(false);
   const [importVisible, setImportVisible] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const handledActionRequest = useRef<number | null>(null);
 
   const subpage = inventory.page !== "list";
@@ -91,6 +92,8 @@ export default function InventoryScreenView({
   };
 
   const exportInventory = async () => {
+    if (exporting) return;
+    setExporting(true);
     try {
       const csv = await inventory.createExportCsv();
       if (Platform.OS === "web") {
@@ -109,6 +112,8 @@ export default function InventoryScreenView({
       inventory.showMessage(`Inventory exported for ${ownerStore.storeName}.`);
     } catch (error) {
       inventory.showMessage(error instanceof Error ? `Inventory couldn't be exported. ${error.message}` : "Inventory couldn't be exported. Try again.");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -228,6 +233,7 @@ export default function InventoryScreenView({
         onMovements={() => inventory.openMovements()}
         onImport={startInventoryImport}
         onExport={() => void exportInventory()}
+        exporting={exporting}
         onArchived={() => inventory.openArchived()}
         onPreferences={() => setPreferencesVisible(true)}
         onMore={() => onNavigate("more")}

@@ -251,14 +251,12 @@ function fingerprint(rows: InventoryFileImportProduct[]) {
 export function finalizeInventoryFileImportReview(
   metadata: InventoryFileImportMetadata,
   rows: InventoryFileImportProduct[],
-  requiresMapping: boolean,
 ): InventoryFileImportReview {
   const readyCount = rows.filter(({ canImport }) => canImport).length;
   const existingCount = rows.filter(({ status }) => status === "existing_product").length;
   return {
     ...metadata,
     detectedCount: metadata.sourceRecords.length,
-    requiresMapping,
     rows,
     readyCount,
     existingCount,
@@ -276,6 +274,5 @@ export async function buildInventoryFileImportReview(
   return finalizeInventoryFileImportReview(
     metadata,
     await validateInventoryFileImportRows(db, store, rows, metadata.mapping),
-    false,
   );
 }

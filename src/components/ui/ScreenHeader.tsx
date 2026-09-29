@@ -5,9 +5,10 @@ import { spacing, typography, useThemeStyles } from "@/theme";
 import type { ThemeColors } from "@/theme/tokens";
 
 type ScreenHeaderProps = {
-  title: string;
+  title: ReactNode;
   subtitle?: string;
   leading?: ReactNode;
+  titleAccessory?: ReactNode;
   actions?: ReactNode;
   context?: ReactNode;
 };
@@ -16,6 +17,7 @@ export default function ScreenHeader({
   title,
   subtitle,
   leading,
+  titleAccessory,
   actions,
   context,
 }: ScreenHeaderProps) {
@@ -28,7 +30,10 @@ export default function ScreenHeader({
         <View style={styles.heading}>
           {leading}
           <View style={styles.copy}>
-            <Text style={styles.title}>{title}</Text>
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>{title}</Text>
+              {titleAccessory ? <View style={styles.titleAccessory}>{titleAccessory}</View> : null}
+            </View>
             {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
           </View>
         </View>
@@ -67,12 +72,25 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   copy: {
     minWidth: 0,
-    flexShrink: 1,
+    flex: 1,
     gap: spacing[1],
+  },
+  titleRow: {
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
   },
   title: {
     ...typography.h2,
+    minWidth: 0,
+    flexShrink: 1,
     color: colors.primary[700],
+  },
+  titleAccessory: {
+    minWidth: 0,
+    flex: 1,
+    maxWidth: 190,
   },
   subtitle: {
     ...typography.bodySmall,

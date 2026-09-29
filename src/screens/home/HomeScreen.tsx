@@ -37,6 +37,7 @@ const OwnerStoreScreen = lazy(() => import("@/components/store/OwnerStoreScreen"
 const CatalogScreen = lazy(() => import("@/features/catalogs/CatalogScreen"));
 const InventoryScreen = lazy(() => import("@/features/inventory/InventoryScreen"));
 const InsightsScreen = lazy(() => import("@/features/insights/InsightsScreen"));
+const PosScreen = lazy(() => import("@/features/pos/PosScreen"));
 const MoreScreen = lazy(() => import("@/features/settings/MoreScreen"));
 
 type HomeSection = Exclude<BottomNavKey, "camera">;
@@ -354,6 +355,14 @@ export default function HomeScreen() {
         onNavigate={navigate}
         actionRequest={inventoryActionRequest}
         onActionRequestHandled={markInventoryActionHandled}
+      />
+    ) : activeSection === "pos" ? (
+      <PosScreen
+        ownerStore={ownerStore}
+        ownerStores={ownerStores}
+        onSelectStore={switchStore}
+        onCreateStore={createStore}
+        onNavigate={navigate}
       />
     ) : activeSection === "insights" ? (
       <InsightsScreen

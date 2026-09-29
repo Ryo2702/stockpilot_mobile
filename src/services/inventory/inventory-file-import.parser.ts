@@ -139,16 +139,6 @@ export function inventoryFileImportMappingNeedsReview(mapping: InventoryFileImpo
   return !fields.has("name") || !fields.has("quantity");
 }
 
-export function assertInventoryFileImportMapping(mapping: InventoryFileImportFieldMapping[]) {
-  const used = mapping.filter(({ field }) => field !== "ignore").map(({ field }) => field);
-  if (!used.includes("name") || !used.includes("quantity")) {
-    throw new Error("Map Product Name and Quantity before continuing.");
-  }
-  if (new Set(used).size !== used.length) {
-    throw new Error("Map each StockPilot field only once.");
-  }
-}
-
 function parseLabeledText(text: string): ParsedInventoryFile | null {
   const records: Array<Record<string, string>> = [];
   let record: Record<string, string> = {};
@@ -212,14 +202,42 @@ function parseDocxDocument(bytes: Uint8Array): ParsedInventoryFile {
   return parseTextDocument(paragraphs);
 }
 
+function spreadsheetDocumentFromRows(rows: unknown[][]) {
+  const nonEmpty = rows
+    .map((row) => row.map(cleanValue))
+    .filter((row) => row.some(Boolean));
+  if (!nonEmpty.length) return null;
+
+  for (let index = 0; index < Math.min(nonEmpty.length - 1, 30); index += 1) {
+    const columns = nonEmpty[index].map((value, column) => value || `Column ${column + 1}`);
+    if (inventoryFileImportMappingNeedsReview(createInitialInventoryFileImportMapping(columns, false))) continue;
+    return { columns, records: nonEmpty.slice(index + 1), positional: false } satisfies ParsedInventoryFile;
+  }
+
+  try {
+    return documentFromRecords(nonEmpty);
+  } catch {
+    return null;
+  }
+}
+
 function parseSpreadsheetDocument(bytes: Uint8Array): ParsedInventoryFile {
   try {
     const workbook = XLSX.read(bytes, { type: "array", raw: false });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = sheetName ? workbook.Sheets[sheetName] : undefined;
-    if (!sheet) throw new Error("missing sheet");
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", blankrows: false }) as unknown[][];
-    return documentFromRecords(rows.map((row) => row.map(cleanValue)));
+    let fallback: ParsedInventoryFile | null = null;
+    for (const sheetName of workbook.SheetNames) {
+      const sheet = workbook.Sheets[sheetName];
+      if (!sheet) continue;
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", blankrows: false }) as unknown[][];
+      const parsed = spreadsheetDocumentFromRows(rows);
+      if (!parsed?.records.length) continue;
+      if (!inventoryFileImportMappingNeedsReview(createInitialInventoryFileImportMapping(parsed.columns, parsed.positional))) {
+        return parsed;
+      }
+      fallback ??= parsed;
+    }
+    if (fallback) return fallback;
+    throw new Error("missing inventory sheet");
   } catch {
     throw new Error("Unable to read this spreadsheet. It may be corrupted or use an unsupported structure.");
   }

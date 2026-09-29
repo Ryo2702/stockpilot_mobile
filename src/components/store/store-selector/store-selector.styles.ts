@@ -33,7 +33,7 @@ export const createStoreSelectorStyles = (colors: ThemeColors) => StyleSheet.cre
   },
   compactSelector: {
     width: "100%",
-    maxWidth: "100%",
+    maxWidth: 190,
     minWidth: 0,
   },
   pressed: {

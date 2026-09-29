@@ -14,7 +14,7 @@ import { useTheme } from "@/theme/ThemeProvider";
 
 import { createInventoryImportStyles } from "./inventory-import.styles";
 import { ConfirmationDialog, ImportPreview, ProductEditor } from "./InventoryImportReview";
-import { FieldMapping, ImportStepper, SelectedFileCard, StoreContext, StorePicker } from "./InventoryImportSetup";
+import { ImportStepper, SelectedFileCard, StoreContext, StorePicker } from "./InventoryImportSetup";
 import useInventoryImport from "../hooks/useInventoryImport";
 
 type InventoryImportScreenProps = {
@@ -40,6 +40,7 @@ export default function InventoryImportScreen({
   const stores = ownerStores.filter((store) => store.businessId === ownerStore.businessId);
   const review = importer.review;
   const isImporting = importer.stage === "importing";
+  const isBusy = isImporting || importer.stage === "parsing" || importer.resolving;
   const stageStep: 1 | 2 | 3 = importer.stage === "empty" || importer.stage === "parsing" ? 1 : importer.stage === "importing" || importer.stage === "success" ? 3 : 2;
   const remaining = review ? review.detectedCount - review.readyCount : 0;
 
@@ -53,7 +54,7 @@ export default function InventoryImportScreen({
       <View style={styles.screen}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <IconButton icon={ArrowLeft} label="Back to inventory" disabled={isImporting} onPress={onBack} />
+            <IconButton icon={ArrowLeft} label="Back to inventory" disabled={isBusy} onPress={onBack} />
             <View style={styles.headerCopy}>
               <Text style={styles.title}>Import Inventory</Text>
               <Text style={styles.subtitle}>Add multiple products from an existing file</Text>
@@ -61,7 +62,7 @@ export default function InventoryImportScreen({
           </View>
           <StoreContext
             store={importer.destinationStore}
-            disabled={isImporting || importer.stage === "success"}
+            disabled={isBusy || importer.stage === "success"}
             onPress={() => setStorePickerVisible(true)}
           />
           <ImportStepper step={stageStep} />
@@ -95,15 +96,6 @@ export default function InventoryImportScreen({
               <Text style={styles.parsingTitle}>{importer.progress?.phase === "reading" ? "Reading inventory file..." : "Preparing product preview..."}</Text>
               <Text style={styles.copy}>Your inventory is unchanged while StockPilot checks the file.</Text>
             </View>
-          ) : null}
-
-          {importer.stage === "mapping" && review ? (
-            <FieldMapping
-              mapping={review.mapping}
-              error={importer.error}
-              saving={importer.resolving}
-              onSave={(mapping) => void importer.applyMapping(mapping)}
-            />
           ) : null}
 
           {importer.stage === "preview" && review ? (

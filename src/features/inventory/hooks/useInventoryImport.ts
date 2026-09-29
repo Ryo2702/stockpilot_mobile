@@ -6,11 +6,9 @@ import { Platform } from "react-native";
 
 import type { OwnerStore } from "@/services/owner-store.service";
 import {
-  applyInventoryFileImportMapping,
   commitInventoryFileImport,
   prepareInventoryFileImport,
   reviewInventoryFileImportRows,
-  type InventoryFileImportFieldMapping,
   type InventoryFileImportProduct,
   type InventoryFileImportProgress,
   type InventoryFileImportResult,
@@ -21,7 +19,6 @@ import {
 export type InventoryImportStage =
   | "empty"
   | "parsing"
-  | "mapping"
   | "preview"
   | "confirming"
   | "importing"
@@ -34,14 +31,7 @@ export type SelectedInventoryImportFile = {
   size: number | null;
 };
 
-const documentTypes = [
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "text/plain",
-  "text/csv",
-  "text/comma-separated-values",
-];
+const documentTypes = "*/*";
 
 function fileType(name: string) {
   return name.trim().split(".").pop()?.toUpperCase() || "FILE";
@@ -119,31 +109,12 @@ export default function useInventoryImport(db: SQLiteDatabase, initialStore: Own
       if (request.current !== id) return;
       setReview(nextReview);
       setProgress(null);
-      setStage(nextReview.requiresMapping ? "mapping" : "preview");
+      setStage("preview");
     } catch (caught) {
       if (request.current !== id) return;
       setProgress(null);
       setError(userFacingError(caught, "Unable to read this file. StockPilot could not identify inventory information in this document."));
       setStage("failure");
-    }
-  };
-
-  const applyMapping = async (mapping: InventoryFileImportFieldMapping[]) => {
-    if (!review || resolving) return false;
-    const id = request.current;
-    setResolving(true);
-    setError("");
-    try {
-      const nextReview = await applyInventoryFileImportMapping(db, destinationStore, review, mapping);
-      if (request.current !== id) return false;
-      setReview(nextReview);
-      setStage("preview");
-      return true;
-    } catch (caught) {
-      if (request.current === id) setError(userFacingError(caught, "Check the field mapping."));
-      return false;
-    } finally {
-      if (request.current === id) setResolving(false);
     }
   };
 
@@ -174,7 +145,7 @@ export default function useInventoryImport(db: SQLiteDatabase, initialStore: Own
   const changeDestinationStore = async (store: OwnerStore) => {
     if (store.storeId === destinationStore.storeId && store.businessId === destinationStore.businessId) return;
     setDestinationStore(store);
-    if (!review || review.requiresMapping) return;
+    if (!review) return;
     const id = request.current;
     setResolving(true);
     setError("");
@@ -226,7 +197,6 @@ export default function useInventoryImport(db: SQLiteDatabase, initialStore: Own
     resolving,
     pickFile,
     reset,
-    applyMapping,
     updateProduct,
     changeDestinationStore,
     importProducts,

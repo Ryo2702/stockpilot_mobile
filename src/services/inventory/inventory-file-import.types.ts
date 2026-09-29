@@ -110,7 +110,6 @@ export type InventoryFileImportReview = {
   detectedCount: number;
   columns: string[];
   mapping: InventoryFileImportFieldMapping[];
-  requiresMapping: boolean;
   sourceRecords: InventoryFileImportSourceRecord[];
   rows: InventoryFileImportProduct[];
   readyCount: number;

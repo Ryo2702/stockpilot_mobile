@@ -1,4 +1,5 @@
 import { EllipsisVertical } from "lucide-react-native";
+import { Text } from "react-native";
 
 import StoreSelector from "@/components/store/StoreSelector";
 import type { BottomNavKey } from "@/components/ui/BottomNavigation";
@@ -27,10 +28,17 @@ export default function OwnerStoreHeader({
 
   return (
     <ScreenHeader
-      title={`Hi ${ownerFirstName}!`}
+      title={(
+        <>
+          <Text style={{ fontWeight: "400" }}>Hi </Text>
+          <Text style={{ fontWeight: "700" }}>{ownerFirstName}</Text>
+          <Text style={{ fontWeight: "400" }}>!</Text>
+        </>
+      )}
       subtitle="Here's your inventory at a glance."
-      context={
+      titleAccessory={
         <StoreSelector
+          compact
           ownerStore={ownerStore}
           ownerStores={ownerStores}
           onSelectStore={onSelectStore}
