@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 import * as Print from "expo-print";
-import * as FileSystem from "expo-file-system/legacy";
+import { Directory, File, Paths } from "expo-file-system";
 
 import { formatCurrency } from "@/domain/currency";
 import type { PosTransaction } from "@/domain/pos";
@@ -72,25 +72,9 @@ export async function createPosReceiptPdf(transaction: PosTransaction) {
 
   if (Platform.OS === "web") return temporaryUri;
 
-  if (Platform.OS === "android") {
-    const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-    if (!permissions.granted) return null;
-    const targetUri = await FileSystem.StorageAccessFramework.createFileAsync(
-      permissions.directoryUri,
-      fileName.replace(/\.pdf$/i, ""),
-      "application/pdf",
-    );
-    const base64 = await FileSystem.readAsStringAsync(temporaryUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    await FileSystem.StorageAccessFramework.writeAsStringAsync(targetUri, base64, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    return targetUri;
-  }
-
-  if (!FileSystem.documentDirectory) throw new Error("Receipt storage is unavailable.");
-  const targetUri = `${FileSystem.documentDirectory}${fileName}`;
-  await FileSystem.copyAsync({ from: temporaryUri, to: targetUri });
-  return targetUri;
+  const directory = new Directory(Paths.document, "StockPilot");
+  directory.create({ intermediates: true, idempotent: true });
+  const target = new File(directory, fileName);
+  await new File(temporaryUri).copy(target, { overwrite: true });
+  return target.uri;
 }

@@ -1,0 +1,16 @@
+import { CheckCircle2, ChevronLeft, Download } from "lucide-react-native";
+import { Modal, Platform, ScrollView, Text, View } from "react-native";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { IconButton } from "@/components/ui/IconButton";
+import { formatCurrency } from "@/domain/currency";
+import type { PosTransaction } from "@/domain/pos";
+import { useTheme, useThemeStyles } from "@/theme/ThemeProvider";
+import { createPosStyles } from "../pos.styles";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export function ReceiptModal({ receipt, receiptLoading, saved, error, onClose, onDownload, onNewSale }: { receipt: PosTransaction | null; receiptLoading: boolean; saved: boolean; error: string; onClose: () => void; onDownload: () => void; onNewSale: () => void }) {
+  const { colors } = useTheme();
+  const styles = useThemeStyles(createPosStyles);
+  return <Modal visible={Boolean(receipt)} animationType="slide" onRequestClose={onClose}>{receipt ? <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}><View style={styles.receiptHeader}><IconButton icon={ChevronLeft} label="Close receipt" onPress={onClose} /><Text style={styles.receiptTitle}>Receipt</Text></View><ScrollView contentContainerStyle={styles.receiptContent}><Card style={styles.receiptCard}><CheckCircle2 color={colors.semantic.success} size={32} /><Text style={styles.receiptSuccess}>Sale completed</Text><Text style={styles.receiptBusiness}>{receipt.businessName}</Text><Text style={styles.receiptStore}>{receipt.storeName}</Text>{receipt.storeAddress ? <Text style={styles.receiptMeta}>{receipt.storeAddress}</Text> : null}<Text style={styles.receiptMeta}>Receipt {receipt.receiptNumber}</Text><Text style={styles.receiptMeta}>{new Date(receipt.createdAt).toLocaleString()}</Text><View style={styles.receiptRule} />{receipt.items.map((item) => <View key={item.id} style={styles.receiptLine}><View style={styles.receiptLineCopy}><Text style={styles.receiptItemName}>{item.productName}</Text><Text style={styles.receiptMeta}>{item.sku ? `SKU ${item.sku} · ` : ""}{item.quantity} × {formatCurrency(item.unitPrice, receipt.currency)}</Text></View><Text style={styles.receiptLineTotal}>{formatCurrency(item.lineTotal, receipt.currency)}</Text></View>)}<View style={styles.receiptRule} /><View style={styles.totalRow}><Text style={styles.totalLabel}>Subtotal</Text><Text style={styles.totalValue}>{formatCurrency(receipt.subtotal, receipt.currency)}</Text></View><View style={styles.totalRow}><Text style={styles.totalTitle}>Total</Text><Text style={styles.totalTitle}>{formatCurrency(receipt.total, receipt.currency)}</Text></View><Text style={styles.thankYou}>Thank you for shopping with us.</Text></Card>{error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}{saved && Platform.OS !== "web" ? <Text style={styles.receiptMeta}>PDF saved to Documents/StockPilot.</Text> : null}<View style={styles.receiptActions}><Button title="Save PDF" icon={Download} loading={receiptLoading} onPress={onDownload} /><Button title="New Sale" variant="ghost" onPress={onNewSale} /></View></ScrollView></SafeAreaView> : null}</Modal>;
+}
