@@ -8,7 +8,7 @@ import {
 } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { control, radii, spacing, typography } from "@/theme";
+import { radii, spacing, typography } from "@/theme";
 import { useTheme, useThemeStyles } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
 
@@ -24,7 +24,7 @@ export type BottomNavKey =
 type BottomNavItemKey = Exclude<BottomNavKey, "camera" | "more">;
 
 const navItems: Array<{ key: BottomNavItemKey; label: string; icon: LucideIcon }> = [
-  { key: "dashboard", label: "Home", icon: House },
+  { key: "dashboard", label: "Dashboard", icon: House },
   { key: "inventory", label: "Inventory", icon: Package },
   { key: "pos", label: "POS", icon: ReceiptText },
   { key: "catalog", label: "Catalog", icon: Boxes },
@@ -47,7 +47,6 @@ export function BottomNavigation({
     <View style={styles.container}>
       {navItems.map(({ key, label, icon: Icon }) => {
         const active = key === activeKey;
-        const isPos = key === "pos";
 
         return (
           <Pressable
@@ -61,20 +60,13 @@ export function BottomNavigation({
             <View
               style={[
                 styles.iconSlot,
-                isPos && styles.posButton,
-                active && !isPos && styles.activeIcon,
+                active && styles.activeIcon,
               ]}
             >
               <Icon
-                color={
-                  isPos
-                    ? colors.text.onPrimary
-                    : active
-                      ? colors.primary[700]
-                      : colors.text.muted
-                }
-                size={isPos ? 22 : 21}
-                strokeWidth={active || isPos ? 2.2 : 2}
+                color={active ? colors.primary[700] : colors.text.muted}
+                size={20}
+                strokeWidth={active ? 2.2 : 2}
               />
             </View>
             <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.label, active && styles.activeLabel]}>
@@ -89,43 +81,35 @@ export function BottomNavigation({
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
-    minHeight: 80,
+    minHeight: 72,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginHorizontal: spacing[3],
-    marginBottom: spacing[2],
-    paddingHorizontal: spacing[1],
-    paddingVertical: spacing[1],
-    borderWidth: 1,
+    paddingHorizontal: spacing[2],
+    paddingTop: spacing[1],
+    paddingBottom: spacing[2],
+    borderTopWidth: 1,
     borderColor: colors.border.default,
-    borderRadius: radii.xl,
     backgroundColor: colors.background.surface,
   },
   item: {
-    minHeight: 72,
+    minHeight: 60,
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: spacing[1],
   },
   iconSlot: {
-    width: control.md,
-    height: control.md,
+    width: 36,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: radii.full,
+    borderRadius: radii.md,
   },
   activeIcon: {
     backgroundColor: colors.primary[50],
     borderWidth: 1,
     borderColor: colors.primary[600],
-  },
-  posButton: {
-    width: 52,
-    height: 52,
-    backgroundColor: colors.primary[600],
-    borderRadius: radii.full,
   },
   label: {
     ...typography.caption,

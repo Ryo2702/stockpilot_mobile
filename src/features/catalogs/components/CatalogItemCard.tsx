@@ -79,10 +79,10 @@ export default function CatalogItemCard({
       <View style={styles.details}>
         <Text style={styles.category}>{category.label}</Text>
         <Text style={styles.priceText}>
-          Current Price: {product.currentPrice === null ? "—" : formatCurrency(product.currentPrice, currency)}
+          Selling Price · {product.currentPrice === null ? "—" : formatCurrency(product.currentPrice, currency)}
         </Text>
         <Text style={styles.stockText}>
-          {product.quantity} {product.unit} in stock
+          {product.quantity} {product.unit} available
         </Text>
       </View>
       <View style={styles.statusRow}>
@@ -97,14 +97,15 @@ export default function CatalogItemCard({
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
-    gap: spacing[3],
+    gap: spacing[2],
+    padding: spacing[3],
   },
   pressed: {
     opacity: 0.75,
   },
   topRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: spacing[1],
   },
   categoryIcon: {

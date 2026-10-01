@@ -1,11 +1,13 @@
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View, type TextInputProps } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AlertCircle, ChevronRight, CircleCheck, Pencil, Search, TriangleAlert, X } from "lucide-react-native";
-import { type ComponentProps, useEffect, useMemo, useState } from "react";
+import { AlertCircle, ChevronRight, CircleCheck, Pencil, TriangleAlert, X } from "lucide-react-native";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
+import { SearchField } from "@/components/ui/SearchField";
+import { TextField, type TextFieldSize } from "@/components/ui/TextField";
 import {
   type InventoryFileImportProduct,
   type InventoryFileImportReview,
@@ -149,13 +151,19 @@ export function ProductEditor({
           </View>
           <ScrollView contentContainerStyle={styles.editorContent} keyboardShouldPersistTaps="handled">
             <EditorField label="Product Name" value={draft.name} onChangeText={(value) => update("name", value)} />
-            <EditorField label="Quantity" keyboardType="number-pad" value={draft.quantity} onChangeText={(value) => update("quantity", value)} />
-            <EditorField label="Cost Price" keyboardType="decimal-pad" value={draft.costPrice} onChangeText={(value) => update("costPrice", value)} />
-            <EditorField label="Selling Price" keyboardType="decimal-pad" value={draft.sellingPrice} onChangeText={(value) => update("sellingPrice", value)} />
-            <EditorField label="SKU" value={draft.sku} onChangeText={(value) => update("sku", value)} autoCapitalize="characters" />
-            <EditorField label="Barcode" keyboardType="number-pad" value={draft.barcode} onChangeText={(value) => update("barcode", value)} />
-            <EditorField label="Category" value={draft.category} onChangeText={(value) => update("category", value)} />
-            <EditorField label="Unit" value={draft.unit} onChangeText={(value) => update("unit", value)} />
+            <View style={styles.editorRow}>
+              <EditorField label="Quantity" size="short" keyboardType="number-pad" value={draft.quantity} onChangeText={(value) => update("quantity", value)} />
+              <EditorField label="Unit" size="short" value={draft.unit} onChangeText={(value) => update("unit", value)} />
+            </View>
+            <View style={styles.editorRow}>
+              <EditorField label="Cost Price" size="medium" keyboardType="decimal-pad" value={draft.costPrice} onChangeText={(value) => update("costPrice", value)} />
+              <EditorField label="Selling Price" size="medium" keyboardType="decimal-pad" value={draft.sellingPrice} onChangeText={(value) => update("sellingPrice", value)} />
+            </View>
+            <View style={styles.editorRow}>
+              <EditorField label="SKU" size="medium" value={draft.sku} onChangeText={(value) => update("sku", value)} autoCapitalize="characters" />
+              <EditorField label="Barcode" size="medium" keyboardType="number-pad" value={draft.barcode} onChangeText={(value) => update("barcode", value)} />
+            </View>
+            <EditorField label="Category" size="medium" value={draft.category} onChangeText={(value) => update("category", value)} />
             {draft.existing ? (
               <Card style={styles.matchCard}>
                 <Text style={styles.matchTitle}>Existing product</Text>
@@ -181,15 +189,8 @@ export function ProductEditor({
   );
 }
 
-function EditorField({ label, ...props }: { label: string } & ComponentProps<typeof TextInput>) {
-  const styles = useThemeStyles(createInventoryImportStyles);
-  const { colors } = useTheme();
-  return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput placeholderTextColor={colors.text.muted} style={styles.fieldInput} {...props} />
-    </View>
-  );
+function EditorField({ label, size = "full", ...props }: { label: string; size?: TextFieldSize } & TextInputProps) {
+  return <TextField label={label} size={size} {...props} />;
 }
 
 export function ConfirmationDialog({
@@ -267,17 +268,7 @@ export function ImportPreview({
         <Text style={styles.sectionTitle}>Preview Import</Text>
         {resolving ? <ActivityIndicator color={colors.primary[600]} size="small" /> : null}
       </View>
-      <View style={styles.searchBox}>
-        <Search color={colors.text.muted} size={18} />
-        <TextInput
-          accessibilityLabel="Search imported products"
-          placeholder="Search products"
-          placeholderTextColor={colors.text.muted}
-          value={search}
-          onChangeText={setSearch}
-          style={styles.searchInput}
-        />
-      </View>
+      <SearchField accessibilityLabel="Search imported products" onChangeText={setSearch} onClear={() => setSearch("")} placeholder="Search products" returnKeyType="search" value={search} />
       <ScrollView horizontal contentContainerStyle={styles.filterRow} showsHorizontalScrollIndicator={false}>
         {([
           ["all", "All"],

@@ -48,8 +48,6 @@ const createStyles = (colors: ThemeColors) => ({
   },
   label: {
     ...typography.caption,
-    fontSize: 10,
-    lineHeight: 12,
     color: colors.text.primary,
     textAlign: "center" as const,
   },

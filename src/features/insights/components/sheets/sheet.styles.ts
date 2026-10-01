@@ -17,8 +17,6 @@ export const createSheetStyles = (colors: ThemeColors) => StyleSheet.create({
   divider: { height: 1, backgroundColor: colors.border.default },
   fieldLabel: { ...typography.label, color: colors.text.primary },
   fields: { flexDirection: "row", gap: spacing[3] },
-  field: { flex: 1, gap: spacing[1] },
-  input: { minHeight: 48, paddingHorizontal: spacing[3], borderRadius: radii.md, borderWidth: 1, borderColor: colors.border.default, color: colors.text.primary, backgroundColor: colors.background.surface, ...typography.bodySmall },
   error: { ...typography.caption, color: colors.semantic.danger },
   actionRow: { minHeight: 52, flexDirection: "row", alignItems: "center", gap: spacing[3], paddingHorizontal: spacing[2], borderRadius: radii.md },
   actionIcon: { width: 36, height: 36, alignItems: "center", justifyContent: "center", borderRadius: radii.full, backgroundColor: colors.primary[50] },

@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react-native";
 import { Pressable, StyleSheet, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 
-import { control, radii } from "@/theme";
+import { radii } from "@/theme";
 import { useTheme, useThemeStyles } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
 
@@ -34,6 +34,7 @@ export function IconButton({
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
+      accessibilityState={{ disabled: Boolean(props.disabled) }}
       style={({ pressed }) => [
         styles.base,
         variant === "primary" && styles.primary,
@@ -50,8 +51,8 @@ export function IconButton({
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   base: {
-    width: control.md,
-    height: control.md,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,

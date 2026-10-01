@@ -42,7 +42,7 @@ export default function InventoryItemRow({ item, archived = false, onPress }: In
           ) : (
             <StatusBadge
               status={status}
-              label={status === "low" ? "Low" : status === "critical" ? "Critical" : "Healthy"}
+              label={status === "low" ? "Low Stock" : status === "critical" ? "Critical" : "Healthy"}
             />
           )}
           <Text numberOfLines={1} style={styles.reorder}>Reorder at {item.reorderLevel} {item.unit}</Text>

@@ -40,7 +40,6 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -62,6 +61,7 @@ import {
 import type { StoreErrors, StoreForm } from "@/components/store/store.types";
 import { BottomNavigation, type BottomNavKey } from "@/components/ui/BottomNavigation";
 import { Button } from "@/components/ui/Button";
+import { TextField, type TextFieldSize } from "@/components/ui/TextField";
 import { legalPages, type LegalPage } from "@/data/legal.data";
 import { getCurrencySymbol } from "@/domain/currency";
 import { productUnitOptions } from "@/data/catalog.data";
@@ -332,6 +332,7 @@ function Field({
   autoCapitalize = "sentences",
   secureTextEntry = false,
   maxLength,
+  size = "full",
 }: {
   label: string;
   value: string;
@@ -343,28 +344,24 @@ function Field({
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
   secureTextEntry?: boolean;
   maxLength?: number;
+  size?: TextFieldSize;
 }) {
-  const { colors } = useTheme();
-  const styles = useThemeStyles(createSettingsStyles);
   return (
-    <View style={styles.fieldGroup}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        accessibilityLabel={label}
-        autoCapitalize={autoCapitalize}
-        autoCorrect={false}
-        keyboardType={keyboardType}
-        maxLength={maxLength}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={colors.text.muted}
-        secureTextEntry={secureTextEntry}
-        style={[styles.input, error ? styles.inputError : null]}
-        value={value}
-      />
-      {help ? <Text style={styles.fieldHelp}>{help}</Text> : null}
-      {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
-    </View>
+    <TextField
+      accessibilityLabel={label}
+      autoCapitalize={autoCapitalize}
+      autoCorrect={false}
+      error={error}
+      helperText={help}
+      keyboardType={keyboardType}
+      label={label}
+      maxLength={maxLength}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      secureTextEntry={secureTextEntry}
+      size={size}
+      value={value}
+    />
   );
 }
 
@@ -1120,6 +1117,7 @@ export default function SettingsScreen({
         <>
           <Field
             label="Currency Name"
+            size="medium"
             value={storeForm.customCurrencyName ?? ""}
             onChangeText={(value) => updateStoreField("customCurrencyName", value)}
             placeholder="e.g. Credits"
@@ -1128,6 +1126,7 @@ export default function SettingsScreen({
           />
           <Field
             label="Symbol"
+            size="short"
             value={storeForm.customCurrencySymbol ?? ""}
             onChangeText={(value) => updateStoreField("customCurrencySymbol", value)}
             placeholder="e.g. ¤"
@@ -1159,7 +1158,7 @@ export default function SettingsScreen({
       <Field label="Barangay" value={storeForm.barangay ?? ""} onChangeText={(value) => updateStoreField("barangay", value)} error={storeErrors.barangay} />
       <Field label="City" value={storeForm.city ?? ""} onChangeText={(value) => updateStoreField("city", value)} error={storeErrors.city} />
       <Field label="Province / State" value={storeForm.provinceState ?? ""} onChangeText={(value) => updateStoreField("provinceState", value)} error={storeErrors.provinceState} />
-      <Field label="Postal Code" value={storeForm.postalCode ?? ""} onChangeText={(value) => updateStoreField("postalCode", value)} error={storeErrors.postalCode} />
+      <Field label="Postal Code" size="short" value={storeForm.postalCode ?? ""} onChangeText={(value) => updateStoreField("postalCode", value)} error={storeErrors.postalCode} />
       <Field
         label="Country Code"
         value={storeForm.countryCode ?? ""}
@@ -1263,6 +1262,7 @@ export default function SettingsScreen({
       {securityPin ? (
         <Field
           label="Current PIN"
+          size="short"
           value={currentPin}
           onChangeText={(value) => {
             setCurrentPin(value.replace(/\D/g, "").slice(0, 6));
@@ -1275,6 +1275,7 @@ export default function SettingsScreen({
       ) : null}
       <Field
         label={securityPin ? "New PIN" : "Create PIN"}
+        size="short"
         value={newPin}
         onChangeText={(value) => {
           setNewPin(value.replace(/\D/g, "").slice(0, 6));
@@ -1286,6 +1287,7 @@ export default function SettingsScreen({
       />
       <Field
         label="Confirm PIN"
+        size="short"
         value={confirmPin}
         onChangeText={(value) => {
           setConfirmPin(value.replace(/\D/g, "").slice(0, 6));
@@ -1347,6 +1349,7 @@ export default function SettingsScreen({
       </Text>
       <Field
         label="Current PIN"
+        size="short"
         value={recoveryCurrentPin}
         onChangeText={(value) => {
           setRecoveryCurrentPin(value.replace(/\D/g, "").slice(0, 6));

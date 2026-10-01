@@ -1,10 +1,11 @@
-import { AlertCircle, ArrowDownToLine, ArrowLeftRight, ArrowUpDown, ArrowUpFromLine, Package, Search, SlidersHorizontal, X } from "lucide-react-native";
+import { AlertCircle, ArrowDownToLine, ArrowLeftRight, ArrowUpDown, ArrowUpFromLine, Package, Search, SlidersHorizontal } from "lucide-react-native";
 import type { ReactNode } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import PrintBarcodeButton from "@/components/ui/PrintBarcodeButton";
+import { SearchField } from "@/components/ui/SearchField";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getCatalogCategoryOption } from "@/data/catalog.data";
 import type { InventoryItem, InventoryMovement } from "@/domain/inventory";
@@ -23,22 +24,10 @@ type InventoryController = InventoryScreenController;
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   body: { gap: spacing[4] },
   searchRow: { flexDirection: "row", alignItems: "center", gap: spacing[2] },
-  searchBox: {
-    minHeight: control.md,
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing[2],
-    paddingHorizontal: spacing[3],
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    borderRadius: radii.md,
-    backgroundColor: colors.background.surface,
-  },
-  searchInput: { minWidth: 0, flex: 1, ...typography.bodySmall, color: colors.text.primary },
+  searchField: { minWidth: 0, flex: 1 },
   toolButton: {
-    width: control.md,
-    height: control.md,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -58,9 +47,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: radii.full,
     backgroundColor: colors.background.surface,
   },
-  chipSelected: { borderColor: colors.primary[600], backgroundColor: colors.primary[600] },
+  chipSelected: { borderColor: colors.primary[500], backgroundColor: colors.primary[50] },
   chipLabel: { ...typography.caption, color: colors.text.secondary },
-  chipLabelSelected: { color: colors.text.onPrimary, fontWeight: "600" },
+  chipLabelSelected: { color: colors.primary[700], fontWeight: "600" },
   summary: { flexDirection: "row", gap: spacing[2] },
   totalCard: { flex: 1.35, minWidth: 96, gap: spacing[1], padding: spacing[3] },
   countCard: { flex: 1, minWidth: 64, alignItems: "center", justifyContent: "center", gap: spacing[1], padding: spacing[2] },
@@ -159,23 +148,15 @@ export function InventoryListContent({
     <View style={styles.body}>
       {!archived && inventory.counts ? <InventorySummary counts={inventory.counts} /> : null}
       <View style={styles.searchRow}>
-        <View style={styles.searchBox}>
-          <Search color={colors.text.muted} size={18} />
-          <TextInput
-            accessibilityLabel={archived ? "Search archived inventory" : "Search inventory, SKU or barcode"}
-            onChangeText={inventory.setSearch}
-            placeholder={archived ? "Search archived products..." : "Search inventory, SKU or barcode"}
-            placeholderTextColor={colors.text.muted}
-            returnKeyType="search"
-            style={styles.searchInput}
-            value={inventory.search}
-          />
-          {inventory.search ? (
-            <Pressable accessibilityRole="button" accessibilityLabel="Clear search" onPress={() => inventory.setSearch("")}>
-              <X color={colors.text.muted} size={18} />
-            </Pressable>
-          ) : null}
-        </View>
+        <SearchField
+          accessibilityLabel={archived ? "Search archived inventory" : "Search inventory, SKU, or barcode"}
+          onChangeText={inventory.setSearch}
+          onClear={() => inventory.setSearch("")}
+          placeholder={archived ? "Search archived products" : "Search inventory, SKU, or barcode"}
+          returnKeyType="search"
+          style={styles.searchField}
+          value={inventory.search}
+        />
         {!archived ? (
           <>
             <ToolButton label="Filter inventory" onPress={onOpenFilters}>
@@ -388,23 +369,15 @@ export function MovementHistoryContent({
         <Text style={styles.results}>Showing movements for {inventory.detail.item.name}</Text>
       ) : null}
       <View style={styles.searchRow}>
-        <View style={styles.searchBox}>
-          <Search color={colors.text.muted} size={18} />
-          <TextInput
-            accessibilityLabel="Search movements"
-            onChangeText={inventory.setMovementSearch}
-            placeholder="Search movements..."
-            placeholderTextColor={colors.text.muted}
-            returnKeyType="search"
-            style={styles.searchInput}
-            value={inventory.movementSearch}
-          />
-          {inventory.movementSearch ? (
-            <Pressable accessibilityRole="button" accessibilityLabel="Clear movement search" onPress={() => inventory.setMovementSearch("")}>
-              <X color={colors.text.muted} size={18} />
-            </Pressable>
-          ) : null}
-        </View>
+        <SearchField
+          accessibilityLabel="Search movements"
+          onChangeText={inventory.setMovementSearch}
+          onClear={() => inventory.setMovementSearch("")}
+          placeholder="Search movements"
+          returnKeyType="search"
+          style={styles.searchField}
+          value={inventory.movementSearch}
+        />
       </View>
       <ScrollView horizontal style={styles.filterScroller} contentContainerStyle={styles.filterChips} showsHorizontalScrollIndicator={false}>
         {movementFilterOptions.map((option) => (

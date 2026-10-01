@@ -85,7 +85,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: radii.md,
   },
   sm: {
-    minHeight: control.sm,
+    minHeight: control.md,
     paddingHorizontal: spacing[3],
   },
   md: {

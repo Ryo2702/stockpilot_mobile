@@ -1,5 +1,6 @@
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
+import { SearchField } from "@/components/ui/SearchField";
 import { catalogCategoryOptions } from "@/data/catalog.data";
 import type { OwnerStore } from "@/services/owner-store.service";
 import type { InsightFilters } from "@/services/insights";
@@ -16,12 +17,11 @@ type Props = {
 
 export function ReportFilters({ ownerStore, ownerStores, filters, onChange }: Props) {
   const styles = useThemeStyles(createInsightsStyles);
-  const { colors } = useTheme();
   const storeOptions = [{ storeId: "all", storeName: "All stores" }, ...ownerStores];
   return <View style={styles.filterGroup}>
     <Text style={styles.sectionTitle}>Report filters</Text>
     <Text style={styles.sectionSubtitle}>Choose the store scope, category, or product before generating a report.</Text>
-    <TextInput accessibilityLabel="Filter product" placeholder="Filter product, SKU, or barcode" placeholderTextColor={colors.text.muted} value={filters.productQuery} onChangeText={(productQuery) => onChange({ productQuery })} style={styles.filterInput} />
+    <SearchField accessibilityLabel="Filter product" onChangeText={(productQuery) => onChange({ productQuery })} onClear={() => onChange({ productQuery: "" })} placeholder="Filter product, SKU, or barcode" returnKeyType="search" value={filters.productQuery} />
     <Text style={styles.filterLabel}>Store scope</Text>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>{storeOptions.map((store) => <FilterChip key={store.storeId} label={store.storeName} selected={filters.storeId === store.storeId || (store.storeId === "all" && filters.storeId === "all")} onPress={() => onChange({ storeId: store.storeId })} styles={styles} />)}</ScrollView>
     <Text style={styles.filterLabel}>Category</Text>

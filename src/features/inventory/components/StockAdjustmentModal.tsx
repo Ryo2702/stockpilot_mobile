@@ -1,5 +1,4 @@
 import { ChevronDown, ChevronLeft } from "lucide-react-native";
-import type { ComponentProps } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
   Modal,
@@ -7,13 +6,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
+import { TextField } from "@/components/ui/TextField";
 import type { InventoryItem } from "@/domain/inventory";
 import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -72,22 +71,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: radii.md,
     backgroundColor: colors.background.surface,
   },
-  segmentSelected: { borderColor: colors.primary[600], backgroundColor: colors.primary[600] },
+  segmentSelected: { borderColor: colors.primary[500], backgroundColor: colors.primary[50] },
   segmentLabel: { ...typography.caption, color: colors.text.secondary, textAlign: "center" },
-  segmentLabelSelected: { color: colors.text.onPrimary, fontWeight: "600" },
+  segmentLabelSelected: { color: colors.primary[700], fontWeight: "600" },
   field: { gap: spacing[1] },
   label: { ...typography.label, color: colors.text.primary },
-  input: {
-    minHeight: control.lg,
-    paddingHorizontal: spacing[3],
-    borderWidth: 1,
-    borderColor: colors.border.strong,
-    borderRadius: radii.md,
-    backgroundColor: colors.background.surface,
-    ...typography.bodySmall,
-    color: colors.text.primary,
-  },
-  multiline: { minHeight: 80, paddingTop: spacing[3], textAlignVertical: "top" },
   selector: {
     minHeight: control.lg,
     flexDirection: "row",
@@ -114,7 +102,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   previewValue: { ...typography.label, color: colors.text.primary },
   explanation: { ...typography.caption, color: colors.text.secondary },
   error: { ...typography.caption, color: colors.semantic.danger },
-  errorBorder: { borderColor: colors.semantic.danger },
   actions: { gap: spacing[2] },
   overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(36, 28, 23, 0.32)" },
   reasonSheet: {
@@ -269,21 +256,18 @@ export default function StockAdjustmentModal({
             </View>
           </View>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>{type === "set_current_stock" ? "Counted Quantity *" : "Quantity *"}</Text>
-            <TextInput
-              accessibilityLabel={type === "set_current_stock" ? "Counted quantity" : "Quantity"}
-              keyboardType="number-pad"
-              onChangeText={setQuantity}
-              placeholder="0"
-              placeholderTextColor={colors.text.muted}
-              value={quantity}
-              style={[styles.input, (insufficient || Boolean(fieldError) || Boolean(quantityError)) && styles.errorBorder]}
-            />
-            {quantityError ? <Text style={styles.error}>{quantityError}</Text> : null}
-            {insufficient ? <Text style={styles.error}>Only {currentQuantity} {item.unit} are currently available.</Text> : null}
-            {noChange ? <Text style={styles.explanation}>The counted quantity matches current stock, so no adjustment will be recorded.</Text> : null}
-          </View>
+          <TextField
+            accessibilityLabel={type === "set_current_stock" ? "Counted quantity" : "Quantity"}
+            error={quantityError || (insufficient ? `Only ${currentQuantity} ${item.unit} are currently available.` : undefined)}
+            keyboardType="number-pad"
+            label={type === "set_current_stock" ? "Counted Quantity" : "Quantity"}
+            onChangeText={setQuantity}
+            placeholder="0"
+            required
+            size="short"
+            value={quantity}
+          />
+          {noChange ? <Text style={styles.explanation}>The counted quantity matches current stock, so no adjustment will be recorded.</Text> : null}
 
           <View style={styles.field}>
             <Text style={styles.label}>Reason *</Text>
@@ -300,9 +284,9 @@ export default function StockAdjustmentModal({
           </View>
 
           {type !== "set_current_stock" ? (
-            <Field label="Reference" optional value={reference} onChangeText={setReference} placeholder="e.g. PO-001" />
+            <TextField label="Reference" optional size="medium" value={reference} onChangeText={setReference} placeholder="e.g. PO-001" />
           ) : null}
-          <Field label="Notes" optional value={note} onChangeText={setNote} placeholder="Add an optional note" multiline />
+          <TextField label="Notes" optional value={note} onChangeText={setNote} placeholder="Add an optional note" multiline />
 
           <View style={styles.preview}>
             {previewRows.map((row) => (
@@ -358,26 +342,5 @@ export default function StockAdjustmentModal({
         </View>
       </Modal>
     </Modal>
-  );
-}
-
-function Field({
-  label,
-  optional = false,
-  multiline = false,
-  ...props
-}: ComponentProps<typeof TextInput> & { label: string; optional?: boolean }) {
-  const styles = useThemeStyles(createStyles);
-  const { colors } = useTheme();
-  return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}{optional ? " (optional)" : ""}</Text>
-      <TextInput
-        {...props}
-        multiline={multiline}
-        placeholderTextColor={colors.text.muted}
-        style={[styles.input, multiline && styles.multiline]}
-      />
-    </View>
   );
 }

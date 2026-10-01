@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { TextField as SharedTextField } from "@/components/ui/TextField";
 import { getCurrencySymbol } from "@/domain/currency";
 import { useTheme } from "@/theme/ThemeProvider";
 
@@ -26,22 +27,7 @@ type TextFieldProps = TextInputProps & {
 };
 
 export function TextField({ label, optional, error, style, ...props }: TextFieldProps) {
-  const { colors } = useTheme();
-  const styles = useOnboardingStyles();
-
-  return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>
-        {label} {optional ? <Text style={styles.optional}>(optional)</Text> : null}
-      </Text>
-      <TextInput
-        {...props}
-        placeholderTextColor={colors.text.muted}
-        style={[styles.input, error ? styles.inputError : null, style]}
-      />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-    </View>
-  );
+  return <SharedTextField {...props} error={error} label={label} optional={optional} style={style} />;
 }
 
 export function ColumnGroup({ children }: PropsWithChildren) {

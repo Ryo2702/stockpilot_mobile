@@ -9,13 +9,13 @@ import {
   TextInput,
   View,
   type StyleProp,
-  type TextInputProps,
   type ViewStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
+import { TextField } from "@/components/ui/TextField";
 import type { CatalogCategory } from "@/domain/catalog";
 import { getCurrencySymbol, type CurrencySettings } from "@/domain/currency";
 import type { Product } from "@/domain/product";
@@ -221,8 +221,9 @@ export default function CatalogFormModal({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <FormField
-            label="Item Name *"
+          <TextField
+            label="Product Name"
+            required
             accessibilityLabel="Item name"
             value={form.name}
             onChangeText={(value) => updateField("name", value)}
@@ -244,8 +245,9 @@ export default function CatalogFormModal({
             </View>
             {errors.barcode ? <Text style={styles.error}>{errors.barcode}</Text> : null}
           </View>
-          <FormField
+          <TextField
             label="SKU"
+            size="medium"
             accessibilityLabel="SKU"
             value={form.sku}
             onChangeText={(value) => updateField("sku", value)}
@@ -254,25 +256,29 @@ export default function CatalogFormModal({
             error={errors.sku}
           />
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Category *</Text>
-            <CategorySelector
-              categories={categories}
-              value={form.category}
-              onChange={(category) => updateField("category", category)}
+          <View style={styles.formRow}>
+            <View style={styles.mediumField}>
+              <Text style={styles.label}>Category <Text style={styles.labelNote}>(required)</Text></Text>
+              <CategorySelector
+                categories={categories}
+                value={form.category}
+                onChange={(category) => updateField("category", category)}
+              />
+              {errors.category ? <Text style={styles.error}>{errors.category}</Text> : null}
+            </View>
+            <DropdownField
+              label="Unit"
+              value={form.unit}
+              options={unitOptions}
+              onChange={(value) => updateField("unit", value)}
+              error={errors.unit}
+              containerStyle={styles.shortField}
             />
-            {errors.category ? <Text style={styles.error}>{errors.category}</Text> : null}
           </View>
-
-          <DropdownField
-            label="Unit"
-            value={form.unit}
-            options={unitOptions}
-            onChange={(value) => updateField("unit", value)}
-            error={errors.unit}
-          />
-          <FormField
-            label="Current Price"
+          <View style={styles.formRow}>
+          <TextField
+            label="Selling Price"
+            size="medium"
             accessibilityLabel="Current price"
             value={form.currentPrice}
             onChangeText={(value) => updateField("currentPrice", value)}
@@ -283,8 +289,10 @@ export default function CatalogFormModal({
             error={errors.currentPrice}
           />
           {!product ? (
-            <FormField
-              label="Initial Quantity *"
+            <TextField
+              label="Initial Quantity"
+              required
+              size="short"
               accessibilityLabel="Initial quantity"
               value={form.initialQuantity}
               onChangeText={(value) => updateField("initialQuantity", value)}
@@ -292,10 +300,12 @@ export default function CatalogFormModal({
               error={errors.initialQuantity}
             />
           ) : null}
+          </View>
 
           <View style={styles.levelRow}>
-            <FormField
+            <TextField
               label="Reorder Level"
+              size="short"
               accessibilityLabel="Reorder level"
               value={form.reorderLevel}
               onChangeText={(value) => updateField("reorderLevel", value)}
@@ -312,8 +322,9 @@ export default function CatalogFormModal({
               containerStyle={styles.levelField}
             />
           </View>
-          <FormField
+          <TextField
             label="Notes"
+            size="full"
             accessibilityLabel="Item notes"
             value={form.notes}
             onChangeText={(value) => updateField("notes", value)}
@@ -341,46 +352,6 @@ export default function CatalogFormModal({
         </ScrollView>
       </SafeAreaView>
     </Modal>
-  );
-}
-
-function FormField({
-  label,
-  error,
-  containerStyle,
-  multiline,
-  prefix,
-  ...inputProps
-}: TextInputProps & {
-  label: string;
-  error?: string;
-  containerStyle?: StyleProp<ViewStyle>;
-  prefix?: string;
-}) {
-  const { colors } = useTheme();
-  const styles = useThemeStyles(createStyles);
-  const input = (
-    <TextInput
-      {...inputProps}
-      multiline={multiline}
-      style={[styles.input, prefix ? styles.prefixedInputText : null, multiline && styles.multilineInput]}
-      placeholderTextColor={colors.text.muted}
-    />
-  );
-
-  return (
-    <View style={[styles.fieldGroup, containerStyle]}>
-      <Text style={styles.label}>{label}</Text>
-      {prefix ? (
-        <View style={[styles.prefixedInput, error ? styles.inputError : null]}>
-          <Text style={styles.inputPrefix}>{prefix}</Text>
-          {input}
-        </View>
-      ) : (
-        input
-      )}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-    </View>
   );
 }
 
@@ -498,6 +469,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
     gap: spacing[2],
   },
+  formRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing[3],
+  },
+  mediumField: { width: 180, maxWidth: "100%" },
+  shortField: { width: 120, maxWidth: "100%" },
   barcodeInput: {
     minWidth: 0,
     flex: 1,
@@ -512,8 +490,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     ...typography.label,
     color: colors.text.primary,
   },
+  labelNote: {
+    ...typography.caption,
+    color: colors.text.muted,
+  },
   input: {
-    minHeight: control.md,
+    minHeight: control.lg,
     paddingHorizontal: spacing[3],
     borderWidth: 1,
     borderColor: colors.border.default,
@@ -521,30 +503,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.background.surface,
     ...typography.bodySmall,
     color: colors.text.primary,
-  },
-  prefixedInput: {
-    minHeight: control.md,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing[2],
-    paddingHorizontal: spacing[3],
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    borderRadius: radii.md,
-    backgroundColor: colors.background.surface,
-  },
-  inputError: { borderColor: colors.semantic.danger },
-  inputPrefix: {
-    ...typography.bodySmall,
-    color: colors.text.secondary,
-  },
-  prefixedInputText: {
-    minWidth: 0,
-    flex: 1,
-    paddingHorizontal: 0,
-    borderWidth: 0,
-    borderRadius: 0,
-    backgroundColor: "transparent",
   },
   dropdownSelector: {
     minHeight: control.md,

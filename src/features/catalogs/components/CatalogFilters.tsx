@@ -1,7 +1,8 @@
-import { ArrowDownAZ, ArrowUpAZ, ChevronDown, Search, Tag } from "lucide-react-native";
+import { ArrowDownAZ, ArrowUpAZ, ChevronDown, Tag } from "lucide-react-native";
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { SearchField } from "@/components/ui/SearchField";
 import type { CatalogCategory } from "@/domain/catalog";
 import type { ProductSort, ProductStockFilter } from "@/domain/product";
 import { control, radii, spacing, typography, useThemeStyles } from "@/theme";
@@ -51,18 +52,15 @@ export default function CatalogFilters({
   return (
     <View style={styles.container}>
       <View style={styles.searchRow}>
-        <View style={styles.searchBox}>
-          <Search color={colors.text.muted} size={18} />
-          <TextInput
-            accessibilityLabel="Search catalog, SKU, barcode, or category"
-            onChangeText={onSearchChange}
-            placeholder="Search catalog, SKU, or barcode"
-            placeholderTextColor={colors.text.muted}
-            returnKeyType="search"
-            style={styles.searchInput}
-            value={search}
-          />
-        </View>
+        <SearchField
+          accessibilityLabel="Search catalog, SKU, barcode, or category"
+          onChangeText={onSearchChange}
+          onClear={() => onSearchChange("")}
+          placeholder="Search product, SKU, or barcode"
+          returnKeyType="search"
+          style={styles.searchField}
+          value={search}
+        />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Sort by ${sortLabel}`}
@@ -178,27 +176,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: "row",
     gap: spacing[2],
   },
-  searchBox: {
-    minHeight: control.md,
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing[2],
-    paddingHorizontal: spacing[3],
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    borderRadius: radii.md,
-    backgroundColor: colors.background.surface,
-  },
-  searchInput: {
-    minWidth: 0,
-    flex: 1,
-    ...typography.bodySmall,
-    color: colors.text.primary,
-  },
+  searchField: { minWidth: 0, flex: 1 },
   sortButton: {
-    minWidth: control.md,
-    height: control.md,
+    minWidth: 44,
+    height: 44,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

@@ -170,7 +170,7 @@ export default function StoreStatusCards({ overview }: { overview: OwnerStoreOve
             })}
           </Svg>
           <View style={styles.donutCenter}>
-            <Text style={styles.totalLabel}>Total Items</Text>
+            <Text style={styles.totalLabel}>Total Products</Text>
             <Text style={styles.totalCount}>{overview ? animatedTotal.toLocaleString() : "—"}</Text>
           </View>
         </View>
