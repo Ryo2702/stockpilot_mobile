@@ -4,6 +4,7 @@ import { describe, expect, it } from "@jest/globals";
 import { InsufficientStockError } from "@/domain/inventory.errors";
 import type { OwnerStore } from "@/services/owner-store.service";
 import { migrate, type DatabaseExecutor } from "@/database/migrate";
+import { createInsightsCsv } from "@/services/insights/reports";
 import { getStoreInsights } from "@/services/insights/queries";
 
 import { checkoutPosTransaction, listPosTransactions } from "./pos.service";
@@ -74,7 +75,7 @@ describe("checkoutPosTransaction", () => {
 
       expect(transaction.total).toBe(140);
       const insights = await getStoreInsights(db, store, "this_month");
-      expect(insights.revenue).toEqual({ total: 140, transactions: 1 });
+      expect(insights.revenue).toEqual({ total: 140, transactions: 1, unitsSold: 2, averageTransactionValue: 140 });
       expect(insights.monthlyRevenue.reduce((sum, month) => sum + month.revenue, 0)).toBe(140);
       await expect(listPosTransactions(db, store)).resolves.toEqual([expect.objectContaining({
         id: transaction.id,
@@ -105,7 +106,108 @@ describe("checkoutPosTransaction", () => {
       expect(database.prepare("SELECT COUNT(*) AS count FROM pos_transactions").get()).toEqual({ count: 0 });
       expect(database.prepare("SELECT quantity FROM inventory WHERE product_id = 'product-1'").get()).toEqual({ quantity: 1 });
       const insights = await getStoreInsights(db, store, "this_month");
-      expect(insights.revenue).toEqual({ total: 0, transactions: 0 });
+      expect(insights.revenue).toEqual({ total: 0, transactions: 0, unitsSold: 0, averageTransactionValue: 0 });
+    } finally {
+      database.close();
+    }
+  });
+
+  it("calculates valuation, sales analytics, and report filters", async () => {
+    const { db, database } = createDatabase();
+    try {
+      await seedProduct(db, 3);
+      await db.runAsync(
+        `INSERT INTO products (id, business_id, store_id, name, sku, category, current_price, cost_price, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        "product-2",
+        "business-1",
+        "store-1",
+        "Bread",
+        "BREAD-01",
+        "beverages",
+        20,
+        10,
+        "now",
+        "now",
+      );
+      await db.runAsync(
+        "INSERT INTO inventory (product_id, business_id, store_id, quantity, updated_at) VALUES (?, ?, ?, ?, ?)",
+        "product-2",
+        "business-1",
+        "store-1",
+        5,
+        "now",
+      );
+      const transaction = await checkoutPosTransaction(db, store, [{ productId: "product-1", quantity: 2 }]);
+      const insights = await getStoreInsights(db, store, "this_month");
+
+      expect(insights.inventory).toEqual({
+        totalUnits: 6,
+        costValue: 100,
+        sellingValue: 170,
+        potentialGrossMargin: 70,
+        missingCostPrices: 0,
+        missingSellingPrices: 0,
+      });
+      expect(insights.revenue).toEqual({ total: 140, transactions: 1, unitsSold: 2, averageTransactionValue: 140 });
+      expect(insights.topSelling[0]).toMatchObject({ id: "product-1", unitsSold: 2, revenue: 140 });
+      expect(insights.salesByDay).toHaveLength(1);
+      expect(insights.salesByWeek).toHaveLength(1);
+      expect(insights.salesByStore).toEqual([expect.objectContaining({ storeId: store.storeId, grossSales: 140, unitsSold: 2 })]);
+
+      const categoryInsights = await getStoreInsights(db, store, "this_month", null, {
+        storeId: store.storeId,
+        category: "beverages",
+        productQuery: "",
+      });
+      expect(categoryInsights.inventory.totalUnits).toBe(5);
+      expect(categoryInsights.revenue.total).toBe(0);
+      expect(categoryInsights.topSelling).toEqual([]);
+
+      const productInsights = await getStoreInsights(db, store, "this_month", null, {
+        storeId: store.storeId,
+        category: null,
+        productQuery: "Coke",
+      });
+      expect(productInsights.inventory.totalUnits).toBe(1);
+      expect(productInsights.revenue.unitsSold).toBe(2);
+      expect(productInsights.revenue.total).toBe(transaction.total);
+
+      await db.runAsync("INSERT INTO stores (id, business_id, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)", "store-2", "business-1", "Second Store", "now", "now");
+      await db.runAsync(
+        `INSERT INTO products (id, business_id, store_id, name, sku, category, current_price, cost_price, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        "product-3",
+        "business-1",
+        "store-2",
+        "Rice",
+        "RICE-01",
+        "grocery",
+        30,
+        15,
+        "now",
+        "now",
+      );
+      await db.runAsync(
+        "INSERT INTO inventory (product_id, business_id, store_id, quantity, updated_at) VALUES (?, ?, ?, ?, ?)",
+        "product-3",
+        "business-1",
+        "store-2",
+        4,
+        "now",
+      );
+      await checkoutPosTransaction(db, { businessId: store.businessId, storeId: "store-2" }, [{ productId: "product-3", quantity: 1 }]);
+      const allStoreInsights = await getStoreInsights(db, store, "this_month", null, { storeId: "all", category: null, productQuery: "" });
+      expect(allStoreInsights.inventory.totalUnits).toBe(9);
+      expect(allStoreInsights.revenue).toMatchObject({ total: 170, transactions: 2, unitsSold: 3 });
+      expect(allStoreInsights.salesByStore).toEqual(expect.arrayContaining([
+        expect.objectContaining({ storeId: "store-1", grossSales: 140 }),
+        expect.objectContaining({ storeId: "store-2", grossSales: 30 }),
+      ]));
+      const csv = await createInsightsCsv(db, store, allStoreInsights);
+      expect(csv).toContain("Inventory Selling Value (Theoretical)");
+      expect(csv).toContain("Sales by Day");
+      expect(csv).toContain("Top Selling Products");
     } finally {
       database.close();
     }

@@ -22,6 +22,11 @@ export const insightPeriods = [
 
 export type InsightPeriod = (typeof insightPeriods)[number];
 export type InsightCustomRange = { start: string; end: string };
+export type InsightFilters = {
+  storeId: string | "all";
+  category: CatalogCategory | null;
+  productQuery: string;
+};
 export type InsightReportType =
   | "monthly"
   | "movement"
@@ -37,6 +42,16 @@ export type InsightHealth = {
   healthy: number;
   low: number;
   critical: number;
+  outOfStock: number;
+};
+
+export type InsightInventorySummary = {
+  totalUnits: number;
+  costValue: number;
+  sellingValue: number;
+  potentialGrossMargin: number;
+  missingCostPrices: number;
+  missingSellingPrices: number;
 };
 
 export type InsightMovementSummary = {
@@ -49,15 +64,48 @@ export type InsightMovementSummary = {
 export type InsightRevenueSummary = {
   total: number;
   transactions: number;
+  unitsSold: number;
+  averageTransactionValue: number;
+};
+
+export type InsightSellingProduct = {
+  id: string;
+  name: string;
+  sku: string | null;
+  category: CatalogCategory;
+  unit: string;
+  unitsSold: number;
+  revenue: number;
+  transactions: number;
+};
+
+export type SalesTrendPoint = {
+  periodKey: string;
+  label: string;
+  revenue: number;
+  transactions: number;
+  unitsSold: number;
+};
+
+export type InsightStoreSales = {
+  storeId: string;
+  storeName: string;
+  grossSales: number;
+  transactions: number;
+  unitsSold: number;
 };
 
 export type InsightProduct = {
   id: string;
+  storeId: string;
+  storeName: string;
   name: string;
   sku: string | null;
   createdAt: string;
   category: CatalogCategory;
   unit: string;
+  costPrice: number | null;
+  sellingPrice: number | null;
   quantity: number;
   reorderLevel: number;
   criticalLevel: number;
@@ -102,6 +150,7 @@ export type MonthlyRevenue = {
   label: string;
   revenue: number;
   transactions: number;
+  unitsSold: number;
 };
 
 export type MonthlyHealthSnapshot = InsightHealth & {
@@ -137,8 +186,11 @@ export type InsightPeriodInfo = {
 
 export type StoreInsights = {
   currency: CurrencySettings;
+  filters: InsightFilters;
+  scopeLabel: string;
   period: InsightPeriodInfo;
   health: InsightHealth;
+  inventory: InsightInventorySummary;
   hasMovementHistory: boolean;
   previousMonthHealth: MonthlyHealthSnapshot | null;
   movement: InsightMovementSummary;
@@ -158,6 +210,10 @@ export type StoreInsights = {
   categories: InsightCategory[];
   monthlyMovement: MonthlyMovement[];
   monthlyRevenue: MonthlyRevenue[];
+  salesByDay: SalesTrendPoint[];
+  salesByWeek: SalesTrendPoint[];
+  salesByStore: InsightStoreSales[];
+  topSelling: InsightSellingProduct[];
   monthlyHealth: MonthlyHealthSnapshot[];
 };
 
@@ -167,9 +223,11 @@ export type InsightReport = {
   title: string;
   periodLabel: string;
   storeName: string;
+  filters?: InsightFilters;
   createdAt: string;
   summary: {
     health: InsightHealth;
+    inventory?: InsightInventorySummary;
     movement: InsightMovementSummary;
     previousMovement: InsightMovementSummary;
     revenue?: InsightRevenueSummary;
@@ -184,5 +242,9 @@ export type InsightReport = {
     categories: Array<Pick<InsightCategory, "category" | "products" | "stockIn" | "stockOut" | "net">>;
     recentMovements: Array<Pick<InsightMovementRecord, "productName" | "type" | "delta" | "unit" | "reason" | "createdAt">>;
     noMovementCount: number;
+    topSelling?: InsightSellingProduct[];
+    salesByDay?: SalesTrendPoint[];
+    salesByWeek?: SalesTrendPoint[];
+    salesByStore?: InsightStoreSales[];
   };
 };

@@ -42,7 +42,7 @@ export function daysSince(date: string | null) {
 
 export function dataFindings(data: StoreInsights) {
   const findings: string[] = [];
-  if (data.health.critical) findings.push(`${data.health.critical} ${data.health.critical === 1 ? "product is" : "products are"} currently critical with zero available stock.`);
+  if (data.health.outOfStock) findings.push(`${data.health.outOfStock} ${data.health.outOfStock === 1 ? "product is" : "products are"} out of stock.`);
   if (data.health.low) findings.push(`${data.health.low} ${data.health.low === 1 ? "product is" : "products are"} at or below its reorder level.`);
   if (data.products.noMovementCount) findings.push(`${data.products.noMovementCount} products had no stock movement in the last 30 days.`);
   const top = data.products.topMoving[0];

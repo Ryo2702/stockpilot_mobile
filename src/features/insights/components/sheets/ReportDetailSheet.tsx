@@ -12,6 +12,6 @@ export function ReportDetailSheet({ report, currency, onClose }: { report: Insig
   const reportCurrency = currency ?? { currencyMode: "iso" as const, currencyCode: "PHP", currencyDecimalPlaces: 2 };
   return <SheetFrame visible={Boolean(report)} onClose={onClose} title="Report Detail">{report ? <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: spacing[4] }}>
     <View style={styles.productHeader}><Text style={styles.reportHeading}>{report.title}</Text><Text style={styles.reportPeriod}>{report.storeName} · {report.periodLabel}</Text><Text style={styles.reportTimestamp}>Saved {new Date(report.createdAt).toLocaleString()}</Text></View>
-    <ReportSummarySection report={report} currency={reportCurrency} /><ReportListsSection report={report} />
+    <ReportSummarySection report={report} currency={reportCurrency} /><ReportListsSection report={report} currency={reportCurrency} />
   </ScrollView> : null}</SheetFrame>;
 }

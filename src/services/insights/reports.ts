@@ -1,5 +1,6 @@
 import type {
   InsightsDatabase,
+  InsightFilters,
   InsightMovementRecord,
   InsightReport,
   InsightReportType,
@@ -8,12 +9,56 @@ import type {
 } from "./types";
 import createId from "@/utils/createId";
 
+function movementQueryScope(store: StoreScope, filters: InsightFilters, start: string, end: string) {
+  const params: string[] = [store.businessId];
+  const conditions = [
+    "stock_movements.business_id = ?",
+    "stock_movements.created_at >= ?",
+    "stock_movements.created_at < ?",
+    `EXISTS (
+      SELECT 1 FROM stores
+      WHERE stores.id = stock_movements.store_id
+        AND stores.business_id = stock_movements.business_id
+        AND stores.status = 'active'
+    )`,
+  ];
+  params.push(start, end);
+  if (filters.storeId !== "all") {
+    conditions.push("stock_movements.store_id = ?");
+    params.push(filters.storeId);
+  }
+  if (filters.category || filters.productQuery) {
+    const query = `%${filters.productQuery}%`;
+    const productConditions = ["filter_products.is_active = 1"];
+    if (filters.category) {
+      productConditions.push("filter_products.category = ?");
+      params.push(filters.category);
+    }
+    if (filters.productQuery) {
+      productConditions.push(`(
+        LOWER(COALESCE(filter_products.name, '')) LIKE LOWER(?) OR
+        LOWER(COALESCE(filter_products.sku, '')) LIKE LOWER(?) OR
+        LOWER(COALESCE(filter_products.barcode, '')) LIKE LOWER(?)
+      )`);
+      params.push(query, query, query);
+    }
+    conditions.push(`EXISTS (
+      SELECT 1 FROM products AS filter_products
+      WHERE filter_products.id = stock_movements.product_id
+        AND filter_products.business_id = stock_movements.business_id
+        AND filter_products.store_id = stock_movements.store_id
+        AND ${productConditions.join(" AND ")}
+    )`);
+  }
+  return { where: conditions.join(" AND "), params };
+}
+
 const reportTitles: Record<InsightReportType, string> = {
   monthly: "Monthly Inventory Report",
   movement: "Stock Movement Report",
   performance: "Product Performance Report",
   low_stock: "Low Stock Report",
-  critical_stock: "Critical Stock Report",
+  critical_stock: "Out of Stock Report",
   slow_moving: "Slow Moving Report",
   category: "Category Report",
   custom: "Custom Inventory Report",
@@ -26,6 +71,7 @@ export async function saveInsightsReport(
   type: InsightReportType,
 ) {
   const createdAt = new Date().toISOString();
+  const movementScope = movementQueryScope(store, insights.filters, insights.period.start, insights.period.end);
   const recentMovements = await db.getAllAsync<Pick<InsightMovementRecord, "productName" | "type" | "delta" | "unit" | "reason" | "createdAt">>(
     `SELECT products.name AS productName, products.unit,
        stock_movements.movement_type AS type, stock_movements.delta,
@@ -33,29 +79,21 @@ export async function saveInsightsReport(
      FROM stock_movements
      INNER JOIN products ON products.id = stock_movements.product_id
        AND products.business_id = stock_movements.business_id AND products.store_id = stock_movements.store_id
-     WHERE stock_movements.business_id = ? AND stock_movements.store_id = ?
-       AND stock_movements.created_at >= ? AND stock_movements.created_at < ?
-       AND EXISTS (
-         SELECT 1 FROM stores
-         WHERE stores.id = stock_movements.store_id
-           AND stores.business_id = stock_movements.business_id
-           AND stores.status = 'active'
-       )
+     WHERE ${movementScope.where}
      ORDER BY stock_movements.created_at DESC LIMIT 8`,
-    store.businessId,
-    store.storeId,
-    insights.period.start,
-    insights.period.end,
+    ...movementScope.params,
   );
   const report: InsightReport = {
     id: createId("report"),
     type,
     title: reportTitles[type],
     periodLabel: insights.period.label,
-    storeName: store.storeName,
+    storeName: insights.scopeLabel,
+    filters: insights.filters,
     createdAt,
     summary: {
       health: insights.health,
+      inventory: insights.inventory,
       movement: insights.movement,
       previousMovement: insights.previousMovement,
       revenue: insights.revenue,
@@ -77,6 +115,10 @@ export async function saveInsightsReport(
         createdAt: movementAt,
       })),
       noMovementCount: insights.products.noMovementCount,
+      topSelling: insights.topSelling,
+      salesByDay: insights.salesByDay,
+      salesByWeek: insights.salesByWeek,
+      salesByStore: insights.salesByStore,
     },
   };
   await db.runAsync(
@@ -134,6 +176,7 @@ function csvCell(value: string | number | null | undefined) {
 }
 
 export async function createInsightsCsv(db: InsightsDatabase, store: StoreScope, insights: StoreInsights) {
+  const movementScope = movementQueryScope(store, insights.filters, insights.period.start, insights.period.end);
   const movements = await db.getAllAsync<InsightMovementRecord>(
     `SELECT stock_movements.id,
        products.name AS productName,
@@ -150,29 +193,30 @@ export async function createInsightsCsv(db: InsightsDatabase, store: StoreScope,
      FROM stock_movements
      INNER JOIN products ON products.id = stock_movements.product_id
        AND products.business_id = stock_movements.business_id AND products.store_id = stock_movements.store_id
-     WHERE stock_movements.business_id = ? AND stock_movements.store_id = ?
-       AND stock_movements.created_at >= ? AND stock_movements.created_at < ?
-       AND EXISTS (
-         SELECT 1 FROM stores
-         WHERE stores.id = stock_movements.store_id
-           AND stores.business_id = stock_movements.business_id
-           AND stores.status = 'active'
-       )
+     WHERE ${movementScope.where}
      ORDER BY stock_movements.created_at DESC, stock_movements.id DESC`,
-    store.businessId,
-    store.storeId,
-    insights.period.start,
-    insights.period.end,
+    ...movementScope.params,
   );
   const rows: Array<Array<string | number | null>> = [
-    ["StockPilot Inventory Report", store.storeName],
+    ["StockPilot Inventory Report", insights.scopeLabel],
     ["Period", insights.period.label],
+    ["Store Scope", insights.scopeLabel],
+    ["Category Filter", insights.filters.category ?? "All categories"],
+    ["Product Filter", insights.filters.productQuery || "All products"],
     [],
     ["Inventory Health", "Products"],
     ["Total Products", insights.health.total],
+    ["Total Units", insights.inventory.totalUnits],
     ["Healthy", insights.health.healthy],
     ["Low Stock", insights.health.low],
-    ["Critical", insights.health.critical],
+    ["Out of Stock", insights.health.outOfStock],
+    [],
+    ["Inventory Valuation", "Amount"],
+    ["Inventory Cost Value", insights.inventory.costValue],
+    ["Inventory Selling Value (Theoretical)", insights.inventory.sellingValue],
+    ["Potential Gross Margin (Theoretical)", insights.inventory.potentialGrossMargin],
+    ["Products Missing Cost Price", insights.inventory.missingCostPrices],
+    ["Products Missing Selling Price", insights.inventory.missingSellingPrices],
     [],
     ["Stock Movement", "Quantity"],
     ["Stock In", insights.movement.stockIn],
@@ -180,13 +224,26 @@ export async function createInsightsCsv(db: InsightsDatabase, store: StoreScope,
     ["Adjustments", insights.movement.adjustments],
     ["Net Movement", insights.movement.net],
     [],
-    ["Revenue", "Amount"],
-    ["Revenue", insights.revenue.total],
+    ["Sales Analytics", "Value"],
+    ["Gross Sales", insights.revenue.total],
     ["Completed Sales", insights.revenue.transactions],
-    ["Average Sale", insights.revenue.transactions ? insights.revenue.total / insights.revenue.transactions : 0],
+    ["Units Sold", insights.revenue.unitsSold],
+    ["Average Transaction Value", insights.revenue.averageTransactionValue],
     [],
-    ["Revenue by Month", "Month", "Revenue", "Completed Sales"],
-    ...insights.monthlyRevenue.map((month) => [month.label, month.monthKey, month.revenue, month.transactions]),
+    ["Sales by Day", "Day", "Gross Sales", "Completed Sales", "Units Sold"],
+    ...insights.salesByDay.map((point) => [point.label, point.periodKey, point.revenue, point.transactions, point.unitsSold]),
+    [],
+    ["Sales by Week", "Week", "Gross Sales", "Completed Sales", "Units Sold"],
+    ...insights.salesByWeek.map((point) => [point.label, point.periodKey, point.revenue, point.transactions, point.unitsSold]),
+    [],
+    ["Sales by Month", "Month", "Gross Sales", "Completed Sales", "Units Sold"],
+    ...insights.monthlyRevenue.map((month) => [month.label, month.monthKey, month.revenue, month.transactions, month.unitsSold]),
+    [],
+    ["Sales by Store", "Store", "Gross Sales", "Completed Sales", "Units Sold"],
+    ...insights.salesByStore.map((item) => [item.storeName, item.storeId, item.grossSales, item.transactions, item.unitsSold]),
+    [],
+    ["Top Selling Products", "Units Sold", "Revenue", "Transactions", "Unit"],
+    ...insights.topSelling.map((product) => [product.name, product.unitsSold, product.revenue, product.transactions, product.unit]),
     [],
     ["Stock Movements", "Date", "Product", "SKU", "Type", "Change", "Before", "After", "Reason", "Reference", "Notes"],
     ...movements.map((movement) => [
@@ -211,22 +268,22 @@ export async function createInsightsCsv(db: InsightsDatabase, store: StoreScope,
       category.net,
     ]),
     [],
-    ["Top Moving Products", "Stock Out", "Unit"],
+    ["Top Stock Movement Products", "Stock Out", "Unit"],
     ...insights.products.topMoving.map((product) => [product.name, product.stockOut, product.unit]),
     [],
     ["Low Stock", "Current Stock", "Reorder Level", "Unit"],
     ...insights.products.low.map((product) => [product.name, product.quantity, product.reorderLevel, product.unit]),
     [],
-    ["Critical Stock", "Current Stock", "Reorder Level", "Unit"],
+    ["Out of Stock Products", "Current Stock", "Reorder Level", "Unit"],
     ...insights.products.critical.map((product) => [product.name, product.quantity, product.reorderLevel, product.unit]),
   ];
   return rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
 }
 
 export const insightReportOptions: Array<{ type: InsightReportType; description: string }> = [
-  { type: "monthly", description: "Health, movement, and revenue for the selected period." },
+  { type: "monthly", description: "Health, valuation, movement, and sales for the selected period." },
   { type: "movement", description: "Stock In, Stock Out, and adjustments." },
-  { type: "performance", description: "Fast and slow moving products." },
+  { type: "performance", description: "Top-selling products and stock movement." },
   { type: "low_stock", description: "Products at or below their reorder level." },
   { type: "critical_stock", description: "Products with zero available stock." },
   { type: "slow_moving", description: "Products with the least outgoing movement." },
