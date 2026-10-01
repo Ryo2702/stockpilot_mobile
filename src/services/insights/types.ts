@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
 import type { CatalogCategory } from "@/domain/catalog";
+import type { CurrencySettings } from "@/domain/currency";
 import type { ProductStockStatus } from "@/domain/product";
 import type { NamedStoreScope } from "@/domain/store";
 
@@ -43,6 +44,11 @@ export type InsightMovementSummary = {
   stockOut: number;
   adjustments: number;
   net: number;
+};
+
+export type InsightRevenueSummary = {
+  total: number;
+  transactions: number;
 };
 
 export type InsightProduct = {
@@ -91,6 +97,13 @@ export type MonthlyMovement = {
   net: number;
 };
 
+export type MonthlyRevenue = {
+  monthKey: string;
+  label: string;
+  revenue: number;
+  transactions: number;
+};
+
 export type MonthlyHealthSnapshot = InsightHealth & {
   monthKey: string;
   capturedAt: string;
@@ -123,12 +136,15 @@ export type InsightPeriodInfo = {
 };
 
 export type StoreInsights = {
+  currency: CurrencySettings;
   period: InsightPeriodInfo;
   health: InsightHealth;
   hasMovementHistory: boolean;
   previousMonthHealth: MonthlyHealthSnapshot | null;
   movement: InsightMovementSummary;
   previousMovement: InsightMovementSummary;
+  revenue: InsightRevenueSummary;
+  previousRevenue: InsightRevenueSummary;
   products: {
     topMoving: InsightProduct[];
     slowMoving: InsightProduct[];
@@ -141,6 +157,7 @@ export type StoreInsights = {
   };
   categories: InsightCategory[];
   monthlyMovement: MonthlyMovement[];
+  monthlyRevenue: MonthlyRevenue[];
   monthlyHealth: MonthlyHealthSnapshot[];
 };
 
@@ -155,6 +172,8 @@ export type InsightReport = {
     health: InsightHealth;
     movement: InsightMovementSummary;
     previousMovement: InsightMovementSummary;
+    revenue?: InsightRevenueSummary;
+    previousRevenue?: InsightRevenueSummary;
     previousMonthHealth: InsightHealth | null;
     comparisonLabel: string;
     topMoving: Array<Pick<InsightProduct, "name" | "stockOut" | "unit">>;

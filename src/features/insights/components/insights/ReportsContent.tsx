@@ -1,0 +1,15 @@
+import { CalendarDays, ChevronRight, Download, FileText, RefreshCw } from "lucide-react-native";
+import { Pressable, Text, View } from "react-native";
+
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { getInsightReportTitle, insightReportOptions, type InsightReport, type InsightReportType } from "@/services/insights";
+import { useTheme, useThemeStyles } from "@/theme/ThemeProvider";
+
+import { createInsightsStyles } from "./insights.styles";
+import { EmptyCopy } from "./InsightBasics";
+
+export default function ReportsContent({ reports, onGenerate, onSelectReport, onExport, generating }: { reports: InsightReport[]; onGenerate: (type: InsightReportType) => void; onSelectReport: (report: InsightReport) => void; onExport: () => void; generating: boolean }) {
+  const styles = useThemeStyles(createInsightsStyles); const colors = useTheme().colors;
+  return <><Card style={styles.card}><View style={styles.row}><View style={{ flex: 1, gap: 2 }}><Text style={styles.sectionTitle}>Reports</Text><Text style={styles.sectionSubtitle}>Create store-scoped reports from inventory and completed POS sales.</Text></View><FileText size={20} color={colors.primary[600]} /></View><Button title="Export selected period as CSV" icon={Download} onPress={onExport} /><Text style={styles.caption}>CSV includes revenue, summary, categories, movements, and low / critical stock lists.</Text></Card><Card style={styles.card}><Text style={styles.sectionTitle}>Report types</Text>{insightReportOptions.map(({ type, description }) => <Pressable key={type} accessibilityRole="button" onPress={() => onGenerate(type)} style={styles.reportRow}><View style={styles.reportIcon}><FileText size={18} color={colors.primary[600]} /></View><View style={styles.reportCopy}><Text style={styles.reportTitle}>{getInsightReportTitle(type)}</Text><Text style={styles.reportDescription}>{description}</Text></View>{generating ? <RefreshCw size={17} color={colors.text.muted} /> : <ChevronRight size={18} color={colors.text.muted} />}</Pressable>)}</Card><Card style={styles.card}><View style={styles.row}><View style={{ flex: 1, gap: 2 }}><Text style={styles.sectionTitle}>Report history</Text><Text style={styles.sectionSubtitle}>Saved on this device for this store.</Text></View><CalendarDays size={18} color={colors.text.muted} /></View>{reports.slice(0, 5).map((report) => <Pressable key={report.id} onPress={() => onSelectReport(report)} style={styles.reportRow}><View style={styles.reportIcon}><FileText size={17} color={colors.primary[600]} /></View><View style={styles.reportCopy}><Text style={styles.reportTitle}>{report.title}</Text><Text style={styles.reportDescription}>{report.periodLabel} · {new Date(report.createdAt).toLocaleDateString()}</Text></View><ChevronRight size={18} color={colors.text.muted} /></Pressable>)}{!reports.length ? <EmptyCopy title="No saved reports" copy="Generated reports will appear here and remain stored locally for this store." /> : null}</Card></>;
+}

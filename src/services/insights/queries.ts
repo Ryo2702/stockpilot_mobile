@@ -1,4 +1,5 @@
 import type { CatalogCategory } from "@/domain/catalog";
+import type { CurrencySettings } from "@/domain/currency";
 import { getProductStockStatus } from "@/domain/product";
 import type {
   InsightsDatabase,
@@ -210,6 +211,22 @@ async function getHealth(db: InsightsDatabase, store: StoreScope) {
   )) ?? { total: 0, healthy: 0, low: 0, critical: 0 };
 }
 
+async function getStoreCurrency(db: InsightsDatabase, store: StoreScope): Promise<CurrencySettings> {
+  const row = await db.getFirstAsync<CurrencySettings>(
+    `SELECT
+       currency_mode AS currencyMode,
+       currency_code AS currencyCode,
+       custom_currency_symbol AS customCurrencySymbol,
+       currency_decimal_places AS currencyDecimalPlaces
+     FROM stores
+     WHERE id = ? AND business_id = ? AND status = 'active'
+     LIMIT 1`,
+    store.storeId,
+    store.businessId,
+  );
+  return row ?? { currencyMode: "iso", currencyCode: "PHP", currencyDecimalPlaces: 2 };
+}
+
 async function getMovementSummary(db: InsightsDatabase, store: StoreScope, range: DateRange) {
   const query = movementSql(store, range);
   return (await db.getFirstAsync<InsightMovementSummary>(query.sql, ...query.params)) ?? {
@@ -217,6 +234,30 @@ async function getMovementSummary(db: InsightsDatabase, store: StoreScope, range
     stockOut: 0,
     adjustments: 0,
     net: 0,
+  };
+}
+
+async function getRevenueSummary(db: InsightsDatabase, store: StoreScope, range: DateRange) {
+  const row = await db.getFirstAsync<{ total: number | null; transactions: number | null }>(
+    `SELECT
+       COALESCE(SUM(total), 0) AS total,
+       COUNT(id) AS transactions
+     FROM pos_transactions
+     WHERE business_id = ? AND store_id = ? AND created_at >= ? AND created_at < ?
+       AND EXISTS (
+         SELECT 1 FROM stores
+         WHERE stores.id = pos_transactions.store_id
+           AND stores.business_id = pos_transactions.business_id
+           AND stores.status = 'active'
+       )`,
+    store.businessId,
+    store.storeId,
+    range.start.toISOString(),
+    range.end.toISOString(),
+  );
+  return {
+    total: Number(row?.total ?? 0),
+    transactions: Number(row?.transactions ?? 0),
   };
 }
 
@@ -388,6 +429,46 @@ async function getMonthlyMovement(db: InsightsDatabase, store: StoreScope, now: 
   });
 }
 
+async function getMonthlyRevenue(db: InsightsDatabase, store: StoreScope, now: Date) {
+  const firstMonth = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const rows = await db.getAllAsync<{
+    monthKey: string;
+    revenue: number;
+    transactions: number;
+  }>(
+    `SELECT
+       strftime('%Y-%m', created_at, 'localtime') AS monthKey,
+       COALESCE(SUM(total), 0) AS revenue,
+       COUNT(id) AS transactions
+     FROM pos_transactions
+     WHERE business_id = ? AND store_id = ? AND created_at >= ? AND created_at < ?
+       AND EXISTS (
+         SELECT 1 FROM stores
+         WHERE stores.id = pos_transactions.store_id
+           AND stores.business_id = pos_transactions.business_id
+           AND stores.status = 'active'
+       )
+     GROUP BY monthKey
+     ORDER BY monthKey ASC`,
+    store.businessId,
+    store.storeId,
+    firstMonth.toISOString(),
+    now.toISOString(),
+  );
+  const values = new Map(rows.map((row) => [row.monthKey, row]));
+  return Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
+    const key = monthKey(date);
+    const value = values.get(key);
+    return {
+      monthKey: key,
+      label: monthLabel(date),
+      revenue: Number(value?.revenue ?? 0),
+      transactions: Number(value?.transactions ?? 0),
+    };
+  });
+}
+
 async function getMonthlyCategoryMovement(db: InsightsDatabase, store: StoreScope, now: Date) {
   const firstMonth = new Date(now.getFullYear(), now.getMonth() - 5, 1);
   const end = now;
@@ -518,7 +599,8 @@ export async function getStoreInsights(
 ) {
   const now = new Date();
   const range = getDateRange(period, customRange, now);
-  const [health, movement, previousMovement, allProducts, monthlyMovement, monthlyCategoryMovement] = await Promise.all([
+  const [currency, health, movement, previousMovement, revenue, previousRevenue, allProducts, monthlyMovement, monthlyRevenue, monthlyCategoryMovement] = await Promise.all([
+    getStoreCurrency(db, store),
     getHealth(db, store),
     getMovementSummary(db, store, range),
     getMovementSummary(db, store, {
@@ -526,8 +608,15 @@ export async function getStoreInsights(
       start: range.previousStart,
       end: range.previousEnd,
     }),
+    getRevenueSummary(db, store, range),
+    getRevenueSummary(db, store, {
+      ...range,
+      start: range.previousStart,
+      end: range.previousEnd,
+    }),
     getProducts(db, store, range, now),
     getMonthlyMovement(db, store, now),
+    getMonthlyRevenue(db, store, now),
     getMonthlyCategoryMovement(db, store, now),
   ]);
 
@@ -552,12 +641,15 @@ export async function getStoreInsights(
   };
 
   return {
+    currency,
     period: periodInfo,
     health,
     hasMovementHistory: allProducts.some((product) => product.lastMovementAt !== null),
     previousMonthHealth: monthlyHealth.find((snapshot) => snapshot.monthKey === previousMonthKey) ?? null,
     movement,
     previousMovement,
+    revenue,
+    previousRevenue,
     products: {
       topMoving,
       slowMoving,
@@ -576,6 +668,7 @@ export async function getStoreInsights(
     },
     categories: getCategories(allProducts, monthlyCategoryMovement),
     monthlyMovement,
+    monthlyRevenue,
     monthlyHealth,
   } satisfies StoreInsights;
 }

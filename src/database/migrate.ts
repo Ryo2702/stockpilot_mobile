@@ -77,8 +77,15 @@ export async function migrate(db: DatabaseExecutor) {
     "SELECT version FROM schema_migrations WHERE version = ?",
     FRESH_RESET_VERSION,
   );
+  const hasNumberedMigration = await db.getFirstAsync<{ version: number }>(
+    "SELECT version FROM schema_migrations WHERE version > ? LIMIT 1",
+    FRESH_RESET_VERSION,
+  );
+  const hasExistingSchema = await db.getFirstAsync<{ name: string }>(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name <> 'schema_migrations' LIMIT 1",
+  );
 
-  if (!resetApplied) {
+  if (!resetApplied && !hasNumberedMigration && !hasExistingSchema) {
     await migrateFresh(db);
     return;
   }

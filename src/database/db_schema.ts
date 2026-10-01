@@ -2,6 +2,7 @@ import { businessesSchema } from "./schema/businesses";
 import { insightSnapshotsSchema } from "./schema/insight_snapshots";
 import { inventorySchema } from "./schema/inventory";
 import { productsSchema } from "./schema/products";
+import { posTransactionsSchema } from "./schema/pos_transactions";
 import { schemaMigrationsSchema } from "./schema/schema_migrations";
 import { settingsSchema } from "./schema/settings";
 import { stockMovementsSchema } from "./schema/stock_movements";
@@ -15,6 +16,7 @@ export const DB_TABLES_SCHEMA = [
   productsSchema,
   inventorySchema,
   stockMovementsSchema,
+  posTransactionsSchema,
   settingsSchema,
   insightSnapshotsSchema,
 ].join("\n\n");

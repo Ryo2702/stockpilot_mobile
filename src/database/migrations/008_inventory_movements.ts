@@ -1,4 +1,11 @@
 import type { DatabaseExecutor, Migration } from "../migrate";
+import { stockMovementsSchema } from "../schema/stock_movements";
+
+async function hasTable(db: DatabaseExecutor) {
+  return Boolean(await db.getFirstAsync<{ name: string }>(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'stock_movements'",
+  ));
+}
 
 async function getColumns(db: DatabaseExecutor) {
   return new Set((await db.getAllAsync<{ name: string }>("PRAGMA table_info(stock_movements)")).map(({ name }) => name));
@@ -15,6 +22,10 @@ export const inventoryMovementsMigration: Migration = {
     return columns.has("movement_type") && columns.has("reference") && Boolean(index);
   },
   async up(db) {
+    if (!(await hasTable(db))) {
+      await db.execAsync(stockMovementsSchema);
+      return;
+    }
     const columns = await getColumns(db);
     if (!columns.has("movement_type")) {
       await db.execAsync(`

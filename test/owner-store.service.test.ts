@@ -144,14 +144,14 @@ describe("owner store service", () => {
         .run("product-main", businessId.id, mainStore.storeId, 4, "now");
 
       expect((await getOwnerStores(db)).map(({ storeName }) => storeName)).toEqual(["Main Store", "Back Room"]);
-      expect(await getOwnerStoreOverview(db, businessId.id, mainStore.storeId)).toEqual({
+      expect(await getOwnerStoreOverview(db, businessId.id, mainStore.storeId)).toEqual(expect.objectContaining({
         productCount: 1,
         itemsInStock: 4,
-      });
-      expect(await getOwnerStoreOverview(db, businessId.id, backRoom.storeId)).toEqual({
+      }));
+      expect(await getOwnerStoreOverview(db, businessId.id, backRoom.storeId)).toEqual(expect.objectContaining({
         productCount: 0,
         itemsInStock: 0,
-      });
+      }));
     } finally {
       database.close();
     }

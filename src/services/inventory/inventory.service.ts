@@ -40,6 +40,7 @@ import {
 import createId from "@/utils/createId";
 
 type InventoryExecutor = Pick<SQLiteDatabase, "getAllAsync" | "getFirstAsync" | "runAsync">;
+export type InventoryTransactionExecutor = InventoryExecutor;
 type InventoryDatabase = InventoryExecutor &
   Pick<SQLiteDatabase, "withTransactionAsync" | "withExclusiveTransactionAsync">;
 
@@ -166,6 +167,35 @@ export async function applyStockChange(
     await insertInventoryMovement(tx, movement, store);
     return nextQuantity;
   });
+}
+
+export async function deductInventoryForSale(
+  db: InventoryTransactionExecutor,
+  store: StoreScope,
+  productId: string,
+  quantity: number,
+  transactionId: string,
+  now: string,
+) {
+  const current = await getActiveInventoryQuantity(db, store, productId);
+  if (!current) throw new InventoryItemNotFoundError();
+  if (quantity > current.quantity) throw new InsufficientStockError(current.quantity);
+
+  const nextQuantity = current.quantity - quantity;
+  await updateInventoryQuantity(db, store, productId, nextQuantity, now);
+  await insertInventoryMovement(db, {
+    id: createId("movement"),
+    productId,
+    type: "stock_out",
+    delta: -quantity,
+    quantityBefore: current.quantity,
+    quantityAfter: nextQuantity,
+    reason: "sale",
+    reference: transactionId,
+    note: null,
+    createdAt: now,
+  }, store);
+  return nextQuantity;
 }
 
 function isInventorySort(value: unknown): value is InventorySort {
