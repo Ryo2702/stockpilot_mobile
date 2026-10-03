@@ -24,6 +24,7 @@ import {
   saveAppRememberPin,
   saveAppSecurityRecovery,
   saveActiveStoreSelection,
+  resetAppSecurity,
   verifyAppSecurityRecovery,
   type AppSecuritySettings,
   type SecurityRecoveryAnswer,
@@ -103,7 +104,7 @@ export default function HomeScreen() {
           setStoredPin(pin);
           setSecuritySettings(nextSecuritySettings);
           setFingerprintAvailable(nextFingerprintAvailable);
-          setAuthState(stores.length ? (pin ? "locked" : "setup") : "unlocked");
+          setAuthState(pin ? "locked" : stores.length ? "setup" : "unlocked");
         }
       })
       .catch(() => {
@@ -181,6 +182,11 @@ export default function HomeScreen() {
       (store) =>
         store.storeId !== ownerStore.storeId || store.businessId !== ownerStore.businessId,
     );
+    if (!remainingStores.length) {
+      await resetAppSecurity(db);
+      setStoredPin(null);
+      setSecuritySettings(defaultSecuritySettings);
+    }
     void saveActiveStoreSelection(
       db,
       remainingStores[0]
@@ -190,6 +196,7 @@ export default function HomeScreen() {
     setOwnerStores(remainingStores);
     setOwnerStore(remainingStores[0] ?? null);
     setActiveSection("dashboard");
+    if (!remainingStores.length) setAuthState("unlocked");
   };
 
   const updateOwnerName = async (businessId: string, name: string) => {

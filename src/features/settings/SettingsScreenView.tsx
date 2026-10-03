@@ -173,7 +173,11 @@ export default function SettingsScreenView({
         </ScrollView>
         <BottomNavigation activeKey={null} onChange={onNavigate} />
       </View>
-      <SettingsDialogs ownerStore={ownerStore} settings={settings} />
+      <SettingsDialogs
+        ownerStore={ownerStore}
+        ownerStores={ownerStores}
+        settings={settings}
+      />
     </SafeAreaView>
   );
 }

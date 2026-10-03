@@ -200,6 +200,20 @@ export async function saveAppPin(db: SettingsDatabase, pin: string) {
   await writeSetting(db, "app_pin", pin);
 }
 
+export async function resetAppSecurity(db: SettingsDatabase) {
+  if (await canUseSecureStore()) {
+    await Promise.all([
+      SecureStore.deleteItemAsync(APP_PIN_KEY),
+      SecureStore.deleteItemAsync(APP_SECURITY_KEY),
+    ]);
+    return;
+  }
+  await Promise.all([
+    db.runAsync("DELETE FROM settings WHERE key = ?", "app_pin"),
+    db.runAsync("DELETE FROM settings WHERE key = ?", "app_security"),
+  ]);
+}
+
 export async function getAppSecuritySettings(db: SettingsDatabase): Promise<AppSecuritySettings> {
   return publicSecuritySettings(await readStoredSecuritySettings(db));
 }

@@ -10,9 +10,11 @@ import { createSettingsStyles } from "./settings.styles";
 
 export default function SettingsDialogs({
   ownerStore,
+  ownerStores,
   settings,
 }: {
   ownerStore: OwnerStore;
+  ownerStores: OwnerStore[];
   settings: SettingsController;
 }) {
   const styles = useThemeStyles(createSettingsStyles);
@@ -31,6 +33,11 @@ export default function SettingsDialogs({
     deleteStoreError,
     confirmDeleteStore,
   } = settings;
+  const businessStores = ownerStores.filter(
+    (store) => store.businessId === ownerStore.businessId,
+  );
+  const isMainStore = businessStores[0]?.storeId === ownerStore.storeId;
+  const isOnlyStore = businessStores.length === 1;
 
   return (
     <>
@@ -124,6 +131,16 @@ export default function SettingsDialogs({
               This permanently deletes the store, its products, stock levels,
               and movement history.
             </Text>
+            {isMainStore ? (
+              <View accessibilityRole="alert" style={styles.warningNote}>
+                <Text style={styles.warningTitle}>Main store warning</Text>
+                <Text style={styles.warningText}>
+                  {isOnlyStore
+                    ? "Deleting your main store permanently removes all store data and automatically resets your PIN and recovery settings. Create new security credentials when you set up another store."
+                    : "This is your main store. Deleting it removes its data, but your other stores will remain available."}
+                </Text>
+              </View>
+            ) : null}
             {deleteStoreError ? (
               <Text accessibilityRole="alert" style={styles.error}>
                 {deleteStoreError}

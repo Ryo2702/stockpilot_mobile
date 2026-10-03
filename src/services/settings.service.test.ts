@@ -1,4 +1,5 @@
 jest.mock("expo-secure-store", () => ({
+  deleteItemAsync: async () => undefined,
   getItemAsync: async () => null,
   isAvailableAsync: async () => false,
   setItemAsync: async () => undefined,
@@ -19,8 +20,11 @@ jest.mock("expo-local-authentication", () => ({
 }));
 
 import {
+  getAppPin,
   getAppSecuritySettings,
+  resetAppSecurity,
   saveAppRememberPin,
+  saveAppPin,
   saveAppSecurityRecovery,
   verifyAppSecurityRecovery,
 } from "./settings.service";
@@ -32,8 +36,12 @@ function createSettingsDatabase() {
       getFirstAsync: async <T,>(_query: string, key: string) => (
         values.has(key) ? { valueJson: values.get(key)! } as T : null
       ),
-      runAsync: async (_query: string, key: string, valueJson: string) => {
-        values.set(key, valueJson);
+      runAsync: async (query: string, key: string, valueJson?: string) => {
+        if (query.startsWith("DELETE")) {
+          values.delete(key);
+        } else if (valueJson !== undefined) {
+          values.set(key, valueJson);
+        }
       },
     },
     values,
@@ -69,6 +77,26 @@ describe("security recovery", () => {
       rememberPin: true,
       recoveryQuestions: expect.arrayContaining([expect.objectContaining({ questionId: "favorite-food" })]),
     }));
+  });
+
+  it("clears the PIN and recovery settings when security is reset", async () => {
+    const { database, values } = createSettingsDatabase();
+    const settingsDatabase = database as unknown as SQLiteDatabase;
+
+    await saveAppPin(settingsDatabase, "1234");
+    await saveAppRememberPin(settingsDatabase, true);
+    expect(await getAppPin(settingsDatabase)).toBe("1234");
+
+    await resetAppSecurity(settingsDatabase);
+
+    await expect(getAppPin(settingsDatabase)).resolves.toBeNull();
+    await expect(getAppSecuritySettings(settingsDatabase)).resolves.toEqual({
+      fingerprintEnabled: false,
+      rememberPin: false,
+      recoveryQuestions: [],
+    });
+    expect(values.has("app_pin")).toBe(false);
+    expect(values.has("app_security")).toBe(false);
   });
 });
 import { describe, expect, it, jest } from "@jest/globals";
