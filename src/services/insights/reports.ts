@@ -8,6 +8,7 @@ import type {
   StoreScope,
 } from "./types";
 import createId from "@/utils/createId";
+import * as XLSX from "xlsx";
 
 function movementQueryScope(store: StoreScope, filters: InsightFilters, start: string, end: string) {
   const params: string[] = [store.businessId];
@@ -169,13 +170,12 @@ export async function getInsightReportHistory(db: InsightsDatabase, store: Store
   return reports;
 }
 
-function csvCell(value: string | number | null | undefined) {
-  let text = String(value ?? "");
-  if (typeof value === "string" && /^[=+\-@]/.test(text)) text = `'${text}`;
-  return `"${text.replaceAll('"', '""')}"`;
+function excelCell(value: string | number | null | undefined) {
+  if (typeof value === "string" && /^[=+\-@]/.test(value)) return `'${value}`;
+  return value ?? "";
 }
 
-export async function createInsightsCsv(db: InsightsDatabase, store: StoreScope, insights: StoreInsights) {
+export async function createInsightsExcel(db: InsightsDatabase, store: StoreScope, insights: StoreInsights) {
   const movementScope = movementQueryScope(store, insights.filters, insights.period.start, insights.period.end);
   const movements = await db.getAllAsync<InsightMovementRecord>(
     `SELECT stock_movements.id,
@@ -277,7 +277,10 @@ export async function createInsightsCsv(db: InsightsDatabase, store: StoreScope,
     ["Out of Stock Products", "Current Stock", "Reorder Level", "Unit"],
     ...insights.products.critical.map((product) => [product.name, product.quantity, product.reorderLevel, product.unit]),
   ];
-  return rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
+  const worksheet = XLSX.utils.aoa_to_sheet(rows.map((row) => row.map(excelCell)));
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+  return new Uint8Array(XLSX.write(workbook, { bookType: "xlsx", type: "array", compression: true }));
 }
 
 export const insightReportOptions: Array<{ type: InsightReportType; description: string }> = [

@@ -16,7 +16,7 @@ export default function usePosReceipt({ db, ownerStore, onError, onHistoryError 
     if (fileUri) return fileUri;
     setLoading(true);
     try { const uri = await createPosReceiptPdf(receipt); setFileUri(uri); return uri; }
-    catch { onError("Couldn't generate the receipt PDF."); return null; }
+    catch (error) { onError(error instanceof Error ? error.message : "Couldn't generate the receipt PDF."); return null; }
     finally { setLoading(false); }
   };
   const openTransaction = async (id: string) => {

@@ -103,6 +103,7 @@ export default function CatalogFormModal({
   const [form, setForm] = useState(() => createDraft(product, categories, defaultUnit, defaultReorderLevel));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
   const touchedDefaults = useRef({ unit: false, reorderLevel: false });
 
   useEffect(() => {
@@ -168,6 +169,7 @@ export default function CatalogFormModal({
         next[String(issue.path[0] ?? "form")] = issue.message;
       }
       setErrors(next);
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
       return;
     }
 
@@ -176,9 +178,11 @@ export default function CatalogFormModal({
     try {
       await onSave(result.data);
     } catch (error) {
-      setErrors({
+      const next = {
         form: error instanceof CatalogError ? error.message : "Couldn't save this item.",
-      });
+      };
+      setErrors(next);
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
     } finally {
       setSaving(false);
     }
@@ -202,6 +206,7 @@ export default function CatalogFormModal({
   const criticalLevelOptions = [...criticalLevels]
     .sort((a, b) => a - b)
     .map((level) => ({ value: String(level), label: `${level} ${form.unit || "ea"}` }));
+  const validationMessage = errors.form ?? (Object.values(errors).filter(Boolean).join("\n") || null);
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={close}>
@@ -217,11 +222,17 @@ export default function CatalogFormModal({
           <Text style={styles.title}>{product ? "Edit Item" : "Add Item"}</Text>
         </View>
         <ScrollView
+          ref={scrollRef}
           style={styles.scroll}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {validationMessage ? (
+            <Text accessibilityRole="alert" style={styles.validationSummary}>
+              {validationMessage}
+            </Text>
+          ) : null}
           <TextField
             label="Product Name"
             required
@@ -340,11 +351,6 @@ export default function CatalogFormModal({
               ? "Stock quantity is managed through Inventory."
               : "Initial stock is recorded as a stock movement."}
           </Text>
-          {errors.form ? (
-            <Text accessibilityRole="alert" style={styles.error}>
-              {errors.form}
-            </Text>
-          ) : null}
           <Button
             title={product ? "Save Changes" : "Save Item"}
             loading={saving}
@@ -589,6 +595,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   error: {
     ...typography.caption,
     color: colors.semantic.danger,
+  },
+  validationSummary: {
+    ...typography.bodySmall,
+    padding: spacing[3],
+    borderWidth: 1,
+    borderColor: colors.semantic.danger,
+    borderRadius: radii.md,
+    color: colors.semantic.danger,
+    backgroundColor: colors.background.surface,
   },
   saveButton: {
     width: "100%",

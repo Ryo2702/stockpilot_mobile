@@ -5,7 +5,7 @@ import { insightPeriods, type InsightPeriod } from "@/services/insights";
 export const periodLabels: Record<InsightPeriod, string> = { today: "Today", "7_days": "7 Days", "30_days": "30 Days", this_month: "This Month", last_month: "Last Month", "3_months": "3 Months", "6_months": "6 Months", this_year: "This Year", custom: "Custom Range" };
 export const reportActionRows = [
   { id: "generate", label: "Generate Report", icon: FileText },
-  { id: "export", label: "Export Report (CSV)", icon: Download },
+  { id: "export", label: "Export Report (Excel)", icon: Download },
   { id: "history", label: "Report History", icon: CalendarDays },
 ] as const;
 

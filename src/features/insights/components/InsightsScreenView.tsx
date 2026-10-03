@@ -1,4 +1,5 @@
-import { Directory } from "expo-file-system";
+import { File, Paths } from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import { MoreVertical, Package, RefreshCw } from "lucide-react-native";
 import { useState, type ReactNode } from "react";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
@@ -31,7 +32,30 @@ export default function InsightsScreenView({ ownerStore, ownerStores, onNavigate
   const showMessage = (value: string) => setMessage(value);
   const exportReport = async () => {
     if (!insights.data) return;
-    try { const csv = await insights.createCsv(); const slug = ownerStore.storeName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); const fileName = `stockpilot-${slug}-${new Date().toISOString().slice(0, 10)}.csv`; if (Platform.OS === "web") { const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); const link = document.createElement("a"); link.href = url; link.download = fileName; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); } else await (await Directory.pickDirectoryAsync()).createFile(fileName, "text/csv").write(csv); showMessage(`CSV report saved for ${ownerStore.storeName}.`); } catch (error) { showMessage(error instanceof Error ? `Report couldn't be exported. ${error.message}` : "Report couldn't be exported. Try again."); }
+    try {
+      const bytes = await insights.createExcel();
+      const slug = ownerStore.storeName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const fileName = `stockpilot-${slug}-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      if (Platform.OS === "web") {
+        const url = URL.createObjectURL(new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } else {
+        if (!(await Sharing.isAvailableAsync())) throw new Error("File sharing isn't available on this device.");
+        const file = new File(Paths.cache, fileName);
+        file.create({ overwrite: true });
+        file.write(bytes);
+        await Sharing.shareAsync(file.uri, {
+          dialogTitle: "Save or share Excel report",
+          mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          UTI: "org.openxmlformats.spreadsheetml.sheet",
+        });
+      }
+      showMessage(`Excel report is ready to save for ${ownerStore.storeName}.`);
+    } catch (error) { showMessage(error instanceof Error ? `Report couldn't be exported. ${error.message}` : "Report couldn't be exported. Try again."); }
   };
   const generateReport = async (type: InsightReportType) => { setGenerating(true); try { setSelectedReport(await insights.generateReport(type)); showMessage("Report saved to this store's local history."); } catch (error) { showMessage(error instanceof Error ? error.message : "Report couldn't be generated. Try again."); } finally { setGenerating(false); } };
   const moreAction = (action: "generate" | "export" | "history") => { setMoreVisible(false); if (action === "generate") { setActiveTab("reports"); void generateReport("monthly"); } else if (action === "export") void exportReport(); else setActiveTab("reports"); };

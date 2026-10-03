@@ -6,7 +6,9 @@ import type { ThemeColors } from "@/theme/tokens";
 export const createInventoryImportStyles = (colors: ThemeColors) => StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background.app },
   screen: { flex: 1 },
+  scroll: { flex: 1 },
   content: {
+    flexGrow: 1,
     gap: spacing[4],
     width: "100%",
     maxWidth: 760,

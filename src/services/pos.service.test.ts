@@ -1,10 +1,11 @@
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import { describe, expect, it } from "@jest/globals";
+import * as XLSX from "xlsx";
 
 import { InsufficientStockError } from "@/domain/inventory.errors";
 import type { OwnerStore } from "@/services/owner-store.service";
 import { migrate, type DatabaseExecutor } from "@/database/migrate";
-import { createInsightsCsv } from "@/services/insights/reports";
+import { createInsightsExcel } from "@/services/insights/reports";
 import { getStoreInsights } from "@/services/insights/queries";
 
 import { checkoutPosTransaction, listPosTransactions } from "./pos.service";
@@ -204,10 +205,12 @@ describe("checkoutPosTransaction", () => {
         expect.objectContaining({ storeId: "store-1", grossSales: 140 }),
         expect.objectContaining({ storeId: "store-2", grossSales: 30 }),
       ]));
-      const csv = await createInsightsCsv(db, store, allStoreInsights);
-      expect(csv).toContain("Inventory Retail Value");
-      expect(csv).toContain("Sales by Day");
-      expect(csv).toContain("Top Selling Products");
+      const excel = await createInsightsExcel(db, store, allStoreInsights);
+      const workbook = XLSX.read(excel, { type: "array" });
+      const report = XLSX.utils.sheet_to_csv(workbook.Sheets.Report);
+      expect(report).toContain("Inventory Retail Value");
+      expect(report).toContain("Sales by Day");
+      expect(report).toContain("Top Selling Products");
     } finally {
       database.close();
     }

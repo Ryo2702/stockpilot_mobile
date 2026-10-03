@@ -7,7 +7,7 @@ import type { OwnerStore } from "@/services/owner-store.service";
 import {
   getInsightReportHistory,
   getStoreInsights,
-  createInsightsCsv,
+  createInsightsExcel,
   defaultInsightFilters,
   saveInsightsReport,
   type InsightCustomRange,
@@ -76,9 +76,9 @@ export default function useInsightsScreen(ownerStore: OwnerStore) {
     return report;
   }, [data, db, ownerStore]);
 
-  const createCsv = useCallback(async () => {
+  const createExcel = useCallback(async () => {
     if (!data) throw new Error("Insights are still loading.");
-    return createInsightsCsv(db, ownerStore, data);
+    return createInsightsExcel(db, ownerStore, data);
   }, [data, db, ownerStore]);
 
   return {
@@ -93,6 +93,6 @@ export default function useInsightsScreen(ownerStore: OwnerStore) {
     error,
     reload,
     generateReport,
-    createCsv,
+    createExcel,
   };
 }

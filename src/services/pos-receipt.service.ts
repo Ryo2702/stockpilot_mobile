@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 import * as Print from "expo-print";
-import { Directory, File, Paths } from "expo-file-system";
+import * as Sharing from "expo-sharing";
 
 import { formatCurrency } from "@/domain/currency";
 import type { PosTransaction } from "@/domain/pos";
@@ -87,13 +87,14 @@ export async function createPosReceiptPdf(transaction: PosTransaction) {
     return null;
   }
 
-  const { uri: temporaryUri } = await Print.printToFileAsync({ html });
-  const safeReceiptNumber = transaction.receiptNumber.replace(/[^a-z0-9_-]/gi, "-");
-  const fileName = `receipt-${safeReceiptNumber}.pdf`;
-
-  const directory = new Directory(Paths.document, "StockPilot");
-  directory.create({ intermediates: true, idempotent: true });
-  const target = new File(directory, fileName);
-  await new File(temporaryUri).copy(target, { overwrite: true });
-  return target.uri;
+  const { uri } = await Print.printToFileAsync({ html });
+  if (!(await Sharing.isAvailableAsync())) {
+    throw new Error("File sharing isn't available on this device.");
+  }
+  await Sharing.shareAsync(uri, {
+    dialogTitle: "Save or share receipt PDF",
+    mimeType: "application/pdf",
+    UTI: ".pdf",
+  });
+  return uri;
 }

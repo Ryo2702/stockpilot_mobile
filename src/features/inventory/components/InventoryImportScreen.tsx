@@ -52,7 +52,7 @@ export default function InventoryImportScreen({
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <View style={styles.screen}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <IconButton icon={ArrowLeft} label="Back to inventory" tone="primary" disabled={isBusy} onPress={onBack} />
             <View style={styles.headerCopy}>
