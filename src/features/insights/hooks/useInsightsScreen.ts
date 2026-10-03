@@ -66,7 +66,6 @@ export default function useInsightsScreen(ownerStore: OwnerStore) {
   const reload = useCallback(() => setAttempt((value) => value + 1), []);
 
   const updateFilters = useCallback((next: Partial<InsightFilters>) => {
-    setData(null);
     setFilters((current) => ({ ...current, ...next }));
   }, []);
 

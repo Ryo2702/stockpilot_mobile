@@ -11,15 +11,16 @@ export default function usePosCart({ db, ownerStore, onError, onComplete }: { db
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   useEffect(() => setCart([]), [ownerStore.businessId, ownerStore.storeId]);
 
-  const addProduct = (product: PosProduct) => {
+  const addProduct = (product: PosProduct, requestedQuantity = 1) => {
     onError("");
     const unitPrice = product.currentPrice;
     if (unitPrice === null) return onError("Set a selling price before adding this product.");
     if (product.quantity <= 0) return onError("This product is out of stock.");
+    if (!Number.isSafeInteger(requestedQuantity) || requestedQuantity <= 0) return onError("Enter a whole quantity greater than zero.");
     const existing = cart.find((item) => item.id === product.id);
-    if (existing && existing.quantity >= existing.availableQuantity) return onError(`Only ${existing.availableQuantity} units are available.`);
-    const quantity = (existing?.quantity ?? 0) + 1;
-    setCart((items) => existing ? items.map((item) => item.id === product.id ? { ...item, availableQuantity: product.quantity, quantity, lineTotal: unitPrice * quantity } : item) : [...items, { ...product, availableQuantity: product.quantity, quantity: 1, lineTotal: unitPrice }]);
+    const quantity = (existing?.quantity ?? 0) + requestedQuantity;
+    if (quantity > product.quantity) return onError(`Only ${product.quantity} units are available.`);
+    setCart((items) => existing ? items.map((item) => item.id === product.id ? { ...item, availableQuantity: product.quantity, quantity, lineTotal: unitPrice * quantity } : item) : [...items, { ...product, availableQuantity: product.quantity, quantity: requestedQuantity, lineTotal: unitPrice * requestedQuantity }]);
   };
 
   const changeQuantity = (productId: string, delta: number) => {
