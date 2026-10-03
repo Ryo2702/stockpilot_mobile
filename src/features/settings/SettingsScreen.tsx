@@ -227,6 +227,7 @@ function SettingsRow({
   title,
   description,
   value,
+  badge,
   onPress,
   destructive = false,
 }: {
@@ -234,6 +235,7 @@ function SettingsRow({
   title: string;
   description?: string;
   value?: string;
+  badge?: string;
   onPress?: () => void;
   destructive?: boolean;
 }) {
@@ -250,9 +252,10 @@ function SettingsRow({
           <Text numberOfLines={2} style={styles.rowDescription}>{description ?? value}</Text>
         ) : null}
       </View>
-      {onPress ? (
+      {onPress || badge ? (
         <View style={styles.rowTrailing}>
-          <ChevronRight color={colors.text.muted} size={18} />
+          {badge ? <Text style={styles.rowBadge}>{badge}</Text> : null}
+          {onPress ? <ChevronRight color={colors.text.muted} size={18} /> : null}
         </View>
       ) : null}
     </>
@@ -986,7 +989,7 @@ export default function SettingsScreen({
         <Text style={styles.infoText}>Your StockPilot inventory is stored locally on this device.</Text>
       </View>
       <SettingsGroup label="Purchase">
-        <SettingsRow icon={BadgeCheck} title="StockPilot Premium" description="Lifetime access · one-time purchase" onPress={() => setPage("premium")} />
+        <SettingsRow icon={BadgeCheck} title="StockPilot Premium" description="Lifetime access · one-time purchase" badge="Premium" onPress={() => setPage("premium")} />
         <SettingsRow icon={RefreshCw} title="Restore Purchase" onPress={() => setPage("restore-purchase")} />
       </SettingsGroup>
       <SettingsGroup label="Application">
@@ -1455,7 +1458,8 @@ export default function SettingsScreen({
     <View style={styles.form}>
       <View style={styles.statusCard}>
         <View style={styles.brandMark}><BadgeCheck color={colors.primary[600]} size={30} /></View>
-        <Text style={styles.statusTitle}>Lifetime Access</Text>
+        <Text style={styles.premiumBadge}>Premium</Text>
+        <Text style={styles.statusTitle}>Premium access</Text>
         <Text style={styles.statusCopy}>One-time purchase.</Text>
       </View>
       <View style={styles.infoNote}>

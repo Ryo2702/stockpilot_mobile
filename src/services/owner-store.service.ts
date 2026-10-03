@@ -1,9 +1,4 @@
-import type { StoreSchema } from "../validation/store.validation";
-import {
-  ownerNameSchema,
-  storeSchema,
-  type StoreInput,
-} from "../validation/store.validation";
+import createId from "@/utils/createId";
 import {
   countActiveStoresForBusiness,
   deleteStore as deleteStoreRecord,
@@ -15,16 +10,20 @@ import {
   insertStore,
   listOwnerStores,
   listRecentStoreActivities,
-  updateStore as updateStoreRecord,
   updateBusinessName,
+  updateStore as updateStoreRecord,
   type OwnerStoreRecord,
   type RecentStoreActivityRecord,
-  type StoreDetailsRow,
-  type StoreRepositoryDatabase,
   type StoreOverviewRecord,
+  type StoreRepositoryDatabase,
   type StoreWriteDatabase,
 } from "../database/repositories/store.repository";
-import createId from "@/utils/createId";
+import type { StoreSchema } from "../validation/store.validation";
+import {
+  ownerNameSchema,
+  storeSchema,
+  type StoreInput,
+} from "../validation/store.validation";
 
 export type OwnerStore = OwnerStoreRecord;
 export type OwnerStoreDetails = OwnerStore & StoreSchema;
@@ -32,7 +31,7 @@ export type OwnerStoreOverview = StoreOverviewRecord & {
   recentActivities: RecentStoreActivityRecord[];
 };
 export type OwnerStoreDatabase = StoreRepositoryDatabase;
-export const MAX_STORES_PER_BUSINESS = 3;
+export const MAX_STORES_PER_BUSINESS = 6;
 
 export class OwnerStoreNotFoundError extends Error {
   constructor() {
@@ -74,7 +73,10 @@ export async function insertStoreForBusiness(
   ownerName: string,
   store: StoreSchema,
 ) {
-  if ((await countActiveStoresForBusiness(db, businessId)) >= MAX_STORES_PER_BUSINESS) {
+  if (
+    (await countActiveStoresForBusiness(db, businessId)) >=
+    MAX_STORES_PER_BUSINESS
+  ) {
     throw new StoreLimitReachedError();
   }
 
@@ -102,7 +104,12 @@ export async function updateOwnerName(
   value: string,
 ) {
   const ownerName = ownerNameSchema.parse(value);
-  const changes = await updateBusinessName(db, businessId, ownerName, new Date().toISOString());
+  const changes = await updateBusinessName(
+    db,
+    businessId,
+    ownerName,
+    new Date().toISOString(),
+  );
   if (!changes) throw new OwnerStoreNotFoundError();
   return ownerName;
 }
@@ -206,7 +213,14 @@ export async function createOwnerStore(
 
   await db.withTransactionAsync(async () => {
     await insertBusiness(db, businessId, owner, now);
-    result.store = await createStoreRecord(db, businessId, owner, store, storeId, now);
+    result.store = await createStoreRecord(
+      db,
+      businessId,
+      owner,
+      store,
+      storeId,
+      now,
+    );
   });
 
   if (!result.store) throw new Error("Store creation failed.");
@@ -226,7 +240,12 @@ export async function createStoreForBusiness(
 
   const result: { store?: OwnerStore } = {};
   await db.withTransactionAsync(async () => {
-    result.store = await insertStoreForBusiness(db, businessId, ownerName, store);
+    result.store = await insertStoreForBusiness(
+      db,
+      businessId,
+      ownerName,
+      store,
+    );
   });
 
   if (!result.store) throw new Error("Store creation failed.");
