@@ -50,7 +50,7 @@ export type Page =
   | "appearance"
   | "storage"
   | "security-questions"
-  | "free-access";
+  | "premium-access";
 
 export type SettingsScreenProps = {
   ownerStore: OwnerStore;

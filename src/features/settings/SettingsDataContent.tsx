@@ -216,7 +216,7 @@ export function StorageContent({ settings }: Props) {
   )
 }
 
-export function FreeAccessContent() {
+export function PremiumAccessContent() {
   const { colors } = useTheme();
   const styles = useThemeStyles(createSettingsStyles);
 
@@ -226,8 +226,8 @@ export function FreeAccessContent() {
         <View style={styles.brandMark}>
           <CircleCheck color={colors.semantic.success} size={30} />
         </View>
-        <Text style={styles.premiumBadge}>Free</Text>
-        <Text style={styles.statusTitle}>Free access</Text>
+        <Text style={styles.premiumBadge}>Premium</Text>
+        <Text style={styles.statusTitle}>Premium access</Text>
         <Text style={styles.statusCopy}>
           All current StockPilot features are available without a purchase.
         </Text>

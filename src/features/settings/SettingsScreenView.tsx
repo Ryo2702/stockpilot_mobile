@@ -13,7 +13,7 @@ import SettingsDialogs from "./SettingsDialogs";
 import {
   AboutContent,
   BackupContent,
-  FreeAccessContent,
+  PremiumAccessContent,
   LegalContent,
   StorageContent,
 } from "./SettingsDataContent";
@@ -60,7 +60,7 @@ const titleByPage: Record<Page, string> = {
   rules: legalPages.rules.title,
   backup: "Backup & Restore",
   storage: "Storage Usage",
-  "free-access": "Free Access",
+  "premium-access": "Premium Access",
   about: "About StockPilot",
 };
 
@@ -152,7 +152,7 @@ export default function SettingsScreenView({
     rules: <LegalContent pageKey="rules" />,
     backup: <BackupContent settings={settings} />,
     storage: <StorageContent settings={settings} />,
-    "free-access": <FreeAccessContent />,
+    "premium-access": <PremiumAccessContent />,
     about: <AboutContent />,
   };
 

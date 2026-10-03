@@ -208,10 +208,10 @@ export function SettingsHomeContent({
       <SettingsGroup label="Access">
         <SettingsRow
           icon={CircleCheck}
-          title="Free Access"
+          title="Premium Access"
           description="All current features included · no purchase required"
-          badge="Free"
-          onPress={() => setPage("free-access")}
+          badge="Premium"
+          onPress={() => setPage("premium-access")}
         />
       </SettingsGroup>
       <SettingsGroup label="Application">
