@@ -8,7 +8,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import StoreSelector from "@/components/store/StoreSelector";
 import { BottomNavigation, type BottomNavKey } from "@/components/ui/BottomNavigation";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -34,9 +33,6 @@ type CatalogScreenViewProps = CatalogScreenProps & {
 
 export default function CatalogScreenView({
   ownerStore,
-  ownerStores,
-  onSelectStore,
-  onCreateStore,
   onImportInventory,
   onNavigate,
   categories,
@@ -122,15 +118,7 @@ export default function CatalogScreenView({
               </View>
             </View>
             <View style={styles.headerContext}>
-              <View style={styles.storeSelector}>
-                <StoreSelector
-                  compact
-                  ownerStore={ownerStore}
-                  ownerStores={ownerStores}
-                  onSelectStore={onSelectStore}
-                  onCreateStore={onCreateStore}
-                />
-              </View>
+              <Text numberOfLines={1} style={styles.storeName}>Store · {ownerStore.storeName}</Text>
               <Button
                 title={showArchived ? "Active Catalog" : "Archived Items"}
                 icon={showArchived ? RotateCcw : Archive}
@@ -308,7 +296,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
     gap: spacing[2],
   },
-  storeSelector: {
+  storeName: {
+    ...typography.caption,
+    color: colors.text.secondary,
     minWidth: 0,
     flex: 1,
   },

@@ -50,6 +50,8 @@ type PosProductRow = {
   quantity: number;
 };
 
+export const POS_PAGE_SIZE = 50;
+
 function roundMoney(value: number, decimalPlaces: number) {
   const factor = 10 ** decimalPlaces;
   return Math.round((value + Number.EPSILON) * factor) / factor;
@@ -93,13 +95,14 @@ function toPosProduct(product: Awaited<ReturnType<typeof getProduct>>, costPrice
 export async function listPosProducts(
   db: PosExecutor,
   store: StoreScope,
-  query: { search?: string; category?: CatalogCategory | null } = {},
+  query: { search?: string; category?: CatalogCategory | null; limit?: number; offset?: number } = {},
 ) {
   const products = await listProducts(db, store, {
     search: query.search,
     category: query.category,
     sort: "name_asc",
-    limit: 100,
+    limit: query.limit ?? POS_PAGE_SIZE,
+    offset: query.offset,
   });
   const costPrices = await getCostPrices(db, store, products.map(({ id }) => id));
   return products.map((product) => toPosProduct(product, costPrices.get(product.id) ?? null));

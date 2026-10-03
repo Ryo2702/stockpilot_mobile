@@ -1,4 +1,5 @@
 import type { SQLiteDatabase } from "expo-sqlite";
+import { Platform } from "react-native";
 
 import { migrations } from "./migrations";
 import { schemaMigrationsSchema } from "./schema/schema_migrations";
@@ -65,7 +66,7 @@ async function applyMigrations(db: DatabaseExecutor) {
           );
         }
       };
-      if (db.withExclusiveTransactionAsync) {
+      if (Platform.OS !== "web" && db.withExclusiveTransactionAsync) {
         await db.withExclusiveTransactionAsync((transaction) => runMigration(transaction));
       } else {
         await db.withTransactionAsync(() => runMigration(db));

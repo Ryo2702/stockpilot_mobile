@@ -242,7 +242,7 @@ export default function CatalogFormModal({
                 style={[styles.input, styles.barcodeInput]}
                 placeholderTextColor={colors.text.muted}
               />
-              <Button title="Scan" icon={Camera} variant="secondary" onPress={onScanBarcode} />
+              <Button title="Scan" icon={Camera} size="lg" variant="secondary" onPress={onScanBarcode} />
             </View>
             {errors.barcode ? <Text style={styles.error}>{errors.barcode}</Text> : null}
           </View>
@@ -258,7 +258,7 @@ export default function CatalogFormModal({
           />
 
           <View style={styles.formRow}>
-            <View style={styles.mediumField}>
+            <View style={styles.fieldColumn}>
               <Text style={styles.label}>Category <Text style={styles.labelNote}>(required)</Text></Text>
               <CategorySelector
                 categories={categories}
@@ -273,46 +273,48 @@ export default function CatalogFormModal({
               options={unitOptions}
               onChange={(value) => updateField("unit", value)}
               error={errors.unit}
-              containerStyle={styles.shortField}
+              containerStyle={styles.fieldColumn}
             />
           </View>
           <View style={styles.formRow}>
-          <TextField
-            label="Selling Price"
-            size="medium"
-            accessibilityLabel="Current price"
-            value={form.currentPrice}
-            onChangeText={(value) => updateField("currentPrice", value)}
-            inputMode="decimal"
-            keyboardType="decimal-pad"
-            placeholder="0"
-            prefix={getCurrencySymbol(currency)}
-            error={errors.currentPrice}
-          />
-          {!product ? (
             <TextField
-              label="Initial Quantity"
-              required
-              size="short"
-              accessibilityLabel="Initial quantity"
-              value={form.initialQuantity}
-              onChangeText={(value) => updateField("initialQuantity", value)}
-              keyboardType="number-pad"
-              error={errors.initialQuantity}
+              label="Selling Price"
+              size="full"
+              accessibilityLabel="Current price"
+              value={form.currentPrice}
+              onChangeText={(value) => updateField("currentPrice", value)}
+              inputMode="decimal"
+              keyboardType="decimal-pad"
+              placeholder="0"
+              prefix={getCurrencySymbol(currency)}
+              error={errors.currentPrice}
+              containerStyle={styles.fieldColumn}
             />
-          ) : null}
+            {!product ? (
+              <TextField
+                label="Initial Quantity"
+                required
+                size="full"
+                accessibilityLabel="Initial quantity"
+                value={form.initialQuantity}
+                onChangeText={(value) => updateField("initialQuantity", value)}
+                keyboardType="number-pad"
+                error={errors.initialQuantity}
+                containerStyle={styles.fieldColumn}
+              />
+            ) : null}
           </View>
 
           <View style={styles.levelRow}>
             <TextField
               label="Reorder Level"
-              size="short"
+              size="full"
               accessibilityLabel="Reorder level"
               value={form.reorderLevel}
               onChangeText={(value) => updateField("reorderLevel", value)}
               keyboardType="number-pad"
               error={errors.reorderLevel}
-              containerStyle={styles.levelField}
+              containerStyle={styles.fieldColumn}
             />
             <DropdownField
               label="Critical Level"
@@ -320,7 +322,7 @@ export default function CatalogFormModal({
               options={criticalLevelOptions}
               onChange={(value) => updateField("criticalLevel", value)}
               error={errors.criticalLevel}
-              containerStyle={styles.levelField}
+              containerStyle={styles.fieldColumn}
             />
           </View>
           <TextField
@@ -472,20 +474,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   formRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    alignItems: "flex-start",
     gap: spacing[3],
   },
-  mediumField: { width: 180, maxWidth: "100%" },
-  shortField: { width: 120, maxWidth: "100%" },
+  fieldColumn: {
+    flex: 1,
+    minWidth: 0,
+  },
   barcodeInput: {
     minWidth: 0,
     flex: 1,
-  },
-  levelField: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 140,
-    minWidth: 140,
   },
   label: {
     ...typography.label,
@@ -506,7 +504,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.text.primary,
   },
   dropdownSelector: {
-    minHeight: control.md,
+    minHeight: control.lg,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -581,7 +579,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   levelRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    alignItems: "flex-start",
     gap: spacing[3],
   },
   hint: {

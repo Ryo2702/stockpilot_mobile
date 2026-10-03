@@ -66,12 +66,30 @@ export function buildPosReceiptHtml(transaction: PosTransaction) {
   </html>`;
 }
 
+function printPosReceiptOnWeb(html: string) {
+  const printWindow = window.open("", "_blank", "width=800,height=900");
+  if (!printWindow) throw new Error("The receipt print window was blocked.");
+
+  const print = () => {
+    printWindow.focus();
+    printWindow.print();
+  };
+  printWindow.addEventListener("load", print, { once: true });
+  printWindow.onafterprint = () => printWindow.close();
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
+
 export async function createPosReceiptPdf(transaction: PosTransaction) {
-  const { uri: temporaryUri } = await Print.printToFileAsync({ html: buildPosReceiptHtml(transaction) });
+  const html = buildPosReceiptHtml(transaction);
+  if (Platform.OS === "web") {
+    printPosReceiptOnWeb(html);
+    return null;
+  }
+
+  const { uri: temporaryUri } = await Print.printToFileAsync({ html });
   const safeReceiptNumber = transaction.receiptNumber.replace(/[^a-z0-9_-]/gi, "-");
   const fileName = `receipt-${safeReceiptNumber}.pdf`;
-
-  if (Platform.OS === "web") return temporaryUri;
 
   const directory = new Directory(Paths.document, "StockPilot");
   directory.create({ intermediates: true, idempotent: true });

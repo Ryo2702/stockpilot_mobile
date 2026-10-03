@@ -15,13 +15,9 @@ type OwnerStoreScreenViewProps = OwnerStoreScreenProps &
 
 export default function OwnerStoreScreenView({
   ownerStore,
-  ownerStores,
-  onSelectStore,
-  onCreateStore,
   onNavigate,
   overview,
 }: OwnerStoreScreenViewProps) {
-  const stores = ownerStores?.length ? ownerStores : [ownerStore];
   const styles = useThemeStyles(createOwnerStoreStyles);
 
   return (
@@ -34,9 +30,6 @@ export default function OwnerStoreScreenView({
         >
           <OwnerStoreHeader
             ownerStore={ownerStore}
-            ownerStores={stores}
-            onSelectStore={onSelectStore}
-            onCreateStore={onCreateStore}
             onNavigate={onNavigate}
           />
           <OwnerStoreOverview overview={overview} onNavigate={onNavigate} />

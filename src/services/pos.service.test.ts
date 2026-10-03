@@ -205,7 +205,7 @@ describe("checkoutPosTransaction", () => {
         expect.objectContaining({ storeId: "store-2", grossSales: 30 }),
       ]));
       const csv = await createInsightsCsv(db, store, allStoreInsights);
-      expect(csv).toContain("Inventory Selling Value (Theoretical)");
+      expect(csv).toContain("Inventory Retail Value");
       expect(csv).toContain("Sales by Day");
       expect(csv).toContain("Top Selling Products");
     } finally {

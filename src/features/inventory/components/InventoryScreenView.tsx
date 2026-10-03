@@ -1,14 +1,13 @@
 import { ChevronLeft, MoreVertical } from "lucide-react-native";
 import { Directory } from "expo-file-system";
 import { useEffect, useRef, useState } from "react";
-import { Platform, ScrollView, StyleSheet, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import StoreSelector from "@/components/store/StoreSelector";
 import { BottomNavigation, type BottomNavKey } from "@/components/ui/BottomNavigation";
 import { IconButton } from "@/components/ui/IconButton";
 import ScreenHeader from "@/components/ui/ScreenHeader";
-import { spacing, useThemeStyles } from "@/theme";
+import { spacing, typography, useThemeStyles } from "@/theme";
 import type { ThemeColors } from "@/theme/tokens";
 
 import type { InventoryScreenController } from "../hooks/useInventoryScreen";
@@ -51,6 +50,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingBottom: spacing[8],
   },
   actions: { flexDirection: "row", alignItems: "center", gap: spacing[1] },
+  storeContext: { ...typography.caption, color: colors.text.secondary },
 });
 
 export default function InventoryScreenView({
@@ -165,14 +165,7 @@ export default function InventoryScreenView({
                 <IconButton icon={MoreVertical} label="Inventory actions" size={22} onPress={() => setMoreVisible(true)} style={{ width: 44, height: 44 }} />
               </View>
             )}
-            context={(
-              <StoreSelector
-                ownerStore={ownerStore}
-                ownerStores={ownerStores}
-                onSelectStore={onSelectStore}
-                onCreateStore={onCreateStore}
-              />
-            )}
+            context={<Text style={styles.storeContext}>Store · {ownerStore.storeName}</Text>}
           />
 
           <InventoryMessage message={inventory.message} onDismiss={inventory.clearMessage} />

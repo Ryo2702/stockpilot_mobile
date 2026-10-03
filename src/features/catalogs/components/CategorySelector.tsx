@@ -73,7 +73,7 @@ export default function CategorySelector({ categories, value, onChange }: Catego
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   selector: {
-    minHeight: control.md,
+    minHeight: control.lg,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -86,6 +86,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   selectorText: {
     ...typography.bodySmall,
+    flex: 1,
+    minWidth: 0,
     color: colors.text.primary,
   },
   placeholder: {
