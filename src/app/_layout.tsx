@@ -1,15 +1,18 @@
 import { Suspense, useEffect, useState } from "react";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
 import { Platform, Text, View } from "react-native";
 
 import { migrate } from "@/database/migrate";
-import { ThemeProvider } from "@/theme";
+import { colors as defaultColors, ThemeProvider, typography } from "@/theme";
+import { appFonts } from "@/theme/fonts";
 import { useTheme } from "@/theme/ThemeProvider";
 
 type DatabaseTab = "checking" | "ready" | "busy";
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts(appFonts);
   // ponytail: Web SQLite is single-tab until Expo supports shared OPFS handles.
   const [databaseTab, setDatabaseTab] = useState<DatabaseTab>(
     Platform.OS === "web" ? "checking" : "ready",
@@ -47,11 +50,11 @@ export default function RootLayout() {
     };
   }, []);
 
-  if (databaseTab === "checking") return null;
+  if (databaseTab === "checking" || (!fontsLoaded && !fontError)) return null;
   if (databaseTab === "busy") {
     return (
-      <View style={{ flex: 1, justifyContent: "center", padding: 24, backgroundColor: "#ffffff" }}>
-        <Text accessibilityRole="alert" style={{ color: "#241c17" }}>
+      <View style={{ flex: 1, justifyContent: "center", padding: 24, backgroundColor: defaultColors.background.app }}>
+        <Text accessibilityRole="alert" style={[typography.body, { color: defaultColors.text.primary }]}>
           StockPilot’s web database is already open in another tab. Close that tab and reload this page.
         </Text>
       </View>

@@ -94,7 +94,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(36, 28, 23, 0.32)",
+    backgroundColor: colors.overlay,
   },
   sheet: {
     maxHeight: "75%",

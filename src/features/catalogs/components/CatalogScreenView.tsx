@@ -1,4 +1,4 @@
-import { Archive, Ellipsis, Plus, RotateCcw } from "lucide-react-native";
+import { Archive, CircleCheck, Ellipsis, Plus, RotateCcw } from "lucide-react-native";
 import {
   ActivityIndicator,
   ScrollView,
@@ -155,6 +155,7 @@ export default function CatalogScreenView({
 
           {successMessage ? (
             <View accessibilityLiveRegion="polite" style={styles.success}>
+              <CircleCheck color={colors.semantic.success} size={18} strokeWidth={2.2} />
               <Text style={styles.successText}>{successMessage}</Text>
               {undoArchivedProduct ? (
                 <Button title="Undo" size="sm" variant="ghost" onPress={() => void undoArchive()} />
@@ -348,7 +349,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   successText: {
     ...typography.bodySmall,
     flex: 1,
-    color: colors.semantic.success,
+    color: colors.text.primary,
     textAlign: "left",
   },
 });

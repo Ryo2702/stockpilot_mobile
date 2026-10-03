@@ -20,12 +20,11 @@ const createStyles = (colors: ThemeColors) => ({
     marginBottom: spacing[2],
   },
   title: {
-    ...typography.label,
-    fontWeight: "700" as const,
+    ...typography.section,
     color: colors.text.primary,
   },
   seeAll: {
-    ...typography.caption,
+    ...typography.label,
     fontWeight: "600" as const,
     color: colors.primary[600],
   },
@@ -47,7 +46,7 @@ const createStyles = (colors: ThemeColors) => ({
     borderRadius: radii.md,
   },
   label: {
-    ...typography.caption,
+    ...typography.label,
     color: colors.text.primary,
     textAlign: "center" as const,
   },
@@ -83,15 +82,15 @@ export default function QuickActions({ onNavigate }: { onNavigate?: (key: Bottom
       label: "Stock In",
       Icon: PackagePlus,
       key: "inventory",
-      color: colors.semantic.success,
-      background: colors.semantic.successBackground,
+      color: colors.secondary,
+      background: colors.secondarySoft,
     },
     {
       label: "Stock Out",
       Icon: ArrowUpFromLine,
       key: "inventory",
-      color: colors.semantic.danger,
-      background: colors.semantic.dangerBackground,
+      color: colors.primary[600],
+      background: colors.primary[50],
     },
   ];
 

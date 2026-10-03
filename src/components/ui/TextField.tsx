@@ -100,7 +100,7 @@ export function TextField({
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  field: { gap: spacing[1] },
+  field: { gap: spacing[2] },
   short: { width: 120, maxWidth: "100%" },
   medium: { width: 180, maxWidth: "100%" },
   full: { width: "100%" },
@@ -112,9 +112,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border.default,
     borderRadius: radii.md,
-    backgroundColor: colors.background.surface,
+    backgroundColor: colors.background.input,
     color: colors.text.primary,
-    ...typography.bodySmall,
+    ...typography.input,
   },
   multiline: { minHeight: 92, paddingTop: spacing[3], textAlignVertical: "top" },
   prefixShell: {

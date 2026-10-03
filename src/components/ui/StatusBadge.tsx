@@ -50,7 +50,7 @@ export function StatusBadge({ status, label }: StatusBadgeProps) {
   return (
     <View style={[styles.badge, { backgroundColor: config.backgroundColor }]}>
       <Icon color={config.color} size={14} strokeWidth={2.2} />
-      <Text style={[styles.label, { color: config.color }]}>{label ?? config.label}</Text>
+      <Text style={[styles.label, { color: colors.text.primary }]}>{label ?? config.label}</Text>
     </View>
   );
 }
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
   },
   label: {
-    ...typography.caption,
+    ...typography.label,
     fontWeight: "600",
   },
 });

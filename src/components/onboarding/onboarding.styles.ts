@@ -99,9 +99,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     gap: spacing[1],
   },
   brandName: {
-    fontSize: 22,
-    lineHeight: 28,
-    fontWeight: "600",
+    ...typography.h2,
     color: colors.primary[700],
   },
   brandNameAccent: {
@@ -171,7 +169,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     fontWeight: "700",
   },
   compactSectionTitle: {
-    ...typography.title,
+    ...typography.section,
     flexShrink: 1,
     color: colors.primary[700],
   },
@@ -180,7 +178,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.text.muted,
   },
   field: {
-    gap: spacing[1],
+    gap: spacing[2],
   },
   columnGroup: {
     flexDirection: "row",
@@ -192,7 +190,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     flexShrink: 1,
     flexBasis: 140,
     minWidth: 140,
-    gap: spacing[1],
+    gap: spacing[2],
   },
   fieldLabel: {
     ...typography.label,
@@ -207,11 +205,11 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     minHeight: 52,
     paddingHorizontal: spacing[4],
     borderWidth: 1,
-    borderColor: colors.border.strong,
+    borderColor: colors.border.default,
     borderRadius: radii.lg,
     color: colors.text.primary,
     backgroundColor: colors.background.surface,
-    ...typography.bodySmall,
+    ...typography.input,
   },
   inputError: {
     borderColor: colors.semantic.danger,
@@ -246,7 +244,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     opacity: 0.75,
   },
   choiceLabel: {
-    ...typography.caption,
+    ...typography.label,
     color: colors.text.secondary,
   },
   choiceLabelSelected: {
@@ -279,7 +277,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     height: 54,
   },
   compactStoreTypeLabel: {
-    ...typography.caption,
+    ...typography.label,
     minHeight: 28,
     color: colors.text.secondary,
     textAlign: "center",
@@ -340,7 +338,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.background.surface,
   },
   dropdownText: {
-    ...typography.caption,
+    ...typography.input,
     flex: 1,
     color: colors.text.primary,
   },
@@ -350,7 +348,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
   dropdownOverlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(36, 28, 23, 0.32)",
+    backgroundColor: colors.overlay,
   },
   dropdownSheet: {
     maxHeight: "75%",
@@ -377,7 +375,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: spacing[2],
   },
   dropdownOptionLabel: {
-    ...typography.caption,
+    ...typography.bodySmall,
     flex: 1,
     color: colors.text.primary,
   },
@@ -484,7 +482,7 @@ const createOnboardingStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   featureTitle: {
-    ...typography.label,
+    ...typography.title,
     color: colors.text.primary,
     fontWeight: "600",
   },

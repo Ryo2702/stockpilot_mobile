@@ -22,7 +22,7 @@ const createStyles = (colors: ThemeColors) => ({
     alignItems: "center" as const,
     justifyContent: "space-between" as const,
   },
-  activityTitle: { ...typography.label, color: colors.text.primary },
+  activityTitle: { ...typography.section, color: colors.text.primary },
   activityList: { gap: spacing[3] },
   activityRow: {
     flexDirection: "row" as const,
@@ -37,9 +37,9 @@ const createStyles = (colors: ThemeColors) => ({
     borderRadius: radii.md,
   },
   activityCopy: { flex: 1, minWidth: 0, gap: spacing[1] },
-  activityProduct: { ...typography.bodySmall, color: colors.text.primary, fontWeight: "600" as const },
+  activityProduct: { ...typography.title, color: colors.text.primary },
   activityDetails: { ...typography.caption, color: colors.text.muted },
-  activityDelta: { ...typography.label, textAlign: "right" as const },
+  activityDelta: { ...typography.numericSmall, textAlign: "right" as const },
   activityEmpty: { ...typography.bodySmall, color: colors.text.muted },
 });
 

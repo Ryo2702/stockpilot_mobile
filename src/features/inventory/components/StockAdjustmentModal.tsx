@@ -46,7 +46,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   product: { gap: spacing[1] },
   productName: { ...typography.title, color: colors.text.primary },
-  meta: { ...typography.caption, color: colors.text.muted },
+  meta: { ...typography.bodySmall, color: colors.text.muted },
+  technicalMeta: { ...typography.mono, color: colors.text.muted },
   current: {
     gap: spacing[1],
     padding: spacing[3],
@@ -58,7 +59,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   currentLabel: { ...typography.caption, color: colors.text.muted },
   currentValue: { ...typography.h2, color: colors.text.primary },
   section: { gap: spacing[2] },
-  sectionTitle: { ...typography.label, color: colors.text.primary },
+  sectionTitle: { ...typography.section, color: colors.text.primary },
   segments: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2] },
   segment: {
     minHeight: control.md,
@@ -72,9 +73,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.background.surface,
   },
   segmentSelected: { borderColor: colors.primary[500], backgroundColor: colors.primary[50] },
-  segmentLabel: { ...typography.caption, color: colors.text.secondary, textAlign: "center" },
+  segmentLabel: { ...typography.label, color: colors.text.secondary, textAlign: "center" },
   segmentLabelSelected: { color: colors.primary[700], fontWeight: "600" },
-  field: { gap: spacing[1] },
+  field: { gap: spacing[2] },
   label: { ...typography.label, color: colors.text.primary },
   selector: {
     minHeight: control.lg,
@@ -100,10 +101,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   previewRow: { flexDirection: "row", justifyContent: "space-between", gap: spacing[3] },
   previewLabel: { ...typography.bodySmall, color: colors.text.secondary },
   previewValue: { ...typography.label, color: colors.text.primary },
-  explanation: { ...typography.caption, color: colors.text.secondary },
+  explanation: { ...typography.bodySmall, color: colors.text.secondary },
   error: { ...typography.caption, color: colors.semantic.danger },
   actions: { gap: spacing[2] },
-  overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(36, 28, 23, 0.32)" },
+  overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: colors.overlay },
   reasonSheet: {
     maxHeight: "75%",
     gap: spacing[2],
@@ -220,13 +221,13 @@ export default function StockAdjustmentModal({
     <Modal visible={visible} animationType="slide" onRequestClose={() => { if (!saving) onClose(); }}>
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         <View style={styles.header}>
-          <IconButton icon={ChevronLeft} label="Close stock adjustment" disabled={saving} onPress={onClose} />
+          <IconButton icon={ChevronLeft} label="Close stock adjustment" tone="primary" disabled={saving} onPress={onClose} />
           <Text style={styles.headerTitle}>Adjust Stock</Text>
         </View>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.product}>
             <Text style={styles.productName}>{item.name}</Text>
-            <Text style={styles.meta}>{item.sku ? `SKU: ${item.sku}` : "No SKU"}</Text>
+            <Text style={styles.technicalMeta}>{item.sku ? `SKU: ${item.sku}` : "No SKU"}</Text>
             <Text style={styles.meta}>Store: {storeName}</Text>
           </View>
           <View style={styles.current}>

@@ -10,6 +10,7 @@ type IconButtonProps = Omit<PressableProps, "children"> & {
   label: string;
   size?: number;
   variant?: "default" | "primary" | "danger";
+  tone?: "primary" | "secondary";
   style?: StyleProp<ViewStyle>;
 };
 
@@ -18,6 +19,7 @@ export function IconButton({
   label,
   size = 20,
   variant = "default",
+  tone = "secondary",
   style,
   ...props
 }: IconButtonProps) {
@@ -25,10 +27,12 @@ export function IconButton({
   const styles = useThemeStyles(createStyles);
   const iconColor =
     variant === "primary"
-      ? colors.text.onPrimary
-      : variant === "danger"
-        ? colors.semantic.danger
-        : colors.primary[700];
+        ? colors.text.onPrimary
+        : variant === "danger"
+          ? colors.semantic.danger
+        : tone === "primary"
+          ? colors.primary[600]
+          : colors.secondary;
 
   return (
     <Pressable

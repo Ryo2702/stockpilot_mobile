@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowDownToLine, ArrowLeftRight, ArrowUpDown, ArrowUpFromLine, Package, Search, SlidersHorizontal } from "lucide-react-native";
+import { AlertCircle, ArrowDownToLine, ArrowLeftRight, ArrowUpDown, ArrowUpFromLine, CircleCheck, Package, Search, SlidersHorizontal, TriangleAlert } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -48,14 +48,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.background.surface,
   },
   chipSelected: { borderColor: colors.primary[500], backgroundColor: colors.primary[50] },
-  chipLabel: { ...typography.caption, color: colors.text.secondary },
+  chipLabel: { ...typography.label, color: colors.text.secondary },
   chipLabelSelected: { color: colors.primary[700], fontWeight: "600" },
   summary: { flexDirection: "row", gap: spacing[2] },
   totalCard: { flex: 1.35, minWidth: 96, gap: spacing[1], padding: spacing[3] },
   countCard: { flex: 1, minWidth: 64, alignItems: "center", justifyContent: "center", gap: spacing[1], padding: spacing[2] },
+  countHeading: { flexDirection: "row", alignItems: "center", gap: spacing[1] },
   countLabel: { ...typography.caption, color: colors.text.secondary, textAlign: "center" },
   totalNumber: { ...typography.h2, color: colors.text.primary },
-  countNumber: { ...typography.label, fontSize: 18, fontWeight: "700", color: colors.text.primary },
+  countNumber: { ...typography.numericSmall, color: colors.text.primary },
   results: { ...typography.caption, color: colors.text.muted },
   sortCopy: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing[2] },
   sortLabel: { ...typography.caption, color: colors.text.muted },
@@ -81,6 +82,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   detailIdentity: { gap: spacing[1] },
   detailName: { ...typography.h2, color: colors.text.primary },
   detailMeta: { ...typography.bodySmall, color: colors.text.secondary },
+  technicalMeta: { ...typography.mono, color: colors.text.secondary },
   stockCard: { gap: spacing[3], padding: spacing[4] },
   stockHeading: { ...typography.caption, color: colors.text.muted },
   stockValue: { ...typography.display, color: colors.text.primary },
@@ -93,19 +95,19 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   detailValue: { ...typography.label, color: colors.text.primary, textAlign: "right" },
   twoActions: { gap: spacing[2] },
   sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing[2] },
-  sectionTitle: { ...typography.label, color: colors.text.primary },
-  link: { ...typography.caption, color: colors.primary[600], fontWeight: "600" },
+  sectionTitle: { ...typography.section, color: colors.text.primary },
+  link: { ...typography.label, color: colors.primary[600], fontWeight: "600" },
   movementList: { gap: spacing[2] },
   movementRow: { flexDirection: "row", alignItems: "center", gap: spacing[3], paddingVertical: spacing[2] },
   movementIcon: { width: 34, height: 34, alignItems: "center", justifyContent: "center", borderRadius: radii.md },
   movementCopy: { minWidth: 0, flex: 1, gap: spacing[1] },
-  movementName: { ...typography.bodySmall, color: colors.text.primary, fontWeight: "600" },
+  movementName: { ...typography.title, color: colors.text.primary },
   movementMeta: { ...typography.caption, color: colors.text.muted },
-  movementAmount: { ...typography.label, textAlign: "right" },
+  movementAmount: { ...typography.numericSmall, textAlign: "right" },
   group: { gap: spacing[1] },
-  groupTitle: { ...typography.caption, color: colors.text.muted, fontWeight: "700", letterSpacing: 0.5 },
+  groupTitle: { ...typography.label, color: colors.text.muted, fontWeight: "600" },
   line: { height: 1, backgroundColor: colors.border.default },
-  detailType: { ...typography.label, fontWeight: "700" },
+  detailType: { ...typography.label, fontWeight: "600" },
   info: { ...typography.caption, color: colors.text.secondary, padding: spacing[3], borderRadius: radii.md, backgroundColor: colors.background.subtle },
   archivedLabel: { ...typography.caption, color: colors.text.muted },
 });
@@ -245,9 +247,9 @@ function InventorySummary({ counts }: { counts: NonNullable<InventoryController[
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const values = [
-    { label: "Healthy", value: counts.healthy, color: colors.semantic.success },
-    { label: "Low", value: counts.low, color: colors.semantic.warning },
-    { label: "Critical", value: counts.critical, color: colors.semantic.danger },
+    { label: "Healthy", value: counts.healthy, color: colors.semantic.success, Icon: CircleCheck },
+    { label: "Low", value: counts.low, color: colors.semantic.warning, Icon: TriangleAlert },
+    { label: "Critical", value: counts.critical, color: colors.semantic.danger, Icon: AlertCircle },
   ];
   return (
     <View style={styles.summary}>
@@ -255,10 +257,10 @@ function InventorySummary({ counts }: { counts: NonNullable<InventoryController[
         <Text style={styles.countLabel}>Total Products</Text>
         <Text style={styles.totalNumber}>{counts.total.toLocaleString()}</Text>
       </Card>
-      {values.map((entry) => (
-        <Card key={entry.label} style={styles.countCard}>
-          <Text style={[styles.countNumber, { color: entry.color }]}>{entry.value.toLocaleString()}</Text>
-          <Text style={styles.countLabel}>{entry.label}</Text>
+      {values.map(({ label, value, color, Icon }) => (
+        <Card key={label} style={styles.countCard}>
+          <View style={styles.countHeading}><Icon color={color} size={14} strokeWidth={2.2} /><Text style={styles.countLabel}>{label}</Text></View>
+          <Text style={styles.countNumber}>{value.toLocaleString()}</Text>
         </Card>
       ))}
     </View>
@@ -306,8 +308,8 @@ export function InventoryDetailContent({
     <View style={styles.body}>
       <View style={styles.detailIdentity}>
         <Text style={styles.detailName}>{item.name}</Text>
-        <Text style={styles.detailMeta}>{item.sku ? `SKU: ${item.sku}` : "No SKU"}</Text>
-        <Text style={styles.detailMeta}>Barcode: {item.barcode ?? "—"}</Text>
+        <Text style={styles.technicalMeta}>{item.sku ? `SKU: ${item.sku}` : "No SKU"}</Text>
+        <Text style={styles.technicalMeta}>Barcode: {item.barcode ?? "—"}</Text>
         <Text style={styles.detailMeta}>{category.label}</Text>
       </View>
       <PrintBarcodeButton name={item.name} barcode={item.barcode ?? item.sku} />
@@ -401,7 +403,7 @@ export function MovementHistoryContent({
           {inventory.movementError ? <Text accessibilityRole="alert" style={styles.errorCopy}>{inventory.movementError}</Text> : null}
           {groupMovements(inventory.movementItems).map((group) => (
             <View key={group.title} style={styles.group}>
-              <Text style={styles.groupTitle}>{group.title.toUpperCase()}</Text>
+              <Text style={styles.groupTitle}>{group.title}</Text>
               <View style={styles.line} />
               <View style={styles.movementList}>
                 {group.items.map((movement) => (
@@ -447,7 +449,7 @@ export function MovementDetailContent({ inventory }: { inventory: InventoryContr
     <View style={styles.body}>
       <View style={styles.detailIdentity}>
         <Text style={styles.detailName}>{movement.productName}</Text>
-        <Text style={styles.detailMeta}>{movement.sku ? `SKU: ${movement.sku}` : "No SKU"}</Text>
+        <Text style={styles.technicalMeta}>{movement.sku ? `SKU: ${movement.sku}` : "No SKU"}</Text>
       </View>
       <Card style={styles.stockCard}>
         <View style={styles.stockStatusRow}>

@@ -4,6 +4,7 @@ import { Directory, File, Paths } from "expo-file-system";
 
 import { formatCurrency } from "@/domain/currency";
 import type { PosTransaction } from "@/domain/pos";
+import { colors } from "@/theme/tokens";
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({
@@ -30,17 +31,17 @@ export function buildPosReceiptHtml(transaction: PosTransaction) {
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <style>
         @page { margin: 24px; }
-        body { font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; color: #241c17; }
+        body { font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; color: ${colors.text.primary}; }
         h1, h2, p { margin: 0 0 8px; }
         h1 { font-size: 22px; }
         h2 { font-size: 16px; font-weight: 600; }
         p, td, th { font-size: 12px; }
-        .muted { color: #746a62; }
-        .rule { border-top: 1px solid #e6ded6; margin: 16px 0; }
+        .muted { color: ${colors.text.secondary}; }
+        .rule { border-top: 1px solid ${colors.border.subtle}; margin: 16px 0; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 7px 0; text-align: left; border-bottom: 1px solid #e6ded6; }
+        th, td { padding: 7px 0; text-align: left; border-bottom: 1px solid ${colors.border.subtle}; }
         th:nth-child(2), td:nth-child(2), th:last-child, td:last-child { text-align: right; }
-        small { display: block; color: #746a62; }
+        small { display: block; color: ${colors.text.secondary}; }
         .total { font-size: 16px; font-weight: 700; }
       </style>
     </head>

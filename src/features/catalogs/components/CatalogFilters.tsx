@@ -213,7 +213,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.primary[50],
   },
   chipLabel: {
-    ...typography.caption,
+    ...typography.label,
     color: colors.text.secondary,
   },
   selectedChipLabel: {
@@ -223,7 +223,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(36, 28, 23, 0.32)",
+    backgroundColor: colors.overlay,
   },
   sortSheet: {
     maxHeight: "75%",

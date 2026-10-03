@@ -169,7 +169,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.text.primary,
     ...typography.body,
   },
-  overlay: { flex: 1, justifyContent: "center", padding: spacing[5], backgroundColor: "rgba(36, 28, 23, 0.45)" },
+  overlay: { flex: 1, justifyContent: "center", padding: spacing[5], backgroundColor: colors.overlay },
   dialog: {
     width: "100%",
     maxWidth: 440,

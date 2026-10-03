@@ -1,3 +1,4 @@
+import { CircleAlert, CircleCheck, TriangleAlert } from "lucide-react-native";
 import { ScrollView, Text, View } from "react-native";
 import { Button } from "@/components/ui/Button";
 import { type InsightProduct } from "@/services/insights";
@@ -10,8 +11,13 @@ import { formatQuantity } from "./sheet.utils";
 function StatusPill({ status }: { status: InsightProduct["stockStatus"] }) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createSheetStyles);
-  const statusStyle = status === "healthy" ? { backgroundColor: colors.semantic.successBackground, color: colors.semantic.success } : status === "low" ? { backgroundColor: colors.semantic.warningBackground, color: colors.semantic.warning } : { backgroundColor: colors.semantic.dangerBackground, color: colors.semantic.danger };
-  return <View style={[styles.statusPill, { backgroundColor: statusStyle.backgroundColor }]}><Text style={[styles.statusText, { color: statusStyle.color }]}>{status === "low" ? "Low stock" : status === "critical" ? "Critical" : "Healthy"}</Text></View>;
+  const statusStyle = status === "healthy"
+    ? { backgroundColor: colors.semantic.successBackground, color: colors.semantic.success, Icon: CircleCheck, label: "Healthy" }
+    : status === "low"
+      ? { backgroundColor: colors.semantic.warningBackground, color: colors.semantic.warning, Icon: TriangleAlert, label: "Low stock" }
+      : { backgroundColor: colors.semantic.dangerBackground, color: colors.semantic.danger, Icon: CircleAlert, label: "Critical" };
+  const StatusIcon = statusStyle.Icon;
+  return <View style={[styles.statusPill, { backgroundColor: statusStyle.backgroundColor }]}><StatusIcon color={statusStyle.color} size={14} strokeWidth={2.2} /><Text style={styles.statusText}>{statusStyle.label}</Text></View>;
 }
 
 export function ProductInsightSheet({ product, onClose, onViewInventory }: { product: InsightProduct | null; onClose: () => void; onViewInventory: () => void }) {

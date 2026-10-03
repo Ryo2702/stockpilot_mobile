@@ -89,7 +89,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingTop: spacing[1],
     paddingBottom: spacing[2],
     borderTopWidth: 1,
-    borderColor: colors.border.default,
+    borderColor: colors.border.subtle,
     backgroundColor: colors.background.surface,
   },
   item: {
@@ -112,8 +112,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: colors.primary[600],
   },
   label: {
-    ...typography.caption,
-    color: colors.text.muted,
+    ...typography.label,
+    color: colors.text.secondary,
     textAlign: "center",
   },
   activeLabel: {

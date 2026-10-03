@@ -61,7 +61,7 @@ export default function ProductDetailsModal({
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         <View style={styles.header}>
-          <IconButton icon={ChevronLeft} label="Close item details" onPress={onClose} />
+          <IconButton icon={ChevronLeft} label="Close item details" tone="primary" onPress={onClose} />
           <Text style={styles.headerTitle}>Item Details</Text>
         </View>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -194,7 +194,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.text.primary,
   },
   identifier: {
-    ...typography.bodySmall,
+    ...typography.mono,
     color: colors.text.secondary,
   },
   stockCard: {
@@ -206,7 +206,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.background.surface,
   },
   sectionLabel: {
-    ...typography.caption,
+    ...typography.label,
     color: colors.text.muted,
   },
   quantity: {

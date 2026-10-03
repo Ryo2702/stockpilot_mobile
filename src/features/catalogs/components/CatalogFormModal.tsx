@@ -210,6 +210,7 @@ export default function CatalogFormModal({
           <IconButton
             icon={ChevronLeft}
             label="Close item form"
+            tone="primary"
             disabled={saving}
             onPress={close}
           />
@@ -501,7 +502,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: colors.border.default,
     borderRadius: radii.md,
     backgroundColor: colors.background.surface,
-    ...typography.bodySmall,
+    ...typography.input,
     color: colors.text.primary,
   },
   dropdownSelector: {
@@ -527,7 +528,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   dropdownOverlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(36, 28, 23, 0.32)",
+    backgroundColor: colors.overlay,
   },
   dropdownSheet: {
     maxHeight: "75%",

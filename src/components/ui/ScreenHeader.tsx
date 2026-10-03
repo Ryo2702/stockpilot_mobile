@@ -85,7 +85,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     ...typography.h2,
     minWidth: 0,
     flexShrink: 1,
-    color: colors.primary[700],
+    color: colors.text.primary,
   },
   titleAccessory: {
     minWidth: 0,

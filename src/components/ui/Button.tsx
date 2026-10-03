@@ -39,13 +39,20 @@ export function Button({
   const styles = useThemeStyles(createStyles);
   const isDisabled = disabled || loading;
   const isLight = variant === "secondary" || variant === "ghost";
+  const pressedStyle = variant === "primary"
+    ? styles.primaryPressed
+    : variant === "secondary"
+      ? styles.secondaryPressed
+      : variant === "danger"
+        ? styles.dangerPressed
+        : styles.ghostPressed;
   const iconColor = isDisabled
     ? colors.text.disabled
     : variant === "danger"
-      ? colors.white
+      ? colors.text.onDanger
       : variant === "primary"
         ? colors.text.onPrimary
-        : colors.text.secondary;
+        : colors.primary[600];
 
   return (
     <Pressable
@@ -56,7 +63,7 @@ export function Button({
         styles.base,
         styles[size],
         styles[variant],
-        pressed && !isDisabled && styles.pressed,
+        pressed && !isDisabled && pressedStyle,
         isDisabled && variant !== "ghost" && styles.disabled,
         style,
       ]}
@@ -102,7 +109,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   secondary: {
     backgroundColor: colors.background.surface,
-    borderColor: colors.border.default,
+    borderColor: colors.primary[600],
   },
   ghost: {
     backgroundColor: "transparent",
@@ -118,19 +125,20 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontWeight: "600",
   },
   lightLabel: {
-    color: colors.text.primary,
+    color: colors.primary[600],
   },
   dangerLabel: {
-    color: colors.white,
+    color: colors.text.onDanger,
   },
-  pressed: {
-    opacity: 0.8,
-  },
+  primaryPressed: { backgroundColor: colors.primary[800], borderColor: colors.primary[800] },
+  secondaryPressed: { backgroundColor: colors.primary[50] },
+  ghostPressed: { backgroundColor: colors.primary[50] },
+  dangerPressed: { opacity: 0.86 },
   disabled: {
-    backgroundColor: colors.background.disabled,
-    borderColor: colors.background.disabled,
+    backgroundColor: colors.background.disabledControl,
+    borderColor: colors.background.disabledControl,
   },
   disabledLabel: {
-    color: colors.text.disabled,
+    color: colors.text.muted,
   },
 });

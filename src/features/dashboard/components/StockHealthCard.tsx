@@ -41,12 +41,12 @@ const createStyles = (colors: ThemeColors) => ({
     gap: spacing[1],
   },
   label: {
-    ...typography.caption,
+    ...typography.label,
     fontWeight: "600" as const,
     color: colors.text.primary,
   },
-  title: { ...typography.label, fontWeight: "700" as const },
-  message: { ...typography.caption, color: colors.text.secondary },
+  title: { ...typography.title, fontWeight: "600" as const, color: colors.text.primary },
+  message: { ...typography.bodySmall, color: colors.text.secondary },
 });
 
 const healthCopy = {
@@ -107,7 +107,7 @@ export default function StockHealthCard({ state }: { state: StoreStockHealthStat
           <HealthIcon color={color} size={15} strokeWidth={2.5} />
           <Text style={styles.label}>Stock Health</Text>
         </View>
-        <Text style={[styles.title, { color }]}>{presentation.title}</Text>
+        <Text style={styles.title}>{presentation.title}</Text>
         <Text style={styles.message}>{presentation.message}</Text>
       </View>
     </Card>

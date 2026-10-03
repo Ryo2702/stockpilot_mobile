@@ -122,11 +122,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   name: {
-    ...typography.label,
+    ...typography.title,
     color: colors.text.primary,
   },
   identifier: {
-    ...typography.caption,
+    ...typography.mono,
     color: colors.text.muted,
   },
   details: {
@@ -137,7 +137,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     gap: spacing[2],
   },
   category: {
-    ...typography.caption,
+    ...typography.bodySmall,
     color: colors.text.secondary,
   },
   stockText: {

@@ -25,7 +25,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(36, 28, 23, 0.28)",
+    backgroundColor: colors.overlay,
   },
   card: {
     minWidth: 200,

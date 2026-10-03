@@ -1,6 +1,6 @@
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View, type TextInputProps } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AlertCircle, ChevronRight, CircleCheck, Pencil, TriangleAlert, X } from "lucide-react-native";
+import { AlertCircle, ChevronRight, CircleCheck, Pencil, TriangleAlert, X, type LucideIcon } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
@@ -57,7 +57,7 @@ function StatusChip({ status }: { status: InventoryFileImportStatus }) {
   return (
     <View style={[styles.statusChip, { backgroundColor }]}>
       <Icon color={color} size={13} strokeWidth={2.3} />
-      <Text style={[styles.statusLabel, { color }]}>{statusLabels[status]}</Text>
+      <Text style={styles.statusLabel}>{statusLabels[status]}</Text>
     </View>
   );
 }
@@ -92,7 +92,7 @@ function ProductRow({
       </Pressable>
       {expanded ? (
         <View style={styles.productDetail}>
-          <Text style={styles.detailLine}>Barcode: {row.barcode || "—"}</Text>
+          <Text style={styles.technicalLine}>Barcode: {row.barcode || "—"}</Text>
           <Text style={styles.detailLine}>Category: {row.category || "Other"}</Text>
           <Text style={styles.detailLine}>Unit: {row.unit || "ea"}</Text>
           {row.existing ? <Text style={styles.matchLine}>Matched using {row.existing.match} · {row.existing.name}</Text> : null}
@@ -259,9 +259,9 @@ export function ImportPreview({
         <Text style={styles.sectionTitle}>Import Summary</Text>
         <Text style={styles.summaryDetected}>{review.detectedCount.toLocaleString()} {review.detectedCount === 1 ? "product" : "products"} detected</Text>
         <View style={styles.summaryGrid}>
-          <SummaryValue label="Ready" value={review.readyCount} color={colors.semantic.success} />
-          <SummaryValue label="Existing" value={review.existingCount} color={colors.semantic.warning} />
-          <SummaryValue label="Need Review" value={review.needsReviewCount} color={colors.semantic.danger} />
+          <SummaryValue label="Ready" value={review.readyCount} color={colors.semantic.success} Icon={CircleCheck} />
+          <SummaryValue label="Existing" value={review.existingCount} color={colors.semantic.warning} Icon={TriangleAlert} />
+          <SummaryValue label="Need Review" value={review.needsReviewCount} color={colors.semantic.danger} Icon={AlertCircle} />
         </View>
       </Card>
       <View style={styles.previewHeader}>
@@ -306,12 +306,12 @@ export function ImportPreview({
   );
 }
 
-function SummaryValue({ label, value, color }: { label: string; value: number; color: string }) {
+function SummaryValue({ label, value, color, Icon }: { label: string; value: number; color: string; Icon: LucideIcon }) {
   const styles = useThemeStyles(createInventoryImportStyles);
   return (
     <View style={styles.summaryValue}>
-      <Text style={[styles.summaryNumber, { color }]}>{value.toLocaleString()}</Text>
-      <Text style={styles.summaryLabel}>{label}</Text>
+      <View style={styles.summaryHeading}><Icon color={color} size={14} strokeWidth={2.2} /><Text style={styles.summaryLabel}>{label}</Text></View>
+      <Text style={styles.summaryNumber}>{value.toLocaleString()}</Text>
     </View>
   );
 }

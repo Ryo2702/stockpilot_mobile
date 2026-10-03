@@ -32,9 +32,9 @@ export default function InventoryItemRow({ item, archived = false, onPress }: In
       <View style={styles.product}>
         <Text numberOfLines={1} style={styles.name}>{item.name}</Text>
         <Text numberOfLines={1} style={styles.meta}>
-          {item.sku ? `SKU: ${item.sku}` : "No SKU"}
-          {item.barcode ? ` · Barcode: ${item.barcode}` : ""}
-          {` · ${category.label}`}
+          {item.sku ? <Text style={styles.identifier}>SKU: {item.sku}</Text> : "No SKU"}
+          {item.barcode ? <Text> · <Text style={styles.identifier}>Barcode: {item.barcode}</Text></Text> : null}
+          <Text> · {category.label}</Text>
         </Text>
         <View style={styles.statusRow}>
           {archived ? (
@@ -72,8 +72,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   pressed: { opacity: 0.74 },
   product: { minWidth: 0, flex: 1, gap: spacing[1] },
-  name: { ...typography.label, color: colors.text.primary, fontWeight: "600" },
+  name: { ...typography.title, color: colors.text.primary },
   meta: { ...typography.caption, color: colors.text.muted },
+  identifier: { ...typography.mono, color: colors.text.muted },
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -84,6 +85,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   reorder: { ...typography.caption, flexShrink: 1, color: colors.text.secondary },
   archived: { ...typography.caption, color: colors.text.muted, fontWeight: "600" },
   quantity: { minWidth: 48, alignItems: "flex-end" },
-  quantityValue: { ...typography.title, color: colors.text.primary, fontVariant: ["tabular-nums"] },
+  quantityValue: { ...typography.numericSmall, color: colors.text.primary },
   unit: { ...typography.caption, color: colors.text.secondary },
 });

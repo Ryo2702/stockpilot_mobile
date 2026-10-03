@@ -48,7 +48,7 @@ export default function BarcodeScannerModal({ visible, onClose, onScanned }: Bar
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         <View style={styles.header}>
-          <IconButton icon={ChevronLeft} label="Close barcode scanner" onPress={onClose} />
+          <IconButton icon={ChevronLeft} label="Close barcode scanner" tone="primary" onPress={onClose} />
           <Text style={styles.title}>Scan Barcode or QR</Text>
         </View>
         <View style={[styles.content, { paddingVertical: Math.min(spacing[4], height * 0.025) }]}>

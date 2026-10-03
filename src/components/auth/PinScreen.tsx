@@ -312,6 +312,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: radii.md,
     backgroundColor: colors.background.surface,
     color: colors.text.primary,
+    ...typography.input,
     fontSize: 20,
     letterSpacing: 8,
     textAlign: "center",

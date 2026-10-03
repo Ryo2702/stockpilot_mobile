@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Animated, Text, useWindowDimensions, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
+import { CircleAlert, CircleCheck, TriangleAlert, type LucideIcon } from "lucide-react-native";
 
 import { Card } from "@/components/ui/Card";
 import type { OwnerStoreOverview } from "@/services/owner-store.service";
@@ -22,7 +23,7 @@ const createStyles = (colors: ThemeColors) => ({
     justifyContent: "space-between" as const,
   },
   title: {
-    ...typography.title,
+    ...typography.section,
     color: colors.text.primary,
   },
   body: {
@@ -40,14 +41,13 @@ const createStyles = (colors: ThemeColors) => ({
     justifyContent: "center" as const,
   },
   totalLabel: {
-    ...typography.caption,
+    ...typography.label,
     color: colors.text.secondary,
     textAlign: "center" as const,
   },
   totalCount: {
-    ...typography.h2,
+    ...typography.numeric,
     color: colors.text.primary,
-    lineHeight: 30,
   },
   statusList: {
     minWidth: 0,
@@ -62,12 +62,6 @@ const createStyles = (colors: ThemeColors) => ({
     paddingHorizontal: spacing[3],
     borderRadius: radii.md,
   },
-  statusDot: {
-    width: 14,
-    height: 14,
-    borderRadius: radii.full,
-    flexShrink: 0,
-  },
   statusLabel: {
     ...typography.bodySmall,
     minWidth: 0,
@@ -76,7 +70,7 @@ const createStyles = (colors: ThemeColors) => ({
     fontWeight: "500" as const,
   },
   statusCount: {
-    ...typography.label,
+    ...typography.numericSmall,
     color: colors.text.primary,
     fontWeight: "700" as const,
   },
@@ -102,6 +96,7 @@ export default function StoreStatusCards({ overview }: { overview: OwnerStoreOve
     count: number;
     color: string;
     background: string;
+    icon: LucideIcon;
   }> = [
     {
       key: "healthy",
@@ -109,6 +104,7 @@ export default function StoreStatusCards({ overview }: { overview: OwnerStoreOve
       count: healthy,
       color: colors.semantic.success,
       background: colors.semantic.successBackground,
+      icon: CircleCheck,
     },
     {
       key: "lowStock",
@@ -116,6 +112,7 @@ export default function StoreStatusCards({ overview }: { overview: OwnerStoreOve
       count: lowStock,
       color: colors.semantic.warning,
       background: colors.semantic.warningBackground,
+      icon: TriangleAlert,
     },
     {
       key: "critical",
@@ -123,6 +120,7 @@ export default function StoreStatusCards({ overview }: { overview: OwnerStoreOve
       count: critical,
       color: colors.semantic.danger,
       background: colors.semantic.dangerBackground,
+      icon: CircleAlert,
     },
   ];
   const statusTotal = statuses.reduce((sum, status) => sum + status.count, 0);
@@ -176,7 +174,7 @@ export default function StoreStatusCards({ overview }: { overview: OwnerStoreOve
         </View>
 
         <View style={styles.statusList}>
-          {statuses.map(({ key, label, count, color, background }, index) => {
+          {statuses.map(({ key, label, count, color, background, icon: StatusIcon }, index) => {
             const percentage = statusTotal ? Math.round((count / statusTotal) * 100) : 0;
             return (
               <View
@@ -184,10 +182,10 @@ export default function StoreStatusCards({ overview }: { overview: OwnerStoreOve
                 accessibilityLabel={`${label}, ${count} items, ${percentage}% of inventory`}
                 style={[styles.statusRow, { backgroundColor: background }]}
               >
-                <View style={[styles.statusDot, { backgroundColor: color }]} />
+                <StatusIcon color={color} size={16} strokeWidth={2.2} />
                 <Text numberOfLines={1} style={styles.statusLabel}>{label}</Text>
                 <Text style={styles.statusCount}>{overview ? animatedCounts[index].toLocaleString() : "—"}</Text>
-                <Text style={[styles.percentage, { color }]}>{overview ? `${percentage}%` : "—"}</Text>
+                <Text style={styles.percentage}>{overview ? `${percentage}%` : "—"}</Text>
               </View>
             );
           })}

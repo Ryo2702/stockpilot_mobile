@@ -23,7 +23,7 @@ import {
 } from "../data/inventory.data";
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(36, 28, 23, 0.32)" },
+  overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: colors.overlay },
   sheet: {
     maxHeight: "88%",
     gap: spacing[3],
@@ -38,7 +38,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scroll: { flexShrink: 1 },
   content: { gap: spacing[3], paddingBottom: spacing[2] },
   section: { gap: spacing[2] },
-  sectionTitle: { ...typography.label, color: colors.text.primary },
+  sectionTitle: { ...typography.section, color: colors.text.primary },
   radioOption: {
     minHeight: control.md,
     flexDirection: "row",
@@ -83,7 +83,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: radii.full,
   },
   chipSelected: { borderColor: colors.primary[200], backgroundColor: colors.primary[50] },
-  chipLabel: { ...typography.caption, color: colors.text.secondary },
+  chipLabel: { ...typography.label, color: colors.text.secondary },
   chipLabelSelected: { color: colors.primary[700], fontWeight: "600" },
   actions: { flexDirection: "row", gap: spacing[2] },
   action: { minWidth: 0, flex: 1 },

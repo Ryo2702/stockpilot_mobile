@@ -4,18 +4,14 @@ import { useSQLiteContext } from "expo-sqlite";
 import {
   ArrowRight,
   Check,
-  Coffee,
   Info,
   Plus,
-  ShoppingBasket,
-  Store,
   Upload,
-  Wrench,
-  type LucideIcon,
 } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator as NativeActivityIndicator,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -27,6 +23,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import useStoreSelector from "@/components/store/store-selector/hooks/useStoreSelector";
 import StoreSelectorModal from "@/components/store/store-selector/partials/StoreSelectorModal";
+import { storeTypeOptions } from "@/components/store/store.data";
 import { Button } from "@/components/ui/Button";
 import { importInventoryCsv } from "@/services/inventory";
 import {
@@ -58,15 +55,6 @@ type ImportProgress = {
 
 function sameStore(left: OwnerStore, right: OwnerStore) {
   return left.businessId === right.businessId && left.storeId === right.storeId;
-}
-
-function getStoreIcon(storeType: OwnerStore["storeType"]): LucideIcon {
-  if (storeType === "cafe_shop" || storeType === "food_beverage") return Coffee;
-  if (storeType === "mini_store" || storeType === "convenience" || storeType === "grocery") {
-    return ShoppingBasket;
-  }
-  if (storeType === "motor_shop" || storeType === "hardware") return Wrench;
-  return Store;
 }
 
 function csvCell(value: string) {
@@ -329,7 +317,9 @@ export default function ExistingStoreSelectionStep({
                   >
                     {page.map((store) => {
                       const selected = sameStore(store, selectedStore);
-                      const StoreIcon = getStoreIcon(store.storeType);
+                      const storeTypeImage = storeTypeOptions.find(
+                        (option) => option.value === store.storeType,
+                      )?.image ?? storeTypeOptions[0].image;
                       const switching = switchingStoreId === store.storeId;
                       return (
                         <Pressable
@@ -353,10 +343,11 @@ export default function ExistingStoreSelectionStep({
                             {switching ? (
                               <NativeActivityIndicator color={colors.primary[600]} />
                             ) : (
-                              <StoreIcon
-                                color={selected ? colors.primary[600] : colors.text.secondary}
-                                size={selected ? 34 : 30}
-                                strokeWidth={1.8}
+                              <Image
+                                accessible={false}
+                                source={storeTypeImage}
+                                resizeMode="cover"
+                                style={styles.storeTypeImage}
                               />
                             )}
                             {selected ? (
@@ -623,9 +614,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     opacity: 0.78,
   },
   storeCircle: {
+    overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
     borderRadius: radii.full,
+  },
+  storeTypeImage: {
+    position: "absolute",
+    top: 0,
+    width: "100%",
+    height: "125%",
   },
   selectedStoreCircle: {
     width: 92,

@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronDown, ChevronRight } from "lucide-react-native";
+import { CalendarDays, ChevronDown, ChevronRight, CircleAlert, CircleCheck, TriangleAlert } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 
 import { Card } from "@/components/ui/Card";
@@ -11,7 +11,8 @@ import { periodTitle } from "./insights.utils";
 export function HealthBadge({ status }: { status: InsightProduct["stockStatus"] }) {
   const { colors } = useTheme(); const styles = useThemeStyles(createInsightsStyles);
   const theme = status === "healthy" ? [colors.semantic.successBackground, colors.semantic.success] : status === "low" ? [colors.semantic.warningBackground, colors.semantic.warning] : [colors.semantic.dangerBackground, colors.semantic.danger];
-  return <View style={[styles.badge, { backgroundColor: theme[0] }]}><Text style={[styles.badgeText, { color: theme[1] }]}>{status === "low" ? "Low" : status === "critical" ? "Critical" : "Healthy"}</Text></View>;
+  const StatusIcon = status === "healthy" ? CircleCheck : status === "low" ? TriangleAlert : CircleAlert;
+  return <View style={[styles.badge, { backgroundColor: theme[0] }]}><StatusIcon color={theme[1]} size={14} strokeWidth={2.2} /><Text style={styles.badgeText}>{status === "low" ? "Low" : status === "critical" ? "Critical" : "Healthy"}</Text></View>;
 }
 
 export function MetricTile({ label, value, change }: { label: string; value: string; change: string }) {
@@ -26,7 +27,8 @@ export function PeriodControl({ period, label, onPress }: { period: Parameters<t
 
 export function HealthCountCard({ label, count, color }: { label: string; count: number; color: string }) {
   const styles = useThemeStyles(createInsightsStyles);
-  return <Card style={styles.statusCard}><View style={styles.statusTop}><View style={[styles.statusDot, { backgroundColor: color }]} /><Text numberOfLines={1} style={styles.statusLabel}>{label}</Text></View><Text style={styles.statusCount}>{count.toLocaleString()}</Text></Card>;
+  const StatusIcon = label === "Healthy" ? CircleCheck : label === "Low Stock" ? TriangleAlert : CircleAlert;
+  return <Card style={styles.statusCard}><View style={styles.statusTop}><StatusIcon color={color} size={16} strokeWidth={2.2} /><Text numberOfLines={1} style={styles.statusLabel}>{label}</Text></View><Text style={styles.statusCount}>{count.toLocaleString()}</Text></Card>;
 }
 
 export function InlineAction({ label, onPress }: { label: string; onPress: () => void }) {

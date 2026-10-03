@@ -3,7 +3,7 @@ import { radii, spacing, typography, type ThemeColors } from "@/theme";
 
 export const createSheetStyles = (colors: ThemeColors) => StyleSheet.create({
   root: { flex: 1, justifyContent: "flex-end" },
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(36, 28, 23, 0.38)" },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: colors.overlay },
   sheet: { maxHeight: "88%", paddingHorizontal: spacing[5], paddingTop: spacing[3], paddingBottom: spacing[6], gap: spacing[4], borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, borderColor: colors.border.default, backgroundColor: colors.background.surface },
   handle: { width: 36, height: 4, borderRadius: radii.full, backgroundColor: colors.border.strong, alignSelf: "center" },
   sheetHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing[3] },
@@ -26,10 +26,11 @@ export const createSheetStyles = (colors: ThemeColors) => StyleSheet.create({
   meta: { ...typography.bodySmall, color: colors.text.secondary },
   summaryGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2] },
   summaryTile: { width: "47%", minHeight: 78, padding: spacing[3], gap: spacing[1], borderRadius: radii.md, backgroundColor: colors.background.subtle },
+  summaryHeading: { flexDirection: "row", alignItems: "center", gap: spacing[1] },
   summaryLabel: { ...typography.caption, color: colors.text.secondary },
   summaryValue: { ...typography.title, color: colors.text.primary },
-  statusPill: { alignSelf: "flex-start", paddingHorizontal: spacing[2], paddingVertical: spacing[1], borderRadius: radii.full },
-  statusText: { ...typography.caption, fontWeight: "600" },
+  statusPill: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: spacing[1], paddingHorizontal: spacing[2], paddingVertical: spacing[1], borderRadius: radii.full },
+  statusText: { ...typography.label, color: colors.text.primary, fontWeight: "600" },
   explanation: { ...typography.bodySmall, color: colors.text.secondary, lineHeight: 21 },
   buttonRow: { flexDirection: "row", gap: spacing[2] },
   button: { flex: 1 },

@@ -80,7 +80,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: spacing[4],
-    backgroundColor: "rgba(36, 28, 23, 0.32)",
+    backgroundColor: colors.overlay,
   },
   card: {
     width: "100%",

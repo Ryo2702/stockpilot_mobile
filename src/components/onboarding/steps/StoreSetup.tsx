@@ -32,6 +32,7 @@ export default function StoreSetup({
           <IconButton
             icon={ArrowLeft}
             label="Back to store introduction"
+            tone="primary"
             onPress={onBack}
             style={styles.storeSetupBackButton}
           />

@@ -29,7 +29,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     padding: spacing[4],
     backgroundColor: colors.background.surface,
     borderWidth: 1,
-    borderColor: colors.border.default,
+    borderColor: colors.border.subtle,
     borderRadius: radii.lg,
   },
   default: {},

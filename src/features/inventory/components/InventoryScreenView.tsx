@@ -159,7 +159,7 @@ export default function InventoryScreenView({
         >
           <ScreenHeader
             title={title}
-            leading={subpage ? <IconButton icon={ChevronLeft} label={`Back from ${title}`} onPress={goBack} /> : undefined}
+            leading={subpage ? <IconButton icon={ChevronLeft} label={`Back from ${title}`} tone="primary" onPress={goBack} /> : undefined}
             actions={(
               <View style={styles.actions}>
                 <IconButton icon={MoreVertical} label="Inventory actions" size={22} onPress={() => setMoreVisible(true)} style={{ width: 44, height: 44 }} />

@@ -54,7 +54,7 @@ export default function InventoryImportScreen({
       <View style={styles.screen}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <IconButton icon={ArrowLeft} label="Back to inventory" disabled={isBusy} onPress={onBack} />
+            <IconButton icon={ArrowLeft} label="Back to inventory" tone="primary" disabled={isBusy} onPress={onBack} />
             <View style={styles.headerCopy}>
               <Text style={styles.title}>Import Inventory</Text>
               <Text style={styles.subtitle}>Add multiple products from an existing file</Text>
