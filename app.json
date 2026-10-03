@@ -47,7 +47,15 @@
         }
       ],
       "expo-video",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 31
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
