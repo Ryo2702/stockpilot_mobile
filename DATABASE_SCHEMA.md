@@ -17,6 +17,17 @@ Updated: 2026-09-18
 
 ## Tables
 
+### app_events
+
+Stores best-effort local application events such as shared button presses.
+
+- `id TEXT PRIMARY KEY`
+- `event_name TEXT NOT NULL`
+- `properties_json TEXT NOT NULL DEFAULT '{}'`
+- `created_at TEXT NOT NULL`
+
+Event logging is local telemetry only. A logging failure must not block the user action that produced the event.
+
 ### schema_migrations
 
 Tracks applied database migrations.

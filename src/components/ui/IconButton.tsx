@@ -1,6 +1,8 @@
 import type { LucideIcon } from "lucide-react-native";
+import { useSQLiteContext } from "expo-sqlite";
 import { Pressable, StyleSheet, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 
+import { trackAppEvent } from "@/services/event-tracking.service";
 import { radii } from "@/theme";
 import { useTheme, useThemeStyles } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
@@ -23,6 +25,7 @@ export function IconButton({
   style,
   ...props
 }: IconButtonProps) {
+  const db = useSQLiteContext();
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const iconColor =
@@ -33,7 +36,6 @@ export function IconButton({
         : tone === "primary"
           ? colors.primary[600]
           : colors.secondary;
-
   return (
     <Pressable
       accessibilityLabel={label}
@@ -47,6 +49,19 @@ export function IconButton({
         style,
       ]}
       {...props}
+      onPress={(event) => {
+        try {
+          props.onPress?.(event);
+        } finally {
+          setTimeout(() => void trackAppEvent(db, "button_pressed", {
+            kind: "icon_button",
+            label,
+            variant,
+            tone,
+            size,
+          }), 0);
+        }
+      }}
     >
       <Icon color={iconColor} size={size} strokeWidth={2} />
     </Pressable>

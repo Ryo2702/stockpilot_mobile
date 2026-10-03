@@ -10,7 +10,7 @@ export type DatabaseExecutor = Pick<
   | "getFirstAsync"
   | "getAllAsync"
   | "withTransactionAsync"
->;
+> & Partial<Pick<SQLiteDatabase, "withExclusiveTransactionAsync">>;
 
 export type Migration = {
   version: number;
@@ -21,6 +21,7 @@ export type Migration = {
 };
 
 const DROP_ALL_TABLES = `
+DROP TABLE IF EXISTS app_events;
 DROP TABLE IF EXISTS store_settings;
 DROP TABLE IF EXISTS insight_snapshots;
 DROP TABLE IF EXISTS stock_movements;
@@ -37,7 +38,7 @@ const FRESH_RESET_VERSION = 0;
 
 async function prepareDatabase(db: DatabaseExecutor) {
   await db.execAsync(
-    `PRAGMA foreign_keys = ON;\nPRAGMA journal_mode = WAL;\n${schemaMigrationsSchema}`,
+    `PRAGMA busy_timeout = 5000;\nPRAGMA foreign_keys = ON;\nPRAGMA journal_mode = WAL;\n${schemaMigrationsSchema}`,
   );
 }
 
@@ -53,24 +54,29 @@ async function applyMigrations(db: DatabaseExecutor) {
 
     if (migration.disableForeignKeys) await db.execAsync("PRAGMA foreign_keys = OFF;");
     try {
-      await db.withTransactionAsync(async () => {
-        await migration.up(db);
+      const runMigration = async (transaction: DatabaseExecutor) => {
+        await migration.up(transaction);
         if (!applied) {
-          await db.runAsync(
+          await transaction.runAsync(
             "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
             migration.version,
             migration.name,
             new Date().toISOString(),
           );
         }
-      });
+      };
+      if (db.withExclusiveTransactionAsync) {
+        await db.withExclusiveTransactionAsync((transaction) => runMigration(transaction));
+      } else {
+        await db.withTransactionAsync(() => runMigration(db));
+      }
     } finally {
       if (migration.disableForeignKeys) await db.execAsync("PRAGMA foreign_keys = ON;");
     }
   }
 }
 
-export async function migrate(db: DatabaseExecutor) {
+async function migrateOnce(db: DatabaseExecutor) {
   await prepareDatabase(db);
 
   const resetApplied = await db.getFirstAsync<{ version: number }>(
@@ -91,6 +97,38 @@ export async function migrate(db: DatabaseExecutor) {
   }
 
   await applyMigrations(db);
+}
+
+function isDatabaseLocked(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /database (?:table )?(?:is )?locked|database is busy/i.test(message);
+}
+
+async function wait(milliseconds: number) {
+  await new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+let activeMigration: Promise<void> | null = null;
+
+export function migrate(db: DatabaseExecutor) {
+  if (activeMigration) return activeMigration;
+
+  activeMigration = (async () => {
+    const delays = [100, 250, 500, 1000];
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        await migrateOnce(db);
+        return;
+      } catch (error) {
+        if (!isDatabaseLocked(error) || attempt >= delays.length) throw error;
+        await wait(delays[attempt]);
+      }
+    }
+  })().finally(() => {
+    activeMigration = null;
+  });
+
+  return activeMigration;
 }
 
 export async function migrateFresh(db: DatabaseExecutor) {

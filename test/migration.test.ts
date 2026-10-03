@@ -49,7 +49,7 @@ describe("database migration", () => {
       await migrate(database.db);
       await migrate(database.db);
 
-      expect(database.all<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table'")).toHaveLength(11);
+      expect(database.all<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table'")).toHaveLength(12);
       expect(database.all<{ version: number }>("SELECT version FROM schema_migrations ORDER BY version")).toEqual([
         { version: 0 },
         { version: 1 },
@@ -63,6 +63,7 @@ describe("database migration", () => {
         { version: 9 },
         { version: 10 },
         { version: 11 },
+        { version: 12 },
       ]);
       expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'products'")).toEqual({ name: "products" });
       expect(database.first<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'catalogs'")).toBeUndefined();
@@ -97,7 +98,7 @@ describe("database migration", () => {
       const tables = database.all<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name",
       );
-      expect(tables).toHaveLength(11);
+      expect(tables).toHaveLength(12);
       for (const { name } of tables) {
         if (name !== "schema_migrations") {
           expect(database.first<{ count: number }>(`SELECT COUNT(*) AS count FROM ${name}`)?.count).toBe(0);
@@ -116,6 +117,7 @@ describe("database migration", () => {
         { version: 9 },
         { version: 10 },
         { version: 11 },
+        { version: 12 },
       ]);
     } finally {
       database.close();
@@ -200,7 +202,7 @@ describe("database migration", () => {
       expect(database.first<{ product_id: string }>("SELECT product_id FROM stock_movements")).toEqual({
         product_id: "product-1",
       });
-      expect(database.all<{ version: number }>("SELECT version FROM schema_migrations ORDER BY version")).toHaveLength(11);
+      expect(database.all<{ version: number }>("SELECT version FROM schema_migrations ORDER BY version")).toHaveLength(12);
       expect(database.all("PRAGMA foreign_key_check")).toHaveLength(0);
     } finally {
       database.close();

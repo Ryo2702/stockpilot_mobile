@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react-native";
+import { useSQLiteContext } from "expo-sqlite";
 import {
   ActivityIndicator,
   Pressable,
@@ -10,6 +11,7 @@ import {
 } from "react-native";
 
 import { control, radii, spacing, typography } from "@/theme";
+import { trackAppEvent } from "@/services/event-tracking.service";
 import { useTheme, useThemeStyles } from "@/theme/ThemeProvider";
 import type { ThemeColors } from "@/theme/tokens";
 
@@ -35,6 +37,7 @@ export function Button({
   style,
   ...props
 }: ButtonProps) {
+  const db = useSQLiteContext();
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const isDisabled = disabled || loading;
@@ -68,6 +71,19 @@ export function Button({
         style,
       ]}
       {...props}
+      onPress={(event) => {
+        try {
+          props.onPress?.(event);
+        } finally {
+          setTimeout(() => void trackAppEvent(db, "button_pressed", {
+            kind: "button",
+            label: title,
+            variant,
+            size,
+            accessibilityLabel: props.accessibilityLabel ?? null,
+          }), 0);
+        }
+      }}
     >
       {loading ? (
         <ActivityIndicator color={iconColor} size="small" />

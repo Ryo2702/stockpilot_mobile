@@ -1,4 +1,5 @@
 import { businessesSchema } from "./schema/businesses";
+import { appEventsSchema } from "./schema/app_events";
 import { insightSnapshotsSchema } from "./schema/insight_snapshots";
 import { inventorySchema } from "./schema/inventory";
 import { productsSchema } from "./schema/products";
@@ -10,6 +11,7 @@ import { storesIndexesSchema, storesSchema } from "./schema/stores";
 import { storeSettingsSchema } from "./schema/store_settings";
 
 export const DB_TABLES_SCHEMA = [
+  appEventsSchema,
   businessesSchema,
   storesSchema,
   storeSettingsSchema,

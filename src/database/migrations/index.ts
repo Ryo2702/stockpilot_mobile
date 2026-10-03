@@ -9,6 +9,7 @@ import { inventoryMovementsMigration } from "./008_inventory_movements";
 import { storeTypesMigration } from "./009_store_types";
 import { productCostPriceMigration } from "./010_product_cost_price";
 import { posTransactionsMigration } from "./011_pos_transactions";
+import { appEventsMigration } from "./012_app_events";
 
 export const migrations = [
   initialMigration,
@@ -22,4 +23,5 @@ export const migrations = [
   storeTypesMigration,
   productCostPriceMigration,
   posTransactionsMigration,
+  appEventsMigration,
 ];
