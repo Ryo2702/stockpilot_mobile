@@ -37,6 +37,8 @@ type UseCatalogScreenOptions = {
   onCameraRequestHandled?: () => void;
   productRequest: string | null;
   onProductRequestHandled?: () => void;
+  createRequest: number | null;
+  onCreateRequestHandled?: (id: number) => void;
   barcodeRequest?: { id: number; code: string } | null;
   onBarcodeRequestHandled?: (id: number) => void;
 };
@@ -48,6 +50,8 @@ export default function useCatalogScreen({
   onCameraRequestHandled,
   productRequest,
   onProductRequestHandled,
+  createRequest,
+  onCreateRequestHandled,
   barcodeRequest,
   onBarcodeRequestHandled,
 }: UseCatalogScreenOptions) {
@@ -82,6 +86,7 @@ export default function useCatalogScreen({
   const [successMessage, setSuccessMessage] = useState("");
   const [undoArchivedProduct, setUndoArchivedProduct] = useState<Product | null>(null);
   const handledBarcodeRequest = useRef<number | null>(null);
+  const handledCreateRequest = useRef<number | null>(null);
 
   useEffect(() => {
     if (cameraRequest === 0) return;
@@ -181,6 +186,23 @@ export default function useCatalogScreen({
     setFormBarcode(null);
     setFormVisible(true);
   };
+
+  useEffect(() => {
+    if (createRequest === null) {
+      handledCreateRequest.current = null;
+      return;
+    }
+    if (handledCreateRequest.current === createRequest) return;
+    handledCreateRequest.current = createRequest;
+    onCreateRequestHandled?.(createRequest);
+    setSearch("");
+    setCategory(null);
+    setStockStatus("all");
+    setShowArchived(false);
+    setEditingProduct(null);
+    setFormBarcode(null);
+    setFormVisible(true);
+  }, [createRequest, onCreateRequestHandled]);
 
   const closeForm = () => {
     setFormVisible(false);

@@ -46,9 +46,10 @@ const createStyles = (colors: ThemeColors) => ({
 type OwnerStoreOverviewProps = {
   overview: OwnerStoreOverviewData | null;
   onNavigate?: (key: BottomNavKey) => void;
+  onAddItem?: () => void;
 };
 
-export default function OwnerStoreOverview({ overview, onNavigate }: OwnerStoreOverviewProps) {
+export default function OwnerStoreOverview({ overview, onNavigate, onAddItem }: OwnerStoreOverviewProps) {
   const { colors } = useTheme();
   const healthState = getStoreStockHealthState({
     productCount: overview?.productCount ?? 0,
@@ -61,7 +62,7 @@ export default function OwnerStoreOverview({ overview, onNavigate }: OwnerStoreO
     <View style={{ gap: spacing[3] }}>
       <StoreStatusCards overview={overview} />
       <StockHealthCard state={healthState} />
-      <QuickActions onNavigate={onNavigate} />
+      <QuickActions onNavigate={onNavigate} onAddItem={onAddItem} />
       <Card style={styles.activityCard}>
         <View style={styles.activityHeader}>
           <Text style={styles.activityTitle}>Recent Activities</Text>

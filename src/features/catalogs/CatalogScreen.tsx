@@ -11,6 +11,8 @@ export default function CatalogScreen(props: CatalogScreenProps) {
     onCameraRequestHandled: props.onCameraRequestHandled,
     productRequest: props.productRequest ?? null,
     onProductRequestHandled: props.onProductRequestHandled,
+    createRequest: props.createRequest ?? null,
+    onCreateRequestHandled: props.onCreateRequestHandled,
     barcodeRequest: props.barcodeRequest ?? null,
     onBarcodeRequestHandled: props.onBarcodeRequestHandled,
   });

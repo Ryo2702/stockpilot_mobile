@@ -53,7 +53,13 @@ const createStyles = (colors: ThemeColors) => ({
   pressed: { opacity: 0.75 },
 });
 
-export default function QuickActions({ onNavigate }: { onNavigate?: (key: BottomNavKey) => void }) {
+export default function QuickActions({
+  onNavigate,
+  onAddItem,
+}: {
+  onNavigate?: (key: BottomNavKey) => void;
+  onAddItem?: () => void;
+}) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const compact = useWindowDimensions().width < 380;
@@ -113,8 +119,8 @@ export default function QuickActions({ onNavigate }: { onNavigate?: (key: Bottom
             key={label}
             accessibilityRole="button"
             accessibilityLabel={label}
-            disabled={!onNavigate}
-            onPress={() => onNavigate?.(key)}
+            disabled={!onNavigate && !onAddItem}
+            onPress={() => label === "Add Item" && onAddItem ? onAddItem() : onNavigate?.(key)}
             style={({ pressed }) => [
               styles.tile,
               compact && { flexBasis: "47%" as const, minWidth: 0 },

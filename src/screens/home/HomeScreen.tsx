@@ -55,6 +55,7 @@ export default function HomeScreen() {
   const switchingRef = useRef(false);
   const inventoryActionSequence = useRef(0);
   const barcodeRequestSequence = useRef(0);
+  const catalogCreateSequence = useRef(0);
   const [ownerStore, setOwnerStore] = useState<OwnerStore | null>(null);
   const [ownerStores, setOwnerStores] = useState<OwnerStore[]>([]);
   const [storedPin, setStoredPin] = useState<string | null>(null);
@@ -66,6 +67,7 @@ export default function HomeScreen() {
   const [inventoryActionRequest, setInventoryActionRequest] = useState<InventoryActionRequest | null>(null);
   const [cameraRequest, setCameraRequest] = useState(0);
   const [catalogProductRequest, setCatalogProductRequest] = useState<string | null>(null);
+  const [catalogCreateRequest, setCatalogCreateRequest] = useState<number | null>(null);
   const [catalogBarcodeRequest, setCatalogBarcodeRequest] = useState<{ id: number; code: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -262,7 +264,15 @@ export default function HomeScreen() {
     setCatalogProductRequest(productId);
     setActiveSection("catalog");
   };
+  const openCatalogCreate = () => {
+    catalogCreateSequence.current += 1;
+    setCatalogCreateRequest(catalogCreateSequence.current);
+    setActiveSection("catalog");
+  };
   const handleCatalogProductRequest = useCallback(() => setCatalogProductRequest(null), []);
+  const handleCatalogCreateRequest = useCallback((id: number) => {
+    setCatalogCreateRequest((current) => current === id ? null : current);
+  }, []);
   const handleInventoryBarcode = (code: string) => {
     barcodeRequestSequence.current += 1;
     setCatalogBarcodeRequest({ id: barcodeRequestSequence.current, code });
@@ -388,9 +398,11 @@ export default function HomeScreen() {
         onCreateStore={createStore}
         onImportInventory={() => openInventoryAction("import")}
         productRequest={catalogProductRequest}
+        createRequest={catalogCreateRequest}
         barcodeRequest={catalogBarcodeRequest}
         onBarcodeRequestHandled={acknowledgeCatalogBarcodeRequest}
         onProductRequestHandled={handleCatalogProductRequest}
+        onCreateRequestHandled={handleCatalogCreateRequest}
         onNavigate={navigate}
         cameraRequest={cameraRequest}
         onCameraRequestHandled={() => setCameraRequest(0)}
@@ -402,6 +414,7 @@ export default function HomeScreen() {
         onSelectStore={switchStore}
         onCreateStore={createStore}
         onNavigate={navigate}
+        onAddItem={openCatalogCreate}
       />
     )
   ) : (

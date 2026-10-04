@@ -16,6 +16,7 @@ type OwnerStoreScreenViewProps = OwnerStoreScreenProps &
 export default function OwnerStoreScreenView({
   ownerStore,
   onNavigate,
+  onAddItem,
   overview,
 }: OwnerStoreScreenViewProps) {
   const styles = useThemeStyles(createOwnerStoreStyles);
@@ -32,7 +33,7 @@ export default function OwnerStoreScreenView({
             ownerStore={ownerStore}
             onNavigate={onNavigate}
           />
-          <OwnerStoreOverview overview={overview} onNavigate={onNavigate} />
+          <OwnerStoreOverview overview={overview} onNavigate={onNavigate} onAddItem={onAddItem} />
         </ScrollView>
         <BottomNavigation activeKey="dashboard" onChange={onNavigate} />
       </View>

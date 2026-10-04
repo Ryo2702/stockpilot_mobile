@@ -14,6 +14,7 @@ export type OwnerStoreScreenProps = {
   onSelectStore?: (store: OwnerStore) => Promise<void>;
   onCreateStore?: (store: StoreInput) => Promise<OwnerStore>;
   onNavigate?: (key: BottomNavKey) => void;
+  onAddItem?: () => void;
 };
 
 export default function OwnerStoreScreen(props: OwnerStoreScreenProps) {
